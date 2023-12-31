@@ -1,5 +1,5 @@
 import XCTest
-@testable import swift_layout
+@testable import SwiftLayout
 
 final class swift_layoutTests: XCTestCase {
     func testExample() throws {
