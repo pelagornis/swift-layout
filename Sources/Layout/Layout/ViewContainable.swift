@@ -21,20 +21,20 @@ extension Layout where Self: ViewContainable {
             }
         })
     }
-    
+
     public var layoutConstraints: [NSLayoutConstraint] {
         sublayouts.layoutConstraints
     }
-    
+
     public func prepareSuperview(_ superview: ViewType?) {
         updateSuperview(superview)
         sublayouts.prepareSuperview(view)
     }
-    
+
     public func prepareConstraints(_ identifiers: ViewIdentifiers) {
         sublayouts.prepareConstraints(identifiers)
     }
-    
+
     public func animation() {
         if animationDisabled {
             view.layer.removeAllAnimations()
@@ -42,5 +42,5 @@ extension Layout where Self: ViewContainable {
         }
         sublayouts.animation()
     }
-    
+
 }
