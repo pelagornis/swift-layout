@@ -95,6 +95,7 @@ struct RootUIView_Previews: PreviewProvider {
 ```
 
 ## Using Macro
+Starting with Swift version `5.9`, `@Layout` macro is supported.
 ```swift
 @Layout
 class RootUIView: UIView {
