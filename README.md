@@ -1,4 +1,10 @@
 # Swift Layout
+![Official](https://img.shields.io/badge/project-official-green.svg?colorA=303033&colorB=226af6&label=Pelagornis)
+![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)
+![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)
+[![License](https://img.shields.io/github/license/pelagornis/swift-layout)](https://github.com/pelagornis/swift-layout/blob/main/LICENSE)
+![Platform](https://img.shields.io/badge/platforms-iOS%2013.0%7C%20tvOS%2013.0%7C%20macOS%2010.13-red.svg)
+
 `swift-layout` is a DSL to make Auto Layout easy on both iOS and macOS.
 
 ## Requirements
