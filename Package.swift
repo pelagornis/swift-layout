@@ -10,14 +10,14 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "SwiftLayout",
-            targets: ["SwiftLayout"]),
+            name: "Layout",
+            targets: ["Layout"]),
     ],
     targets: [
         .target(
-            name: "SwiftLayout"),
+            name: "Layout"),
         .testTarget(
-            name: "SwiftLayoutTests",
-            dependencies: ["SwiftLayout"]),
+            name: "LayoutTests",
+            dependencies: ["Layout"]),
     ]
 )
