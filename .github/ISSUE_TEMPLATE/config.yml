@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 
 contact_links:
-  - name: Discord
-    url: https://discord.gg/nCJfCtYz2T
-    about: To join more conversations, join the Pelagornis Discord community!
+  - name: Slack
+    url: https://pelagornis.slack.com
+    about: To join more conversations, join the Pelagornis Slack community!
