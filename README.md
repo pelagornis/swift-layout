@@ -1,5 +1,5 @@
 # Layout
-
+![Assemble](https://badge.pelagornis.com/assemble.svg)
 [![Swift Version](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
 [![iOS Version](https://img.shields.io/badge/iOS-13.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -437,5 +437,7 @@ Layout is inspired by:
 - [PinLayout](https://github.com/layoutBox/PinLayout) - Performance philosophy
 - [Yoga](https://yogalayout.com/) - Flexbox concepts
 - [React Native](https://reactnative.dev/) - Cross-platform approach
+
+## License
 
 **swift-layout** is under MIT license. See the [LICENSE](LICENSE) file for more info.
