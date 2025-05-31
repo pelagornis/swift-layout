@@ -352,42 +352,14 @@ layoutContainer.setBody {
 }
 ```
 
-## 🧪 Testing
-
-Layout includes a comprehensive test suite:
-
-```bash
-# Run all tests
-swift test
-
-# Run specific test category
-swift test --filter LayoutPerformanceTests
-
-# Run quick validation
-swift test --filter QuickTestExample
-```
-
-### Test Coverage
-
-- ✅ **Core Layout Logic**: 95%+
-- ✅ **UIKit Bridge**: 90%+
-- ✅ **Performance Tests**: Included
-- ✅ **Memory Leak Detection**: Automated
-- ✅ **Cross-Platform**: iPhone + iPad
-
 ## 📚 Documentation
 
-- 📖 [API Documentation](https://pelagornis.github.io/Layout/documentation/layout/)
-- 🎯 [Performance Guide](docs/Performance.md)
-- 🔧 [Migration Guide](docs/Migration.md)
-- 💡 [Best Practices](docs/BestPractices.md)
-- 🐛 [Troubleshooting](docs/Troubleshooting.md)
 
 ## 🛠️ Requirements
 
 - iOS 13.0+ / macOS 10.15+
-- Xcode 14.0+
-- Swift 5.7+
+- Xcode 16.0+
+- Swift 6.1+
 
 ## 🎯 Migration Guide
 
