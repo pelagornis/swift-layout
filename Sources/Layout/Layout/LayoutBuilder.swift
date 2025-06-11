@@ -1,89 +1,49 @@
-/// SwiftUI-style result builder for creating declarative layout syntax.
-///
-/// ``LayoutBuilder`` enables the use of SwiftUI-like syntax for defining layouts,
-/// including support for conditional statements, loops, and optional content.
-///
-/// ## Features
-///
-/// - Support for multiple layout components
-/// - Conditional layouts with `if` statements
-/// - Optional content handling
-/// - Array flattening for dynamic content
-///
-/// ## Example Usage
-///
-/// ```swift
-/// @LayoutBuilder var body: Layout {
-///     Vertical(spacing: 16) {
-///         titleLabel.layout()
-///         
-///         if showSubtitle {
-///             subtitleLabel.layout()
-///         }
-///         
-///         ForEach(items) { item in
-///             item.layout()
-///         }
-///     }
-/// }
-/// ```
+import UIKit
+
+/// SwiftUI-style result builder for declarative layout syntax
 @resultBuilder
 public struct LayoutBuilder {
-    /// Builds a layout from multiple components.
-    public static func buildBlock(_ components: Layout...) -> [Layout] {
-        return components
+    public static func buildBlock() -> EmptyLayout {
+        return EmptyLayout()
     }
     
-    /// Builds a layout from arrays of components.
-    public static func buildBlock(_ components: [Layout]...) -> [Layout] {
-        return components.flatMap { $0 }
+    public static func buildBlock<Content: Layout>(_ content: Content) -> Content {
+        return content
     }
     
-    /// Builds a layout from optional content.
-    ///
-    /// - Parameter component: Optional layout component
-    /// - Returns: Array containing the component if present, empty array otherwise
-    public static func buildOptional(_ component: Layout?) -> [Layout] {
-        return component.map { [$0] } ?? []
+    public static func buildBlock<C0: Layout, C1: Layout>(_ c0: C0, _ c1: C1) -> TupleLayout {
+        return TupleLayout([c0, c1])
     }
     
-    /// Builds a layout from the first branch of a conditional.
-    ///
-    /// - Parameter component: Layout from the first conditional branch
-    /// - Returns: Array containing the component
-    public static func buildEither(first component: Layout) -> [Layout] {
-        return [component]
+    public static func buildBlock<C0: Layout, C1: Layout, C2: Layout>(_ c0: C0, _ c1: C1, _ c2: C2) -> TupleLayout {
+        return TupleLayout([c0, c1, c2])
     }
     
-    /// Builds a layout from the second branch of a conditional.
-    ///
-    /// - Parameter component: Layout from the second conditional branch
-    /// - Returns: Array containing the component
-    public static func buildEither(second component: Layout) -> [Layout] {
-        return [component]
+    public static func buildBlock<C0: Layout, C1: Layout, C2: Layout, C3: Layout>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3) -> TupleLayout {
+        return TupleLayout([c0, c1, c2, c3])
     }
     
-    /// Builds a layout from an array of components.
-    ///
-    /// - Parameter components: Array of layout components
-    /// - Returns: The same array of components
-    public static func buildArray(_ components: [Layout]) -> [Layout] {
-        return components
+    public static func buildBlock<C0: Layout, C1: Layout, C2: Layout, C3: Layout, C4: Layout>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4) -> TupleLayout {
+        return TupleLayout([c0, c1, c2, c3, c4])
     }
     
-    /// Builds a layout from a single expression.
-    ///
-    /// - Parameter expression: Single layout component
-    /// - Returns: The component unchanged
-    public static func buildExpression(_ expression: Layout) -> Layout {
-        return expression
+    public static func buildOptional<Content: Layout>(_ component: Content?) -> OptionalLayout<Content> {
+        return OptionalLayout(component)
     }
     
-    /// Builds a layout from an array expression.
-    ///
-    /// - Parameter expression: Array of layout components
-    /// - Returns: The same array of components
-    public static func buildExpression(_ expression: [Layout]) -> [Layout] {
+    public static func buildEither<TrueContent: Layout, FalseContent: Layout>(first component: TrueContent) -> ConditionalLayout<TrueContent, FalseContent> {
+        return ConditionalLayout.first(component)
+    }
+    
+    public static func buildEither<TrueContent: Layout, FalseContent: Layout>(second component: FalseContent) -> ConditionalLayout<TrueContent, FalseContent> {
+        return ConditionalLayout.second(component)
+    }
+    
+    public static func buildArray<Content: Layout>(_ components: [Content]) -> ArrayLayout<Content> {
+        return ArrayLayout(components)
+    }
+    
+    public static func buildExpression<Content: Layout>(_ expression: Content) -> Content {
         return expression
     }
 }

@@ -14,20 +14,18 @@ import UIKit
 /// }
 /// ```
 public struct ForEach<T>: Layout {
-    /// The collection of items to iterate over
+    public typealias Body = Never
+    
     public let items: [T]
+    public let content: (T) -> any Layout
     
-    /// Closure that creates a layout for each item
-    public let content: (T) -> Layout
-    
-    /// Creates a ForEach layout.
-    ///
-    /// - Parameters:
-    ///   - items: The collection of items to iterate over
-    ///   - content: Layout builder closure that creates a layout for each item
-    public init(_ items: [T], @LayoutBuilder content: @escaping (T) -> Layout) {
+    public init(_ items: [T], @LayoutBuilder content: @escaping (T) -> any Layout) {
         self.items = items
         self.content = content
+    }
+    
+    public var body: Never {
+        neverLayout("ForEach")
     }
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {

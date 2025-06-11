@@ -1,3 +1,5 @@
+import UIKit
+
 public extension UIView {
     /// Creates a layout wrapper for this view with chainable modifiers.
     ///

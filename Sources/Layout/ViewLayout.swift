@@ -1,4 +1,4 @@
-
+import UIKit
 /// A wrapper that provides layout functionality for UIViews with chainable modifiers.
 ///
 /// ``ViewLayout`` wraps a UIView and provides a fluent interface for applying
@@ -13,7 +13,13 @@
 ///     .centerX()
 ///     .offset(y: 20)
 /// ```
-public struct ViewLayout: Layout {
+public struct ViewLayout: @preconcurrency Layout {
+    public typealias Body = Never
+    
+    public var body: Never {
+        neverLayout("ViewLayout")
+    }
+    
     /// The wrapped UIView
     public let view: UIView
     
@@ -27,8 +33,14 @@ public struct ViewLayout: Layout {
         self.view = view
     }
     
-    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        var frame = CGRect(origin: .zero, size: view.intrinsicContentSize)
+    @MainActor public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        let intrinsicSize = view.intrinsicContentSize
+        let defaultSize = CGSize(
+            width: intrinsicSize.width == UIView.noIntrinsicMetric ? 100 : intrinsicSize.width,
+            height: intrinsicSize.height == UIView.noIntrinsicMetric ? 30 : intrinsicSize.height
+        )
+        
+        var frame = CGRect(origin: .zero, size: defaultSize)
         
         // Apply modifiers in sequence
         for modifier in modifiers {

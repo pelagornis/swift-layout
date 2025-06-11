@@ -1,3 +1,4 @@
+import UIKit
 /// Utility for measuring and monitoring layout performance.
 ///
 /// ``LayoutPerformanceMonitor`` provides tools for measuring the performance

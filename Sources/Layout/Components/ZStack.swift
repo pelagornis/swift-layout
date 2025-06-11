@@ -8,91 +8,62 @@ import UIKit
 /// ## Example Usage
 ///
 /// ```swift
-/// ZStack(alignment: .topLeading) {
+/// Overlay(alignment: .topLeading) {
 ///     backgroundView.layout()
 ///     overlayLabel.layout()
 ///     actionButton.layout()
 /// }
 /// ```
 public struct ZStack: Layout {
-    /// Child layouts to overlay
-    public let children: [Layout]
+    public typealias Body = Never
     
-    /// Alignment for positioning children
+    private let children: [any Layout]
     public var alignment: Alignment = .center
     
-    /// Alignment options for z-stack positioning
     public enum Alignment {
-        /// Top-leading corner
-        case topLeading
-        /// Top center
-        case top
-        /// Top-trailing corner
-        case topTrailing
-        /// Leading center
-        case leading
-        /// Center
-        case center
-        /// Trailing center
-        case trailing
-        /// Bottom-leading corner
-        case bottomLeading
-        /// Bottom center
-        case bottom
-        /// Bottom-trailing corner
-        case bottomTrailing
+        case topLeading, top, topTrailing
+        case leading, center, trailing
+        case bottomLeading, bottom, bottomTrailing
     }
     
-    /// Creates a z-stack layout.
-    ///
-    /// - Parameters:
-    ///   - alignment: Alignment for positioning children (default: .center)
-    ///   - content: Layout builder closure containing child layouts
-    public init(alignment: Alignment = .center, @LayoutBuilder content: () -> [Layout]) {
-        self.children = content()
+    public init<Content: Layout>(alignment: Alignment = .center, @LayoutBuilder content: () -> Content) {
+        let builtContent = content()
+        self.children = Self.extractChildren(from: builtContent)
         self.alignment = alignment
     }
+    
+    private static func extractChildren(from content: any Layout) -> [any Layout] {
+        if let tupleLayout = content as? TupleLayout {
+            return tupleLayout.getLayouts()
+        } else {
+            return [content]
+        }
+    }
+    
+    public var body: Never { neverLayout("ZStack") }
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         var frames: [UIView: CGRect] = [:]
         var maxWidth: CGFloat = 0
         var maxHeight: CGFloat = 0
         
+        // 각 자식 레이아웃을 개별적으로 처리
         for child in children {
             let childResult = child.calculateLayout(in: bounds)
             
+            // 자식 레이아웃의 전체 크기를 기준으로 배치 위치 계산
+            let childBounds = calculateChildBounds(for: childResult.totalSize, in: bounds, alignment: alignment)
+            
+            // 자식의 모든 뷰를 상대적 위치를 유지하면서 새 위치로 이동
+            let offset = calculateOffset(from: childResult, to: childBounds)
+            
             for (view, childFrame) in childResult.frames {
-                var finalFrame = childFrame
-                
-                // Apply alignment
-                switch alignment {
-                case .topLeading:
-                    finalFrame.origin = .zero
-                case .top:
-                    finalFrame.origin.x = (bounds.width - childFrame.width) / 2
-                    finalFrame.origin.y = 0
-                case .topTrailing:
-                    finalFrame.origin.x = bounds.width - childFrame.width
-                    finalFrame.origin.y = 0
-                case .leading:
-                    finalFrame.origin.x = 0
-                    finalFrame.origin.y = (bounds.height - childFrame.height) / 2
-                case .center:
-                    finalFrame.origin.x = (bounds.width - childFrame.width) / 2
-                    finalFrame.origin.y = (bounds.height - childFrame.height) / 2
-                case .trailing:
-                    finalFrame.origin.x = bounds.width - childFrame.width
-                    finalFrame.origin.y = (bounds.height - childFrame.height) / 2
-                case .bottomLeading:
-                    finalFrame.origin.x = 0
-                    finalFrame.origin.y = bounds.height - childFrame.height
-                case .bottom:
-                    finalFrame.origin.x = (bounds.width - childFrame.width) / 2
-                    finalFrame.origin.y = bounds.height - childFrame.height
-                case .bottomTrailing:
-                    finalFrame.origin.x = bounds.width - childFrame.width
-                    finalFrame.origin.y = bounds.height - childFrame.height
-                }
+                let finalFrame = CGRect(
+                    x: childFrame.origin.x + offset.x,
+                    y: childFrame.origin.y + offset.y,
+                    width: childFrame.width,
+                    height: childFrame.height
+                )
                 
                 frames[view] = finalFrame
                 maxWidth = max(maxWidth, finalFrame.maxX)
@@ -100,7 +71,84 @@ public struct ZStack: Layout {
             }
         }
         
-        return LayoutResult(frames: frames, totalSize: CGSize(width: maxWidth, height: maxHeight))
+        let totalSize = CGSize(width: max(maxWidth, bounds.width), height: max(maxHeight, bounds.height))
+        return LayoutResult(frames: frames, totalSize: totalSize)
+    }
+    
+    private func calculateChildBounds(for childSize: CGSize, in bounds: CGRect, alignment: Alignment) -> CGRect {
+        var childBounds = CGRect(origin: .zero, size: childSize)
+        
+        switch alignment {
+        case .topLeading:
+            childBounds.origin = CGPoint(x: bounds.minX, y: bounds.minY)
+            
+        case .top:
+            childBounds.origin = CGPoint(
+                x: bounds.midX - childSize.width / 2,
+                y: bounds.minY
+            )
+            
+        case .topTrailing:
+            childBounds.origin = CGPoint(
+                x: bounds.maxX - childSize.width,
+                y: bounds.minY
+            )
+            
+        case .leading:
+            childBounds.origin = CGPoint(
+                x: bounds.minX,
+                y: bounds.midY - childSize.height / 2
+            )
+            
+        case .center:
+            childBounds.origin = CGPoint(
+                x: bounds.midX - childSize.width / 2,
+                y: bounds.midY - childSize.height / 2
+            )
+            
+        case .trailing:
+            childBounds.origin = CGPoint(
+                x: bounds.maxX - childSize.width,
+                y: bounds.midY - childSize.height / 2
+            )
+            
+        case .bottomLeading:
+            childBounds.origin = CGPoint(
+                x: bounds.minX,
+                y: bounds.maxY - childSize.height
+            )
+            
+        case .bottom:
+            childBounds.origin = CGPoint(
+                x: bounds.midX - childSize.width / 2,
+                y: bounds.maxY - childSize.height
+            )
+            
+        case .bottomTrailing:
+            childBounds.origin = CGPoint(
+                x: bounds.maxX - childSize.width,
+                y: bounds.maxY - childSize.height
+            )
+        }
+        
+        return childBounds
+    }
+    
+    private func calculateOffset(from childResult: LayoutResult, to targetBounds: CGRect) -> CGPoint {
+        // 자식 레이아웃의 현재 최소 좌표 찾기
+        var minX: CGFloat = CGFloat.greatestFiniteMagnitude
+        var minY: CGFloat = CGFloat.greatestFiniteMagnitude
+        
+        for (_, frame) in childResult.frames {
+            minX = min(minX, frame.origin.x)
+            minY = min(minY, frame.origin.y)
+        }
+        
+        // 목표 위치로 이동하기 위한 오프셋 계산
+        return CGPoint(
+            x: targetBounds.origin.x - minX,
+            y: targetBounds.origin.y - minY
+        )
     }
     
     public func extractViews() -> [UIView] {

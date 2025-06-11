@@ -15,19 +15,24 @@ import UIKit
 /// }
 /// ```
 public struct Spacer: Layout {
-    /// Optional minimum length for the spacer
+    public typealias Body = Never
+    
     public let minLength: CGFloat?
     
-    /// Creates a spacer layout.
-    ///
-    /// - Parameter minLength: Optional minimum length (default: nil for flexible spacing)
     public init(minLength: CGFloat? = nil) {
         self.minLength = minLength
     }
     
+    public var body: Never {
+        neverLayout("Spacer")
+    }
+    
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        let size = CGSize(width: minLength ?? bounds.width, height: minLength ?? bounds.height)
-        return LayoutResult(totalSize: size)
+        // Spacer는 사용 가능한 공간을 채우되, 최소 길이를 보장
+        let width = minLength ?? 0
+        let height = minLength ?? 0
+        
+        return LayoutResult(totalSize: CGSize(width: width, height: height))
     }
     
     public func extractViews() -> [UIView] {

@@ -28,6 +28,7 @@ public struct LayoutResult {
     /// to its calculated position and size.
     ///
     /// - Parameter container: The container view (used for context, frames are applied to individual views)
+    @MainActor
     public func applying(to container: UIView) {
         frames.forEach { view, frame in
             view.frame = frame

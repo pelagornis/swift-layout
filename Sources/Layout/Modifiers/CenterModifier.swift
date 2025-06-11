@@ -29,6 +29,7 @@ public struct CenterModifier: LayoutModifier {
         if vertical {
             newFrame.origin.y = (bounds.height - frame.height) / 2
         }
+        print("CenterModifier: frame=\(frame), bounds=\(bounds), result=\(newFrame)")
         return newFrame
     }
 }
