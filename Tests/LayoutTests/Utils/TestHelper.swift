@@ -5,7 +5,7 @@ import SwiftUI
 extension XCTestCase {
     
     /// Helper method to create a test view with specific properties
-    func createTestView(width: CGFloat = 100, height: CGFloat = 50, tag: Int = 0) -> UIView {
+    @MainActor func createTestView(width: CGFloat = 100, height: CGFloat = 50, tag: Int = 0) -> UIView {
         let view = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
         view.tag = tag
         return view

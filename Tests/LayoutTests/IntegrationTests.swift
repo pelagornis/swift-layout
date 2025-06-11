@@ -6,7 +6,7 @@ import SwiftUI
 /// Integration tests for complex scenarios
 class IntegrationTests: XCTestCase {
     
-    func testCompleteUserInterface() {
+    @MainActor func testCompleteUserInterface() {
         let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 320, height: 568))
         
         // Create UI components
@@ -19,39 +19,39 @@ class IntegrationTests: XCTestCase {
         
         // Set up the complete layout
         container.setBody {
-            Vertical(spacing: 20) {
-                [
-                    // Header
-                    ZStack(alignment: .center) {
-                        [
-                            headerView.layout()
-                                .size(width: 320, height: 60),
-                            
-                            titleLabel.layout()
-                                .size(width: 200, height: 30)
-                        ]
-                    },
+            VStack(spacing: 20) {
+                
+                // Header
+                ZStack(alignment: .center) {
                     
-                    // Content
-                    Vertical(spacing: 16, alignment: .center) {
-                        [
-                            subtitleLabel.layout()
-                                .size(width: 280, height: 40),
-                            
-                            profileImageView.layout()
-                                .size(width: 100, height: 100),
-                            
-                            actionButton.layout()
-                                .size(width: 200, height: 44)
-                        ]
-                    },
+                    headerView.layout()
+                        .size(width: 320, height: 60)
                     
-                    Spacer(),
+                    titleLabel.layout()
+                        .size(width: 200, height: 30)
                     
-                    // Footer
-                    footerView.layout()
-                        .size(width: 320, height: 50)
-                ]
+                }
+                
+                // Content
+                VStack(spacing: 16, alignment: .center) {
+                    
+                    subtitleLabel.layout()
+                        .size(width: 280, height: 40)
+                    
+                    profileImageView.layout()
+                        .size(width: 100, height: 100)
+                    
+                    actionButton.layout()
+                        .size(width: 200, height: 44)
+                    
+                }
+                
+                Spacer()
+                
+                // Footer
+                footerView.layout()
+                    .size(width: 320, height: 50)
+                
             }
         }
         
@@ -72,7 +72,7 @@ class IntegrationTests: XCTestCase {
         XCTAssertEqual(footerView.frame.maxY, container.bounds.height)
     }
     
-    func testDynamicContentUpdate() {
+    @MainActor func testDynamicContentUpdate() {
         let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
         var items = ["Item 1", "Item 2", "Item 3"]
         var itemViews: [UILabel] = []
@@ -85,7 +85,7 @@ class IntegrationTests: XCTestCase {
             }
             
             container.setBody {
-                Vertical(spacing: 8) {
+                VStack(spacing: 8) {
                     ForEach(itemViews) { label in
                         label.layout().size(width: 280, height: 30)
                     }

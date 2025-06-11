@@ -9,7 +9,6 @@ final class LayoutTestSuite: XCTestCase {
     override class func setUp() {
         super.setUp()
         print("🧪 Starting Layout Test Suite")
-        print("📱 Testing on \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
     }
     
     override class func tearDown() {
@@ -18,24 +17,24 @@ final class LayoutTestSuite: XCTestCase {
     }
     
     /// Test that verifies the entire library is working correctly
-    func testLibraryIntegration() {
+    @MainActor func testLibraryIntegration() {
         let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 320, height: 568))
         let label = UILabel()
         let button = UIButton()
         
         // Test the complete flow
         container.setBody {
-            Vertical(spacing: 20) {
-                [
+            VStack(spacing: 20) {
+                
                     label.layout()
                         .size(width: 200, height: 30)
-                        .centerX(),
+                        .centerX()
                     
                     button.layout()
                         .size(width: 150, height: 44)
                         .centerX()
                         .offset(y: 10)
-                ]
+                
             }
             .padding(20)
         }

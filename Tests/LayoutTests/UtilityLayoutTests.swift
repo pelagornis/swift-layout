@@ -1,6 +1,5 @@
 import XCTest
 import UIKit
-import SwiftUI
 @testable import Layout
 
 /// Tests for utility layouts like Spacer and ForEach
@@ -25,7 +24,7 @@ class UtilityLayoutTests: XCTestCase {
         XCTAssertEqual(result.frames.count, 0)
     }
     
-    func testForEachLayout() {
+    @MainActor func testForEachLayout() {
         let views = [
             UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 30)),
             UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 30)),

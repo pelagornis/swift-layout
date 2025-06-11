@@ -6,12 +6,12 @@ import SwiftUI
 /// Tests for edge cases and error conditions
 class EdgeCaseTests: XCTestCase {
     
-    func testEmptyLayout() {
+    @MainActor func testEmptyLayout() {
         let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
         
         container.setBody {
-            Vertical {
-                [] // Empty layout
+            VStack {
+                EmptyLayout()
             }
         }
         
@@ -21,7 +21,7 @@ class EdgeCaseTests: XCTestCase {
         container.layoutSubviews()
     }
     
-    func testZeroSizedBounds() {
+    @MainActor func testZeroSizedBounds() {
         let view = UIView()
         let layout = view.layout().center()
         
@@ -31,7 +31,7 @@ class EdgeCaseTests: XCTestCase {
         XCTAssertNotNil(result.frames[view])
     }
     
-    func testNegativeBounds() {
+    @MainActor func testNegativeBounds() {
         let view = UIView()
         let layout = view.layout().size(width: 100, height: 50)
         
@@ -42,14 +42,14 @@ class EdgeCaseTests: XCTestCase {
         XCTAssertNotNil(result.frames[view])
     }
     
-    func testVeryLargeLayout() {
+    @MainActor func testVeryLargeLayout() {
         let views = (0..<10000).map { _ in UIView() }
         let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
         
         // Should handle very large number of views
         XCTAssertNoThrow {
             container.setBody {
-                Vertical {
+                VStack {
                     ForEach(views) { view in
                         view.layout().size(width: 280, height: 1)
                     }
@@ -58,14 +58,14 @@ class EdgeCaseTests: XCTestCase {
         }
     }
     
-    func testCircularReference() {
+    @MainActor func testCircularReference() {
         let container = LayoutContainer()
         
         // This should not cause infinite recursion
         XCTAssertNoThrow {
             container.setBody {
-                Vertical {
-                    [container.layout()] // Self-reference
+                VStack {
+                    container.layout()// Self-reference
                 }
             }
         }
