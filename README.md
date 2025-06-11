@@ -1,5 +1,5 @@
 # Layout
-![Assemble](https://badge.pelagornis.com/assemble.svg)
+![Official](https://badge.pelagornis.com/official.svg)
 [![Swift Version](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
 [![iOS Version](https://img.shields.io/badge/iOS-13.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -156,11 +156,6 @@ struct MySwiftUIView: View {
             
             // Use any UIKit view in SwiftUI!
             UILabel()
-                .text("UIKit Label in SwiftUI")
-                .font(.boldSystemFont(ofSize: 18))
-                .foregroundColor(.white)
-                .background(.systemBlue)
-                .cornerRadius(8)
                 .swiftui  // ← Magic conversion!
                 .frame(height: 50)
             
@@ -194,22 +189,6 @@ class UIKitViewController: UIViewController {
         hostingController.didMove(toParent: self)
     }
 }
-```
-
-### SwiftUI-Style UIKit API
-
-```swift
-// Chain modifiers like SwiftUI
-let styledButton = UIButton()
-    .title("Styled Button")
-    .font(.boldSystemFont(ofSize: 16))
-    .foregroundColor(.white)
-    .background(.systemBlue)
-    .cornerRadius(12)
-    .shadow(color: .black, radius: 4, opacity: 0.3)
-    .onTapGesture {
-        print("Button tapped!")
-    }
 ```
 
 ## 🏗️ Advanced Examples
