@@ -14,7 +14,7 @@ A high-performance, SwiftUI-style declarative layout system that uses manual fra
 📱 **SwiftUI-Style API** - Familiar declarative syntax with `@LayoutBuilder`  
 🔄 **Automatic View Management** - Smart view hierarchy handling  
 🌉 **UIKit ↔ SwiftUI Bridge** - Seamless integration between frameworks  
-📐 **Flexible Layouts** - Vertical, Horizontal, ZStack, and custom layouts  
+📐 **Flexible Layouts** - VStack, HStack, ZStack, and custom layouts  
 🎯 **Zero Dependencies** - Pure UIKit with optional SwiftUI integration  
 ♿ **Accessibility Ready** - Full VoiceOver and accessibility support  
 📚 **DocC Documentation** - Complete API documentation  
@@ -68,7 +68,7 @@ class MyViewController: UIViewController, LayoutBuildable {
     }
     
     @LayoutBuilder var body: Layout {
-        Vertical(spacing: 24, alignment: .center) {
+        VStack(spacing: 24, alignment: .center) {
             Spacer(minLength: 60)
             
             titleLabel.layout()
@@ -92,14 +92,14 @@ class MyViewController: UIViewController, LayoutBuildable {
 
 ```swift
 // Vertical Stack (like VStack)
-Vertical(spacing: 16, alignment: .center) {
+VStack(spacing: 16, alignment: .center) {
     titleLabel.layout()
     subtitleLabel.layout()
     actionButton.layout()
 }
 
 // Horizontal Stack (like HStack)
-Horizontal(spacing: 12, alignment: .center) {
+HStack(spacing: 12, alignment: .center) {
     profileImage.layout().size(width: 50, height: 50)
     nameLabel.layout()
     Spacer()
@@ -225,13 +225,13 @@ let styledButton = UIButton()
             .cornerRadius(12)
         
         // Content overlay
-        Vertical(spacing: 12, alignment: .leading) {
+        VStack(spacing: 12, alignment: .leading) {
             // Header
-            Horizontal(spacing: 12, alignment: .center) {
+            HStack(spacing: 12, alignment: .center) {
                 avatarImageView.layout()
                     .size(width: 40, height: 40)
                 
-                Vertical(spacing: 4, alignment: .leading) {
+                VStack(spacing: 4, alignment: .leading) {
                     nameLabel.layout().frame(height: 20)
                     timeLabel.layout().frame(height: 16)
                 }
@@ -246,7 +246,7 @@ let styledButton = UIButton()
                 .frame(height: 40)
             
             // Actions
-            Horizontal(spacing: 24, alignment: .center) {
+            HStack(spacing: 24, alignment: .center) {
                 likeButton.layout().frame(width: 60, height: 30)
                 shareButton.layout().frame(width: 60, height: 30)
                 Spacer()
@@ -266,13 +266,13 @@ let styledButton = UIButton()
     
     if isTablet {
         // Tablet: Side-by-side layout
-        Horizontal(spacing: 40, alignment: .top) {
-            Vertical(spacing: 20) {
+        HStack(spacing: 40, alignment: .top) {
+            VStack(spacing: 20) {
                 titleLabel.layout()
                 profileSection.layout()
             }
             
-            Vertical(spacing: 20) {
+            VStack(spacing: 20) {
                 contentView.layout()
                 actionsSection.layout()
             }
@@ -280,7 +280,7 @@ let styledButton = UIButton()
         .padding(40)
     } else {
         // Phone: Stacked layout
-        Vertical(spacing: isCompact ? 12 : 24) {
+        VStack(spacing: isCompact ? 12 : 24) {
             titleLabel.layout()
             profileSection.layout()
             contentView.layout()
@@ -343,7 +343,7 @@ LayoutPerformanceMonitor.measureLayout(name: "Complex Layout") {
 ```swift
 // Views are automatically managed - no manual addSubview needed!
 layoutContainer.setBody {
-    Vertical {
+    VStack {
         if shouldShowView {
             myView.layout()  // Automatically added
         }
