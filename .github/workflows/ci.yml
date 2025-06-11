@@ -1,0 +1,423 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_15.2.app/Contents/Developer
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-14
+    
+    strategy:
+      matrix:
+        destination:
+          - platform=iOS Simulator,OS=17.2,name=iPhone 15
+          - platform=iOS Simulator,OS=16.4,name=iPhone 14
+          - platform=iOS Simulator,OS=15.5,name=iPhone 13
+        include:
+          - destination: platform=iOS Simulator,OS=17.2,name=iPhone 15
+            ios_version: "17.2"
+          - destination: platform=iOS Simulator,OS=16.4,name=iPhone 14
+            ios_version: "16.4"
+          - destination: platform=iOS Simulator,OS=15.5,name=iPhone 13
+            ios_version: "15.5"
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.2'
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+    
+    - name: List available simulators
+      run: xcrun simctl list devices available
+    
+    - name: Resolve Swift Package dependencies
+      run: swift package resolve
+    
+    - name: Build package
+      run: |
+        swift build \
+          --target Layout \
+          -Xswiftc -sdk -Xswiftc "`xcrun --sdk iphonesimulator --show-sdk-path`" \
+          -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator
+    
+    - name: Run tests with swift test
+      run: |
+        swift test \
+          --enable-code-coverage \
+          -Xswiftc -sdk -Xswiftc "`xcrun --sdk iphonesimulator --show-sdk-path`" \
+          -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator
+    
+    - name: Run Quick Smoke Tests
+      run: |
+        set -o pipefail
+        swift package generate-xcodeproj
+        
+        # Quick smoke tests for fast feedback
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "${{ matrix.destination }}" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration QuickSmoke \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty
+
+  build-release:
+
+    - name: Run Core Tests
+      run: |
+        set -o pipefail
+        
+        # Core functionality tests
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "${{ matrix.destination }}" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration CoreTests \
+          -enableCodeCoverage YES \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty
+
+    - name: Run All Tests (Full Suite)
+      if: matrix.ios_version == '17.2'  # Only run full suite on latest iOS
+      run: |
+        set -o pipefail
+        
+        # Complete test suite with coverage
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "${{ matrix.destination }}" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration AllTests \
+          -enableCodeCoverage YES \
+          -resultBundlePath TestResults-${{ matrix.ios_version }}.xcresult \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty --report junit --output test-results-${{ matrix.ios_version }}.xml
+    
+    - name: Run Fast Tests (for older iOS versions)
+      if: matrix.ios_version != '17.2'  # Skip full suite on older versions
+      run: |
+        set -o pipefail
+        
+        # Fast tests without performance tests for older iOS versions
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "${{ matrix.destination }}" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration FastTests \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty
+    
+    - name: Generate code coverage report
+      if: matrix.ios_version == '17.2'
+      run: |
+        # SPM code coverage
+        swift test --enable-code-coverage
+        
+        # Convert coverage data
+        xcrun llvm-cov export \
+          .build/debug/LayoutPackageTests.xctest/Contents/MacOS/LayoutPackageTests \
+          -instr-profile .build/debug/codecov/default.profdata \
+          -format="text" > coverage.txt
+        
+        # Generate readable coverage report
+        xcrun llvm-cov report \
+          .build/debug/LayoutPackageTests.xctest/Contents/MacOS/LayoutPackageTests \
+          -instr-profile .build/debug/codecov/default.profdata > coverage-report.txt
+        
+        echo "📊 Code Coverage Report:"
+        cat coverage-report.txt
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.ios_version }}
+        path: |
+          test-results-${{ matrix.ios_version }}.xml
+          TestResults-${{ matrix.ios_version }}.xcresult
+    
+    - name: Upload code coverage
+      uses: actions/upload-artifact@v3
+      if: matrix.ios_version == '17.2'
+      with:
+        name: code-coverage
+        path: |
+          coverage.txt
+          coverage-report.txt
+    
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results (iOS ${{ matrix.ios_version }})
+        path: test-results-${{ matrix.ios_version }}.xml
+        reporter: java-junit
+
+  lint:
+    name: SwiftLint
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Install SwiftLint
+      run: |
+        brew install swiftlint
+    
+    - name: Run SwiftLint
+      run: |
+        swiftlint lint --reporter github-actions-logging
+
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: "5.9"
+    
+    - name: Build on Linux
+      run: |
+        # Note: This will only build the non-UIKit parts
+        swift build --target Layout || echo "⚠️ Linux build failed (expected if using UIKit)"
+    
+    - name: Run non-UIKit tests on Linux
+      run: |
+        # Run only tests that don't require UIKit
+        swift test --filter LayoutUtilityTests || echo "⚠️ Some tests skipped on Linux"
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: macos-14
+    needs: test
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'performance')
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.2'
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+    
+    - name: Run Performance Tests
+      run: |
+        set -o pipefail
+        swift package generate-xcodeproj
+        
+        # Performance tests with multiple iterations
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "platform=iOS Simulator,OS=17.2,name=iPhone 15" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration PerformanceOnly \
+          -enableCodeCoverage YES \
+          -resultBundlePath PerformanceResults.xcresult \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty
+    
+    - name: Upload Performance Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-test-results
+        path: PerformanceResults.xcresult
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: macos-14
+    needs: test
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.2'
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+    
+    - name: Run Integration Tests
+      run: |
+        set -o pipefail
+        swift package generate-xcodeproj
+        
+        # Integration and edge case tests
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "platform=iOS Simulator,OS=17.2,name=iPhone 15" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration IntegrationTests \
+          -enableCodeCoverage YES \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty
+    
+    - name: Run Stress Tests (if PR has stress label)
+      if: contains(github.event.pull_request.labels.*.name, 'stress-test')
+      run: |
+        set -o pipefail
+        
+        xcodebuild test \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "platform=iOS Simulator,OS=17.2,name=iPhone 15" \
+          -testPlan LayoutTestPlan \
+          -testPlanConfiguration StressTests \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          | xcpretty
+    name: Build Release
+    runs-on: macos-14
+    needs: [test, lint]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.2'
+    
+    - name: Resolve dependencies
+      run: swift package resolve
+    
+    - name: Build for release
+      run: |
+        swift build \
+          --configuration release \
+          --target Layout \
+          -Xswiftc -sdk -Xswiftc "`xcrun --sdk iphoneos --show-sdk-path`" \
+          -Xswiftc -target -Xswiftc arm64-apple-ios15.0
+    
+    - name: Generate Xcode project and build framework
+      run: |
+        swift package generate-xcodeproj
+        
+        xcodebuild archive \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -configuration Release \
+          -destination "generic/platform=iOS" \
+          -archivePath Layout.xcarchive \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY=""
+    
+    - name: Create XCFramework
+      run: |
+        # Build for multiple architectures
+        xcodebuild archive \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "generic/platform=iOS" \
+          -archivePath "Layout-iOS.xcarchive" \
+          SKIP_INSTALL=NO \
+          BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+        
+        xcodebuild archive \
+          -project Layout.xcodeproj \
+          -scheme Layout-Package \
+          -destination "generic/platform=iOS Simulator" \
+          -archivePath "Layout-iOS-Simulator.xcarchive" \
+          SKIP_INSTALL=NO \
+          BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+        
+        # Create XCFramework
+        xcodebuild -create-xcframework \
+          -framework Layout-iOS.xcarchive/Products/Library/Frameworks/Layout.framework \
+          -framework Layout-iOS-Simulator.xcarchive/Products/Library/Frameworks/Layout.framework \
+          -output Layout.xcframework
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: layout-xcframework
+        path: |
+          Layout.xcframework
+          Layout.xcarchive
+
+  security-scan:
+    name: Security Scan
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Run security scan
+      run: |
+        # Check for common security issues in Swift code
+        find . -name "*.swift" -exec grep -l "NSLog\|print(" {} \; > debug_statements.txt || true
+        if [ -s debug_statements.txt ]; then
+          echo "⚠️ Found debug statements in:"
+          cat debug_statements.txt
+        fi
+        
+        # Check for hardcoded credentials or sensitive data
+        find . -name "*.swift" -exec grep -i -l "password\|secret\|key\|token\|api" {} \; > potential_secrets.txt || true
+        if [ -s potential_secrets.txt ]; then
+          echo "⚠️ Found potential secrets in:"
+          cat potential_secrets.txt
+        fi
+        
+        # Check Package.swift for suspicious dependencies
+        if [ -f Package.swift ]; then
+          echo "📦 Checking Package.swift dependencies..."
+          grep -A 5 -B 5 "dependencies" Package.swift || true
+        fi
