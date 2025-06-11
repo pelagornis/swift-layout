@@ -15,21 +15,21 @@ env:
 jobs:
   test:
     name: Test
-    runs-on: macos-14
+    runs-on: macos-15
     
     strategy:
       matrix:
         destination:
-          - platform=iOS Simulator,OS=17.2,name=iPhone 15
-          - platform=iOS Simulator,OS=16.4,name=iPhone 14
-          - platform=iOS Simulator,OS=15.5,name=iPhone 13
+          - platform=iOS Simulator,OS=18.0,name=iPhone 15
+          - platform=iOS Simulator,OS=17.2,name=iPhone 14
+          - platform=iOS Simulator,OS=16.4,name=iPhone 13
         include:
-          - destination: platform=iOS Simulator,OS=17.2,name=iPhone 15
+          - destination: platform=iOS Simulator,OS=18.0,name=iPhone 15
+            ios_version: "18.0"
+          - destination: platform=iOS Simulator,OS=17.2,name=iPhone 14
             ios_version: "17.2"
-          - destination: platform=iOS Simulator,OS=16.4,name=iPhone 14
+          - destination: platform=iOS Simulator,OS=16.4,name=iPhone 13
             ios_version: "16.4"
-          - destination: platform=iOS Simulator,OS=15.5,name=iPhone 13
-            ios_version: "15.5"
     
     steps:
     - name: Checkout
