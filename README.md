@@ -63,11 +63,9 @@ class MyViewController: UIViewController, Layout {
             
             titleLabel.layout()
                 .frame(height: 30)
-                .centerX()
             
             actionButton.layout()
                 .size(width: 240, height: 50)
-                .centerX()
             
             Spacer()
         }
