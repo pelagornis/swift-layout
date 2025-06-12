@@ -19,16 +19,6 @@ A high-performance, SwiftUI-style declarative layout system that uses manual fra
 ♿ **Accessibility Ready** - Full VoiceOver and accessibility support  
 📚 **DocC Documentation** - Complete API documentation  
 
-## 🔥 Performance
-
-Layout delivers exceptional performance compared to Auto Layout:
-
-| Layout Type | Auto Layout | Layout | Improvement |
-|-------------|-------------|--------------|-------------|
-| Simple (100 views) | ~200ms | ~45ms | **4.4x faster** |
-| Complex (1000 views) | ~2.1s | ~180ms | **11.7x faster** |
-| Memory Usage | High | Low | **60% less** |
-
 ## 📦 Installation
 
 ### Swift Package Manager
