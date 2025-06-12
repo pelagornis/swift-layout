@@ -30,12 +30,7 @@ public struct HStack: Layout {
     
     public init<Content: Layout>(spacing: CGFloat = 8, alignment: VerticalAlignment = .center, @LayoutBuilder content: () -> Content) {
         let builtContent = content()
-        print("🔵 Horizontal init: builtContent type = \(type(of: builtContent))")
         self.children = Self.extractChildren(from: builtContent)
-        print("🔵 Horizontal init: extracted \(self.children.count) children")
-        for (index, child) in self.children.enumerated() {
-            print("🔵   Child \(index): \(type(of: child))")
-        }
         self.spacing = spacing
         self.alignment = alignment
     }
