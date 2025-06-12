@@ -45,7 +45,7 @@ dependencies: [
 ### Basic Usage
 
 ```swift
-import UILayout
+import Layout
 
 class MyViewController: UIViewController, Layout {
     let layoutContainer = LayoutContainer()
