@@ -45,9 +45,9 @@ dependencies: [
 ### Basic Usage
 
 ```swift
-import Layout
+import UILayout
 
-class MyViewController: UIViewController, LayoutBuildable {
+class MyViewController: UIViewController, Layout {
     let layoutContainer = LayoutContainer()
     let titleLabel = UILabel()
     let actionButton = UIButton()
