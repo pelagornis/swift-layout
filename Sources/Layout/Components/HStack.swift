@@ -59,7 +59,7 @@ public struct HStack: Layout {
         var maxHeight: CGFloat = 0
 
         // 각 child를 순차적으로 가로 배치
-          for (index, child) in children.enumerated() {
+        for (_, child) in children.enumerated() {
               
               let childBounds = CGRect(x: 0, y: 0, width: bounds.width - currentX - padding.right, height: availableHeight)
               
@@ -69,7 +69,7 @@ public struct HStack: Layout {
               let childWidth = childResult.totalSize.width
               
               // 이 child의 모든 뷰를 적절한 위치에 배치
-              for (viewIndex, (view, childFrame)) in childResult.frames.enumerated() {
+            for (_, (view, childFrame)) in childResult.frames.enumerated() {
                   var finalFrame = childFrame
                   
                   // X 위치: 현재 X + child 내에서의 상대적 위치

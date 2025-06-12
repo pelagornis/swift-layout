@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXGroup section */
-		DC255C6B2DFAACEC00876F4D = {
+		DCBB27492DFAB1CE0005FE27 = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -16,20 +16,20 @@
 /* End PBXGroup section */
 
 /* Begin PBXProject section */
-		DC255C6C2DFAACEC00876F4D /* Project object */ = {
+		DCBB274A2DFAB1CE0005FE27 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1630;
 			};
-			buildConfigurationList = DC255C6F2DFAACEC00876F4D /* Build configuration list for PBXProject "Layout" */;
+			buildConfigurationList = DCBB274D2DFAB1CE0005FE27 /* Build configuration list for PBXProject "Layout" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = DC255C6B2DFAACEC00876F4D;
+			mainGroup = DCBB27492DFAB1CE0005FE27;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
@@ -40,14 +40,14 @@
 /* End PBXProject section */
 
 /* Begin XCBuildConfiguration section */
-		DC255C702DFAACEC00876F4D /* Debug */ = {
+		DCBB274E2DFAB1CE0005FE27 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEVELOPMENT_TEAM = 7JA353ZJMP;
 			};
 			name = Debug;
 		};
-		DC255C712DFAACEC00876F4D /* Release */ = {
+		DCBB274F2DFAB1CE0005FE27 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEVELOPMENT_TEAM = 7JA353ZJMP;
@@ -57,16 +57,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DC255C6F2DFAACEC00876F4D /* Build configuration list for PBXProject "Layout" */ = {
+		DCBB274D2DFAB1CE0005FE27 /* Build configuration list for PBXProject "Layout" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DC255C702DFAACEC00876F4D /* Debug */,
-				DC255C712DFAACEC00876F4D /* Release */,
+				DCBB274E2DFAB1CE0005FE27 /* Debug */,
+				DCBB274F2DFAB1CE0005FE27 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = DC255C6C2DFAACEC00876F4D /* Project object */;
+	rootObject = DCBB274A2DFAB1CE0005FE27 /* Project object */;
 }
