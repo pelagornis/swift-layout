@@ -27,6 +27,10 @@ jobs:
         with:
           ref: gh-pages
           path: docs-out
+          
+      - name: Generate Xcode project
+        run: swift package generate-xcodeproj
+
       - name: Build documentation
         run: >
           rm -rf docs-out/.git;
@@ -46,9 +50,10 @@ jobs:
                   git checkout -f "$tag";
                 fi
 
-                xcodebuild clean docbuild -scheme Layout \
-                -destination generic/platform=iOS \
-                OTHER_DOCC_FLAGS="--transform-for-static-hosting --hosting-base-path swift-layout --output-path docs"
+                xcodebuild docbuild \
+                -scheme Layout \
+                -destination 'platform=iOS Simulator,name=iPhone 15' \
+                OTHER_DOCC_FLAGS="--transform-for-static-hosting --hosting-base-path swift-layout --output-path docs-out"
             fi;
           done
       
