@@ -1,6 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-#endif
 
 /// A flexible space layout for pushing other layouts apart.
 ///

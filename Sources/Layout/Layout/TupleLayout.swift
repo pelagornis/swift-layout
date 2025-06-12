@@ -1,6 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-#endif
 
 /// A layout that represents a tuple of layouts
 public struct TupleLayout: Layout {

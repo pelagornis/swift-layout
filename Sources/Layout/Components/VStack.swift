@@ -1,6 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-#endif
 
 /// A vertical stack layout that arranges child layouts in a column.
 ///

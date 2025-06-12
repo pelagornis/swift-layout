@@ -1,6 +1,5 @@
-#if canImport(UIKit)
 import UIKit
-#endif
+
 /// Base protocol for all layout components in the ManualLayout system.
 ///
 /// Conforming types can calculate their layout within given bounds and extract

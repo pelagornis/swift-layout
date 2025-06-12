@@ -1,6 +1,5 @@
-#if canImport(UIKit)
 import UIKit
-#endif
+
 /// A layout for dynamically generating content from a collection.
 ///
 /// ``ForEach`` is equivalent to SwiftUI's ForEach and creates layouts

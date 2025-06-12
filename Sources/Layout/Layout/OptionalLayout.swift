@@ -1,6 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-#endif
 
 /// A layout that represents an optional layout
 public struct OptionalLayout<Content: Layout>: Layout {

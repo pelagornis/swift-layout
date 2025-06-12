@@ -1,6 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-#endif
 
 /// A layout that does nothing.
 public struct EmptyLayout : Layout {

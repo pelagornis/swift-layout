@@ -1,6 +1,5 @@
-#if canImport(UIKit)
 import UIKit
-#endif
+
 /// A horizontal stack layout that arranges child layouts in a row.
 ///
 /// ``HStack`` is equivalent to SwiftUI's HStack and arranges its children

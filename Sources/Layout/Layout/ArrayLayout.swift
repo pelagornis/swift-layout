@@ -1,6 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-#endif
 
 /// A layout that represents an array of layouts
 public struct ArrayLayout<Content: Layout>: Layout {

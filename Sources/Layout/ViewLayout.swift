@@ -1,6 +1,5 @@
-#if canImport(UIKit)
 import UIKit
-#endif
+
 /// A wrapper that provides layout functionality for UIViews with chainable modifiers.
 ///
 /// ``ViewLayout`` wraps a UIView and provides a fluent interface for applying
