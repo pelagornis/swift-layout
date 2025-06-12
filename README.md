@@ -1,6 +1,6 @@
 # Layout
 ![Official](https://badge.pelagornis.com/official.svg)
-[![Swift Version](https://img.shields.io/badge/Swift-6.1+-orange.svg)](https://swift.org)
+[![Swift Version](https://img.shields.io/badge/Swift-6.0+-orange.svg)](https://swift.org)
 [![iOS Version](https://img.shields.io/badge/iOS-13.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CodeCov](https://img.shields.io/codecov/c/github/pelagornis/Layout)](https://codecov.io/gh/pelagornis/Layout)
