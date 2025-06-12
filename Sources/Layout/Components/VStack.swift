@@ -1,14 +1,16 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// A vertical stack layout that arranges child layouts in a column.
 ///
-/// ``Vertical`` is equivalent to SwiftUI's VStack and arranges its children
+/// ``VStack`` is equivalent to SwiftUI's VStack and arranges its children
 /// vertically with customizable spacing, alignment, and padding.
 ///
 /// ## Example Usage
 ///
 /// ```swift
-/// Vertical(spacing: 16, alignment: .leading) {
+/// VStack(spacing: 16, alignment: .leading) {
 ///     titleLabel.layout()
 ///     subtitleLabel.layout()
 ///     actionButton.layout()

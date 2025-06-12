@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 /// Protocol for modifiers that can transform view frames during layout calculation.
 ///
 /// Layout modifiers are applied in sequence to transform a view's frame

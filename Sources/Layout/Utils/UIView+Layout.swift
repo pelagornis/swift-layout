@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+
 
 public extension UIView {
     /// Creates a layout wrapper for this view with chainable modifiers.
@@ -20,3 +22,4 @@ public extension UIView {
         return ViewLayout(self)
     }
 }
+#endif

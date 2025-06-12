@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// A z-stack layout that overlays child layouts on top of each other.
 ///

@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Modifier for maintaining aspect ratios.
 ///

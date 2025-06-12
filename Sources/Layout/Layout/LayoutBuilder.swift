@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// SwiftUI-style result builder for declarative layout syntax
 @resultBuilder

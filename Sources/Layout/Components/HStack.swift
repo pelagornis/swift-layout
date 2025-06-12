@@ -1,14 +1,15 @@
+#if canImport(UIKit)
 import UIKit
-
+#endif
 /// A horizontal stack layout that arranges child layouts in a row.
 ///
-/// ``Horizontal`` is equivalent to SwiftUI's HStack and arranges its children
+/// ``HStack`` is equivalent to SwiftUI's HStack and arranges its children
 /// horizontally with customizable spacing, alignment, and padding.
 ///
 /// ## Example Usage
 ///
 /// ```swift
-/// Horizontal(spacing: 12, alignment: .center) {
+/// HStack(spacing: 12, alignment: .center) {
 ///     profileImage.layout()
 ///     nameLabel.layout()
 ///     Spacer()

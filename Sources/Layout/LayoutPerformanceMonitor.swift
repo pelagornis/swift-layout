@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 /// Utility for measuring and monitoring layout performance.
 ///
 /// ``LayoutPerformanceMonitor`` provides tools for measuring the performance

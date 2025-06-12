@@ -1,5 +1,6 @@
+#if canImport(UIKit)
 import UIKit
-
+#endif
 /// A container view that automatically manages view hierarchy based on layout definitions.
 ///
 /// ``LayoutContainer`` is the core component that bridges declarative layout definitions
