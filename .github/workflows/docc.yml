@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 concurrency:
   group: docc-${{ github.head_ref }}
@@ -17,24 +16,16 @@ jobs:
   build:
     runs-on: macos-15
     steps:
-      - name: Select Xcode 16.4
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
-
       - name: Checkout Package
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Checkout gh-pages Branch
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: docs-out
-
-      - name: View Swift Version
-        run: swift --version
- 
-     - name: Build documentation
+      - name: Build documentation
         run: >
           rm -rf docs-out/.git;
           rm -rf docs-out/main;
