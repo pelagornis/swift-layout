@@ -27,9 +27,7 @@ jobs:
         with:
           ref: gh-pages
           path: docs-out
-          
-      - name: Generate Xcode project
-        run: swift package generate-xcodeproj
+
 
       - name: Build documentation
         run: >
