@@ -326,7 +326,7 @@ layoutContainer.setBody {
 
 - iOS 13.0+ / macOS 10.15+
 - Xcode 16.0+
-- Swift 6.1+
+- Swift 6.0+
 
 ## 🎯 Migration Guide
 
