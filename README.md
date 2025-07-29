@@ -1,4 +1,5 @@
 # Layout
+
 ![Official](https://badge.pelagornis.com/official.svg)
 [![Swift Version](https://img.shields.io/badge/Swift-6.0+-orange.svg)](https://swift.org)
 [![iOS Version](https://img.shields.io/badge/iOS-13.0+-blue.svg)](https://developer.apple.com/ios/)
@@ -17,7 +18,7 @@ A high-performance, SwiftUI-style declarative layout system that uses manual fra
 📐 **Flexible Layouts** - VStack, HStack, ZStack, and custom layouts  
 🎯 **Zero Dependencies** - Pure UIKit with optional SwiftUI integration  
 ♿ **Accessibility Ready** - Full VoiceOver and accessibility support  
-📚 **DocC Documentation** - Complete API documentation  
+📚 **DocC Documentation** - Complete API documentation
 
 ## 📦 Installation
 
@@ -29,10 +30,9 @@ dependencies: [
 ]
 ```
 
-
 ## 🚀 Quick Start
 
-### Basic Usage
+### SwiftUI-Style Usage
 
 ```swift
 import Layout
@@ -41,36 +41,49 @@ class MyViewController: UIViewController, Layout {
     let layoutContainer = LayoutContainer()
     let titleLabel = UILabel()
     let actionButton = UIButton()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // Setup views
         titleLabel.text = "Welcome to Layout!"
         actionButton.setTitle("Get Started", for: .normal)
-        
+
         // Add container to view
         view.addSubview(layoutContainer)
         layoutContainer.frame = view.bounds
-        
-        // Set declarative layout - views are automatically managed!
+
+        // SwiftUI-style: Content is automatically centered!
         layoutContainer.setBody { self.body }
     }
-    
+
     @LayoutBuilder var body: Layout {
-        VStack(spacing: 24, alignment: .center) {
-            Spacer(minLength: 60)
-            
-            titleLabel.layout()
-                .frame(height: 30)
-            
-            actionButton.layout()
-                .size(width: 240, height: 50)
-            
-            Spacer()
-        }
-        .padding(20)
+        // Content is automatically centered like SwiftUI
+        titleLabel.layout()
+            .frame(height: 30)
+
+        actionButton.layout()
+            .size(width: 240, height: 50)
     }
+}
+```
+
+### Manual Layout (Advanced)
+
+```swift
+@LayoutBuilder var body: Layout {
+    VStack(spacing: 24, alignment: .center) {
+        Spacer(minLength: 60)
+
+        titleLabel.layout()
+            .frame(height: 30)
+
+        actionButton.layout()
+            .size(width: 240, height: 50)
+
+        Spacer()
+    }
+    .padding(20)
 }
 ```
 
@@ -141,18 +154,18 @@ struct MySwiftUIView: View {
     var body: some View {
         VStack {
             Text("SwiftUI Content")
-            
+
             // Use any UIKit view in SwiftUI!
             UILabel()
                 .swiftui  // ← Magic conversion!
                 .frame(height: 50)
-            
+
             createCustomUIKitView()
                 .swiftui
                 .frame(height: 100)
         }
     }
-    
+
     func createCustomUIKitView() -> UIView {
         // Your existing UIKit components work seamlessly
         let chartView = MyCustomChartView()
@@ -167,11 +180,11 @@ struct MySwiftUIView: View {
 class UIKitViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // Embed SwiftUI views in UIKit
         let swiftUIView = MySwiftUIView()
         let hostingController = swiftUIView.uikit
-        
+
         addChild(hostingController)
         view.addSubview(hostingController.view)
         hostingController.didMove(toParent: self)
@@ -190,28 +203,28 @@ class UIKitViewController: UIViewController {
         cardBackgroundView.layout()
             .size(width: 320, height: 140)
             .cornerRadius(12)
-        
+
         // Content overlay
         VStack(spacing: 12, alignment: .leading) {
             // Header
             HStack(spacing: 12, alignment: .center) {
                 avatarImageView.layout()
                     .size(width: 40, height: 40)
-                
+
                 VStack(spacing: 4, alignment: .leading) {
                     nameLabel.layout().frame(height: 20)
                     timeLabel.layout().frame(height: 16)
                 }
-                
+
                 Spacer()
-                
+
                 moreButton.layout().size(width: 30, height: 30)
             }
-            
+
             // Content
             messageLabel.layout()
                 .frame(height: 40)
-            
+
             // Actions
             HStack(spacing: 24, alignment: .center) {
                 likeButton.layout().frame(width: 60, height: 30)
@@ -230,7 +243,7 @@ class UIKitViewController: UIViewController {
 @LayoutBuilder var responsiveLayout: Layout {
     let isCompact = view.bounds.width < 400
     let isTablet = view.bounds.width > 768
-    
+
     if isTablet {
         // Tablet: Side-by-side layout
         HStack(spacing: 40, alignment: .top) {
@@ -238,7 +251,7 @@ class UIKitViewController: UIViewController {
                 titleLabel.layout()
                 profileSection.layout()
             }
-            
+
             VStack(spacing: 20) {
                 contentView.layout()
                 actionsSection.layout()
@@ -268,7 +281,7 @@ func updateLayout(animated: Bool = true) {
         }
         self.layoutContainer.layoutSubviews()
     }
-    
+
     if animated {
         UIView.animate(
             withDuration: 0.3,
@@ -320,7 +333,6 @@ layoutContainer.setBody {
 ```
 
 ## 📚 Documentation
-
 
 ## 🛠️ Requirements
 
