@@ -39,6 +39,80 @@ public protocol Layout {
     @LayoutBuilder var body: Self.Body { get }
 }
 
+extension Layout {
+    /// Applies this layout to a container view
+    ///
+    /// - Parameter container: The UIView to apply the layout to
+    public func apply(to container: UIView) {
+        // 기존 서브뷰 제거
+        for subview in container.subviews {
+            subview.removeFromSuperview()
+        }
+        
+        // 레이아웃에서 뷰들 추출
+        let views = extractViews()
+        
+        // 뷰들을 컨테이너에 추가
+        for view in views {
+            container.addSubview(view)
+        }
+        
+        // 레이아웃 계산 및 적용
+        let result = calculateLayout(in: container.bounds)
+        
+        // 각 뷰의 프레임 설정
+        for (view, frame) in result.frames {
+            view.frame = frame
+        }
+    }
+    
+    /// Adds overlay layouts on top of this layout
+    public func overlay(@LayoutBuilder _ overlay: () -> any Layout) -> OverlayLayout {
+        return OverlayLayout(base: self, overlay: overlay())
+    }
+}
+
+/// A layout that overlays another layout on top of a base layout
+public struct OverlayLayout: Layout {
+    public typealias Body = Never
+    
+    public var body: Never { neverLayout("OverlayLayout") }
+    
+    private let base: any Layout
+    private let overlay: any Layout
+    
+    public init(base: any Layout, overlay: any Layout) {
+        self.base = base
+        self.overlay = overlay
+    }
+    
+    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        // Calculate base layout
+        let baseResult = base.calculateLayout(in: bounds)
+        
+        // Calculate overlay layout
+        let overlayResult = overlay.calculateLayout(in: bounds)
+        
+        // Combine frames
+        var allFrames = baseResult.frames
+        for (view, frame) in overlayResult.frames {
+            allFrames[view] = frame
+        }
+        
+        // Use the larger size to ensure overlay is fully visible
+        let totalSize = CGSize(
+            width: max(baseResult.totalSize.width, overlayResult.totalSize.width),
+            height: max(baseResult.totalSize.height, overlayResult.totalSize.height)
+        )
+        
+        return LayoutResult(frames: allFrames, totalSize: totalSize)
+    }
+    
+    public func extractViews() -> [UIView] {
+        return base.extractViews() + overlay.extractViews()
+    }
+}
+
 extension Never: Layout {
     public typealias Body = Never
     
@@ -65,7 +139,7 @@ extension Layout where Body: Layout {
     @discardableResult
     @inlinable
     public func extractViews() -> [UIView] {
-        return self.self.extractViews()
+        return self.body.extractViews()
     }
 }
 
@@ -73,5 +147,85 @@ extension Layout where Body == Never {
     /// Calls `fatalError` with an explanation that a given `type` is a primitive `Layout`
     public func neverLayout(_ type: String) -> Never {
         fatalError("\(type) is a primitive `Layout`, you're not supposed to access its `body`.")
+    }
+}
+
+/// A scrollable layout that wraps content in a UIScrollView
+public struct ScrollView: Layout {
+    public typealias Body = Never
+    
+    public var body: Never {
+        neverLayout("ScrollView")
+    }
+    
+    /// The content layout to be made scrollable
+    public let content: any Layout
+    
+    /// Scroll view configuration
+    public var showsVerticalScrollIndicator: Bool
+    public var showsHorizontalScrollIndicator: Bool
+    public var isScrollEnabled: Bool
+    public var bounces: Bool
+    
+    /// Creates a scrollable layout
+    ///
+    /// - Parameters:
+    ///   - showsVerticalScrollIndicator: Whether to show vertical scroll indicator
+    ///   - showsHorizontalScrollIndicator: Whether to show horizontal scroll indicator
+    ///   - isScrollEnabled: Whether scrolling is enabled
+    ///   - bounces: Whether the scroll view bounces
+    ///   - content: The content layout to be made scrollable
+    public init(
+        showsVerticalScrollIndicator: Bool = true,
+        showsHorizontalScrollIndicator: Bool = false,
+        isScrollEnabled: Bool = true,
+        bounces: Bool = true,
+        @LayoutBuilder content: () -> any Layout
+    ) {
+        self.content = content()
+        self.showsVerticalScrollIndicator = showsVerticalScrollIndicator
+        self.showsHorizontalScrollIndicator = showsHorizontalScrollIndicator
+        self.isScrollEnabled = isScrollEnabled
+        self.bounces = bounces
+    }
+    
+    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        // Calculate content layout with unlimited height for proper sizing
+        let unlimitedBounds = CGRect(x: bounds.origin.x, y: bounds.origin.y, width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
+        let contentResult = content.calculateLayout(in: unlimitedBounds)
+        
+        // Create a UIScrollView for the content
+        let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = showsVerticalScrollIndicator
+        scrollView.showsHorizontalScrollIndicator = showsHorizontalScrollIndicator
+        scrollView.isScrollEnabled = isScrollEnabled
+        scrollView.bounces = bounces
+        
+        // Set scroll view frame to bounds
+        scrollView.frame = bounds
+        
+        // Set content size based on content layout (ensure minimum height)
+        let contentSize = CGSize(
+            width: max(contentResult.totalSize.width, bounds.width),
+            height: max(contentResult.totalSize.height, bounds.height)
+        )
+        scrollView.contentSize = contentSize
+        
+        // Add content views to scroll view with their calculated frames
+        for (view, frame) in contentResult.frames {
+            view.frame = frame
+            scrollView.addSubview(view)
+        }
+        
+        // Return scroll view as the main view with bounds size
+        return LayoutResult(
+            frames: [scrollView: bounds],
+            totalSize: bounds.size
+        )
+    }
+    
+    public func extractViews() -> [UIView] {
+        // Extract views from content layout
+        return content.extractViews()
     }
 }

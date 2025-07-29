@@ -1,26 +1,27 @@
 import UIKit
 
-/// A layout for dynamically generating content from a collection.
+/// A layout that creates views from a collection of data.
 ///
-/// ``ForEach`` is equivalent to SwiftUI's ForEach and creates layouts
-/// for each item in a collection using a content closure.
+/// ``ForEach`` is equivalent to SwiftUI's ForEach and creates views
+/// dynamically from a collection of data with automatic view management.
 ///
 /// ## Example Usage
 ///
 /// ```swift
 /// ForEach(items) { item in
-///     item.layout()
-///         .size(width: 80, height: 32)
+///     itemView.layout()
+///         .size(width: 280, height: 44)
+///         .centerX()
 /// }
 /// ```
-public struct ForEach<T>: Layout {
+public struct ForEach<Data: RandomAccessCollection, Content: Layout>: Layout {
     public typealias Body = Never
     
-    public let items: [T]
-    public let content: (T) -> any Layout
+    private let data: Data
+    private let content: (Data.Element) -> Content
     
-    public init(_ items: [T], @LayoutBuilder content: @escaping (T) -> any Layout) {
-        self.items = items
+    public init(_ data: Data, @LayoutBuilder content: @escaping (Data.Element) -> Content) {
+        self.data = data
         self.content = content
     }
     
@@ -29,32 +30,55 @@ public struct ForEach<T>: Layout {
     }
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        let layouts = items.map(content)
+        var allFrames: [UIView: CGRect] = [:]
+        var totalSize = CGSize.zero
         
-        // Arrange items vertically for simplicity
-        var frames: [UIView: CGRect] = [:]
-        var currentY: CGFloat = 0
-        var maxWidth: CGFloat = 0
-        
-        for layout in layouts {
-            let childResult = layout.calculateLayout(in: CGRect(x: 0, y: currentY, width: bounds.width, height: bounds.height - currentY))
+        for element in data {
+            let elementLayout = content(element)
+            let elementResult = elementLayout.calculateLayout(in: bounds)
             
-            for (view, frame) in childResult.frames {
-                var adjustedFrame = frame
-                adjustedFrame.origin.y += currentY
-                frames[view] = adjustedFrame
-                maxWidth = max(maxWidth, frame.width)
+            // 모든 뷰의 프레임을 수집
+            for (view, frame) in elementResult.frames {
+                allFrames[view] = frame
             }
             
-            currentY += childResult.totalSize.height
+            // 전체 크기 업데이트
+            totalSize.width = max(totalSize.width, elementResult.totalSize.width)
+            totalSize.height = max(totalSize.height, elementResult.totalSize.height)
         }
         
-        return LayoutResult(frames: frames, totalSize: CGSize(width: maxWidth, height: currentY))
+        return LayoutResult(frames: allFrames, totalSize: totalSize)
     }
     
     public func extractViews() -> [UIView] {
-        return items.flatMap { item in
-            content(item).extractViews()
+        return data.flatMap { element in
+            content(element).extractViews()
         }
+    }
+}
+
+// MARK: - Convenience Initializers
+
+extension ForEach where Data.Element: Identifiable {
+    /// Creates a ForEach with identifiable data
+    public init(_ data: Data, id: KeyPath<Data.Element, Data.Element.ID>, @LayoutBuilder content: @escaping (Data.Element) -> Content) {
+        self.data = data
+        self.content = content
+    }
+}
+
+extension ForEach where Data.Element == String {
+    /// Creates a ForEach with string data
+    public init(_ data: Data, @LayoutBuilder content: @escaping (String) -> Content) {
+        self.data = data
+        self.content = content
+    }
+}
+
+extension ForEach where Data.Element == Int {
+    /// Creates a ForEach with integer data
+    public init(_ data: Data, @LayoutBuilder content: @escaping (Int) -> Content) {
+        self.data = data
+        self.content = content
     }
 }
