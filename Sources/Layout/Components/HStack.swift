@@ -49,45 +49,72 @@ public class HStack: UIView, Layout {
     ///   - alignment: The vertical alignment of child views
     ///   - padding: The padding around the HStack
     ///   - children: A closure that returns the child layouts
-    public init(spacing: CGFloat = 0, alignment: VerticalAlignment = .center, padding: UIEdgeInsets = .zero, @LayoutBuilder children: () -> any Layout) {
+    public init(spacing: CGFloat = 0, alignment: VerticalAlignment = .center, @LayoutBuilder children: () -> any Layout) {
         self.spacing = spacing
         self.alignment = alignment
-        self.padding = padding
+        self.padding = .zero
         
         super.init(frame: .zero)
         
-        print("🔧 HStack - init with spacing: \(spacing), alignment: \(alignment)")
         
         // 자식 레이아웃을 생성하고 뷰로 변환
         let layout = children()
         
-        // TupleLayout인 경우 내부 레이아웃들을 추출
-        let childLayouts: [any Layout]
+        // TupleLayout인 경우 자식들을 직접 추출
         if let tupleLayout = layout as? TupleLayout {
-            childLayouts = tupleLayout.getLayouts()
-            print("🔧 HStack - TupleLayout detected with \(tupleLayout.getLayouts().count) layouts")
-        } else if layout is VStack || layout is HStack || layout is ZStack {
-            childLayouts = [layout]
+            
+            // TupleLayout의 layouts 배열에서 직접 뷰들을 추출
+            for (index, childLayout) in tupleLayout.layouts.enumerated() {
+                
+                let childViews = childLayout.extractViews()
+                
+                // 각 자식 레이아웃의 뷰들을 처리
+                for (viewIndex, childView) in childViews.enumerated() {
+                    
+                    // 스택 컴포넌트인 경우 직접 추가 (자신의 자식으로)
+                    if childView is VStack || childView is HStack || childView is ZStack {
+                        addSubview(childView)
+                        continue
+                    }
+                    
+                    // 일반 뷰들도 직접 추가
+                    addSubview(childView)
+                    
+                    // UILabel이나 UIButton의 경우 텍스트 정보도 출력
+                    if let label = childView as? UILabel {
+                    } else if let button = childView as? UIButton {
+                    }
+                }
+            }
+            
+            for (index, subview) in subviews.enumerated() {
+                if let label = subview as? UILabel {
+                } else if let button = subview as? UIButton {
+                }
+            }
         } else {
-            childLayouts = layout.extractViews().isEmpty ? [] : [layout]
-        }
-        
-        // 각 레이아웃을 UIView로 변환하여 subviews에 추가
-        for childLayout in childLayouts {
-            if let childView = childLayout as? UIView {
+            // 일반적인 경우 (TupleLayout이 아닌 경우)
+            let allChildViews = layout.extractViews()
+            
+            // 각 자식 뷰의 타입 출력
+            for (index, childView) in allChildViews.enumerated() {
+            }
+            
+            // 각 자식 뷰를 subviews에 추가
+            for (index, childView) in allChildViews.enumerated() {
                 addSubview(childView)
-                print("🔧 HStack - Added child view: \(type(of: childView))")
-            } else {
-                // ViewLayout이나 다른 Layout의 경우 extractViews() 사용
-                let extractedViews = childLayout.extractViews()
-                for view in extractedViews {
-                    addSubview(view)
-                    print("🔧 HStack - Added extracted view: \(type(of: view))")
+                
+                // UILabel이나 UIButton의 경우 텍스트 정보도 출력
+                if let label = childView as? UILabel {
+                } else if let button = childView as? UIButton {
                 }
             }
         }
         
-        print("🔧 HStack - init completed with \(subviews.count) subviews")
+        
+        // 최종 subviews 상태 출력
+        for (index, subview) in subviews.enumerated() {
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -146,105 +173,75 @@ public class HStack: UIView, Layout {
         totalWidth = max(totalWidth, 200)
         maxHeight = max(maxHeight, 100)
         
-        print("�� HStack - intrinsicContentSize: \(CGSize(width: totalWidth, height: maxHeight))")
+
         return CGSize(width: totalWidth, height: maxHeight)
     }
     
     public override func layoutSubviews() {
         super.layoutSubviews()
         
-        NSLog("🔧 HStack - layoutSubviews - bounds: \(bounds)")
-        NSLog("🔧 HStack - layoutSubviews - frame: \(frame)")
-        print("🔧 HStack - layoutSubviews - bounds: \(bounds)")
-        print("🔧 HStack - layoutSubviews - subviews count: \(subviews.count)")
         
-        // bounds가 유효하지 않은 경우 레이아웃 건너뛰기
-        guard bounds.width > 0 && bounds.height > 0 else {
-            NSLog("🔧 HStack - Invalid bounds, skipping layout")
-            print("🔧 HStack - Invalid bounds, skipping layout")
-            return
+        // bounds가 유효하지 않은 경우 safeBounds 사용
+        let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
+        let availableBounds = safeBounds.inset(by: padding)
+        
+        // 먼저 고정 콘텐츠 너비를 계산 (Spacer 제외)
+        var fixedContentWidth: CGFloat = 0
+        var nonSpacerSubviews: [(UIView, CGSize)] = []
+        var spacerCount: Int = 0
+        
+        for subview in subviews {
+            // Spacer 감지
+            if subview is Spacer {
+                spacerCount += 1
+            } else {
+                var size: CGSize
+                if let layoutView = subview as? (any Layout) {
+                    let layoutResult = layoutView.calculateLayout(in: availableBounds)
+                    size = layoutResult.totalSize
+                    size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
+                } else if let label = subview as? UILabel {
+                    let textSize = label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: availableBounds.height))
+                    size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                } else if let button = subview as? UIButton {
+                    let buttonSize = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: availableBounds.height))
+                    size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                } else {
+                    let intrinsicSize = subview.intrinsicContentSize
+                    size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                }
+                nonSpacerSubviews.append((subview, size))
+                fixedContentWidth += size.width
+            }
         }
         
-        let availableBounds = bounds.inset(by: padding)
-        print("🔧 HStack - layoutSubviews - availableBounds: \(availableBounds)")
+        // 전체 spacing 계산 (모든 subview 간)
+        let totalSpacing = subviews.count > 1 ? spacing * CGFloat(subviews.count - 1) : 0
         
-        // availableBounds도 유효한지 확인
-        guard availableBounds.width > 0 && availableBounds.height > 0 else {
-            NSLog("🔧 HStack - Invalid availableBounds, skipping layout")
-            print("🔧 HStack - Invalid availableBounds, skipping layout")
-            return
-        }
+        // Spacer를 위한 남은 공간 계산 (SwiftUI처럼 사용 가능한 공간을 모두 차지)
+        let totalAvailableWidthForContent = availableBounds.width
+        let remainingWidthForSpacers = max(0, totalAvailableWidthForContent - fixedContentWidth - totalSpacing)
+        let finalSpacerWidth = spacerCount > 0 ? remainingWidthForSpacers / CGFloat(spacerCount) : 0
         
+        
+        // 배치 시작 위치 계산
         var currentX: CGFloat = availableBounds.minX
         
-        // 먼저 Spacer가 아닌 뷰들의 총 크기를 계산
-        var nonSpacerViews: [UIView] = []
-        var totalNonSpacerWidth: CGFloat = 0
-        
+        // 모든 subview들을 배치
         for subview in subviews {
-            if subview is Spacer {
-                continue
-            }
-            
-            nonSpacerViews.append(subview)
             
             var size: CGSize
-            if let layoutView = subview as? (any Layout) {
-                let availableHeight = max(availableBounds.height, 50)
-                let layoutResult = layoutView.calculateLayout(in: CGRect(x: 0, y: 0, width: availableBounds.width, height: availableHeight))
-                size = layoutResult.totalSize
-                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
-            } else if let label = subview as? UILabel {
-                let textSize = label.sizeThatFits(CGSize(width: .greatestFiniteMagnitude, height: availableBounds.height))
-                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-            } else if let button = subview as? UIButton {
-                let buttonSize = button.sizeThatFits(CGSize(width: .greatestFiniteMagnitude, height: availableBounds.height))
-                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
-            } else {
-                let intrinsicSize = subview.intrinsicContentSize
-                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
-            }
             
-            totalNonSpacerWidth += size.width
-        }
-        
-        // Spacer가 아닌 뷰들 사이의 spacing 계산
-        if nonSpacerViews.count > 1 {
-            totalNonSpacerWidth += spacing * CGFloat(nonSpacerViews.count - 1)
-        }
-        
-        // Spacer가 차지할 수 있는 공간 계산 (더 엄격한 제한)
-        let availableSpaceForSpacers = max(0, availableBounds.width - totalNonSpacerWidth)
-        let spacerCount = subviews.filter { $0 is Spacer }.count
-        let spacerWidth = spacerCount > 0 ? min(100, max(10, availableSpaceForSpacers / CGFloat(spacerCount))) : 0
-        
-        // 이제 모든 뷰들을 배치
-        for subview in subviews {
-            NSLog("🔧 HStack - Processing subview: \(type(of: subview))")
-            print("🔧 HStack - Processing subview: \(type(of: subview))")
-            print("🔧 HStack - Subview text: \((subview as? UILabel)?.text ?? "N/A")")
-            print("🔧 HStack - Subview isHidden: \(subview.isHidden)")
-            print("🔧 HStack - Subview alpha: \(subview.alpha)")
-            print("🔧 HStack - Subview backgroundColor: \(subview.backgroundColor?.description ?? "nil")")
-            
-            var size: CGSize
+            // Spacer 감지
             if subview is Spacer {
-                // Spacer는 사용 가능한 공간을 채움 (더 엄격한 제한)
-                size = CGSize(width: max(spacerWidth, 10), height: min(availableBounds.height, 30))
-            } else if let layoutView = subview as? (any Layout) {
-                let availableHeight = max(availableBounds.height, 50)
-                let layoutResult = layoutView.calculateLayout(in: CGRect(x: 0, y: 0, width: availableBounds.width, height: availableHeight))
-                size = layoutResult.totalSize
-                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
-            } else if let label = subview as? UILabel {
-                let textSize = label.sizeThatFits(CGSize(width: .greatestFiniteMagnitude, height: availableBounds.height))
-                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-            } else if let button = subview as? UIButton {
-                let buttonSize = button.sizeThatFits(CGSize(width: .greatestFiniteMagnitude, height: availableBounds.height))
-                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                size = CGSize(width: finalSpacerWidth, height: availableBounds.height)
             } else {
-                let intrinsicSize = subview.intrinsicContentSize
-                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                // nonSpacerSubviews에서 해당 subview의 크기 찾기
+                if let found = nonSpacerSubviews.first(where: { $0.0 === subview }) {
+                    size = found.1
+                } else {
+                    size = CGSize(width: 50, height: 20) // 기본 크기
+                }
             }
             
             let y: CGFloat
@@ -254,17 +251,8 @@ public class HStack: UIView, Layout {
             case .bottom: y = availableBounds.maxY - size.height
             }
             
-            let frame = CGRect(x: currentX, y: y, width: size.width, height: size.height)
-            NSLog("🔧 HStack - Setting frame for \(type(of: subview)): \(frame)")
-            print("🔧 HStack - Setting frame for \(type(of: subview)): \(frame)")
+            let frame = CGRect(x: currentX, y: y, width: max(size.width, 1), height: max(size.height, 1))
             subview.frame = frame
-            
-            // subview가 실제로 뷰 계층에 추가되었는지 확인 (Layout 뷰들은 제외)
-            if subview.superview == nil && !(subview is VStack || subview is HStack || subview is ZStack) {
-                NSLog("🔧 HStack - Adding subview to hierarchy: \(type(of: subview))")
-                print("🔧 HStack - Adding subview to hierarchy: \(type(of: subview))")
-                self.addSubview(subview)
-            }
             
             currentX += size.width + spacing
         }
@@ -272,65 +260,125 @@ public class HStack: UIView, Layout {
     
     // MARK: - Layout Protocol
     
-    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        print("🔧 HStack - calculateLayout in bounds: \(bounds)")
+    // Spacer가 있을 때의 레이아웃 계산
+    private func calculateLayoutWithSpacers(in bounds: CGRect) -> LayoutResult {
         
-        let availableBounds = bounds.inset(by: padding)
+        let safeBounds = bounds.inset(by: padding)
         var frames: [UIView: CGRect] = [:]
-        var currentX: CGFloat = availableBounds.minX
-        var maxHeight: CGFloat = 0
+        var totalSize = CGSize.zero
         
-        // HStack 자체를 frames에 추가
-        frames[self] = bounds
+        // 먼저 Spacer가 아닌 뷰들의 크기를 계산
+        var fixedContentWidth: CGFloat = 0
+        var spacerCount: Int = 0
         
-        // subviews를 사용하여 자식 뷰들을 처리
         for subview in subviews {
-            var size: CGSize
-            
             if let layoutView = subview as? (any Layout) {
-                let availableHeight = max(availableBounds.height, 50)
-                let layoutResult = layoutView.calculateLayout(in: CGRect(x: 0, y: 0, width: availableBounds.width, height: availableHeight))
-                size = layoutResult.totalSize
-                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
-            } else if let label = subview as? UILabel {
-                let textSize = label.sizeThatFits(CGSize(width: .greatestFiniteMagnitude, height: availableBounds.height))
-                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-            } else if let button = subview as? UIButton {
-                let buttonSize = button.sizeThatFits(CGSize(width: .greatestFiniteMagnitude, height: availableBounds.height))
-                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                let childResult = layoutView.calculateLayout(in: safeBounds)
+                frames.merge(childResult.frames) { _, new in new }
+                totalSize.height = max(totalSize.height, childResult.totalSize.height)
+                fixedContentWidth += childResult.totalSize.width
+            } else if subview is Spacer {
+                spacerCount += 1
             } else {
-                let intrinsicSize = subview.intrinsicContentSize
-                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                var size: CGSize
+                if let label = subview as? UILabel {
+                    let textSize = label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: safeBounds.height))
+                    size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                } else if let button = subview as? UIButton {
+                    let buttonSize = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: safeBounds.height))
+                    size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                } else {
+                    let intrinsicSize = subview.intrinsicContentSize
+                    size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                }
+                frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                totalSize.height = max(totalSize.height, size.height)
+                fixedContentWidth += size.width
             }
-            
-            let y: CGFloat
-            switch alignment {
-            case .top: y = availableBounds.minY
-            case .center: y = availableBounds.midY - size.height / 2
-            case .bottom: y = availableBounds.maxY - size.height
-            }
-            
-            let frame = CGRect(x: currentX, y: y, width: size.width, height: size.height)
-            frames[subview] = frame
-            currentX += size.width + spacing
-            maxHeight = max(maxHeight, size.height)
         }
         
-        // 전체 크기 계산
-        let totalWidth = currentX - spacing + padding.left + padding.right
-        let totalHeight = maxHeight + padding.top + padding.bottom
+        // Spacer 계산
+        let totalSpacing = subviews.count > 1 ? spacing * CGFloat(subviews.count - 1) : 0
+        let remainingWidthForSpacers = max(0, safeBounds.width - fixedContentWidth - totalSpacing)
+        let spacerWidth = spacerCount > 0 ? remainingWidthForSpacers / CGFloat(spacerCount) : 0
         
-        let totalSize = CGSize(width: totalWidth, height: totalHeight)
-        print("🔧 HStack - calculated totalSize: \(totalSize)")
+        // Spacer들에 대해 계산된 크기 설정
+        for subview in subviews {
+            if subview is Spacer {
+                frames[subview] = CGRect(x: 0, y: 0, width: spacerWidth, height: safeBounds.height)
+                totalSize.height = max(totalSize.height, safeBounds.height)
+            }
+        }
+        
+        // 전체 사용 가능한 공간을 사용
+        totalSize.width = safeBounds.width
+        totalSize.width += padding.left + padding.right
+        totalSize.height += padding.top + padding.bottom
+        
+        frames[self] = CGRect(x: 0, y: 0, width: totalSize.width, height: totalSize.height)
         
         return LayoutResult(frames: frames, totalSize: totalSize)
     }
     
+    // Spacer가 없을 때의 레이아웃 계산
+    private func calculateLayoutWithoutSpacers(in bounds: CGRect) -> LayoutResult {
+        
+        let safeBounds = bounds.inset(by: padding)
+        var frames: [UIView: CGRect] = [:]
+        var totalSize = CGSize.zero
+        
+        for subview in subviews {
+            if let layoutView = subview as? (any Layout) {
+                let childResult = layoutView.calculateLayout(in: safeBounds)
+                frames.merge(childResult.frames) { _, new in new }
+                totalSize.width += childResult.totalSize.width
+                totalSize.height = max(totalSize.height, childResult.totalSize.height)
+            } else {
+                var size: CGSize
+                if let label = subview as? UILabel {
+                    let textSize = label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: safeBounds.height))
+                    size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                } else if let button = subview as? UIButton {
+                    let buttonSize = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: safeBounds.height))
+                    size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                } else {
+                    let intrinsicSize = subview.intrinsicContentSize
+                    size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                }
+                frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                totalSize.width += size.width
+                totalSize.height = max(totalSize.height, size.height)
+            }
+        }
+        
+        // spacing 추가
+        if subviews.count > 1 {
+            totalSize.width += spacing * CGFloat(subviews.count - 1)
+        }
+        
+        // padding 추가
+        totalSize.width += padding.left + padding.right
+        totalSize.height += padding.top + padding.bottom
+        
+        frames[self] = CGRect(x: 0, y: 0, width: totalSize.width, height: totalSize.height)
+        
+        return LayoutResult(frames: frames, totalSize: totalSize)
+    }
+
+    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        
+        // Spacer가 있는지 확인
+        let hasSpacers = subviews.contains { $0 is Spacer }
+        
+        if hasSpacers {
+            return calculateLayoutWithSpacers(in: bounds)
+        } else {
+            return calculateLayoutWithoutSpacers(in: bounds)
+        }
+    }
+    
     public func extractViews() -> [UIView] {
-        // HStack 자체와 모든 자식 뷰들을 반환
-        var views: [UIView] = [self]
-        views.append(contentsOf: subviews)
-        return views
+        return [self]
     }
     
     // MARK: - Modifier Methods
@@ -381,7 +429,10 @@ public class HStack: UIView, Layout {
         
         let overlayLayouts: [any Layout]
         if let tupleLayout = overlayLayout as? TupleLayout {
-            overlayLayouts = tupleLayout.getLayouts()
+            // TupleLayout의 extractViews()를 사용하여 자식 뷰들을 추출
+            let views = tupleLayout.extractViews()
+            // ViewLayout으로 변환
+            overlayLayouts = views.map { ViewLayout($0) }
         } else {
             overlayLayouts = [overlayLayout]
         }

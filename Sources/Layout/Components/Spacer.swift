@@ -19,6 +19,9 @@ public class Spacer: UIView, Layout {
     
     public let minLength: CGFloat?
     
+    /// A unique property to identify spacer components
+    public var isSpacer: Bool { return true }
+    
     public init(minLength: CGFloat? = nil) {
         self.minLength = minLength
         super.init(frame: .zero)
@@ -38,18 +41,9 @@ public class Spacer: UIView, Layout {
     }
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        // Spacer는 사용 가능한 공간을 채우되, 최소 길이를 보장
-        let width = minLength ?? max(bounds.width, 20)
-        let height = minLength ?? max(bounds.height, 5)
-        
-        // 최소 크기 보장
-        let finalWidth = max(width, 20)
-        let finalHeight = max(height, 5)
-        
-        return LayoutResult(
-            frames: [self: CGRect(origin: .zero, size: CGSize(width: finalWidth, height: finalHeight))], 
-            totalSize: CGSize(width: finalWidth, height: finalHeight)
-        )
+        var frames: [UIView: CGRect] = [:]
+        frames[self] = .zero // Spacer reports its size as zero
+        return LayoutResult(frames: frames, totalSize: .zero) // Total size is also zero
     }
     
     public func extractViews() -> [UIView] {

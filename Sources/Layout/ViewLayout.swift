@@ -36,6 +36,9 @@ public struct ViewLayout: Layout {
     }
     
     @MainActor public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        // bounds가 유효하지 않은 경우 기본값 사용
+        let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
+        
         let intrinsicSize = view.intrinsicContentSize
         
         // 더 정확한 기본 크기 계산
@@ -66,6 +69,9 @@ public struct ViewLayout: Layout {
             defaultSize = intrinsicSize
         }
         
+        // 음수 값 방지
+        defaultSize = CGSize(width: max(defaultSize.width, 1), height: max(defaultSize.height, 1))
+        
         // size 모디파이어가 있는지 확인
         var hasSizeModifier = false
         var explicitWidth: CGFloat?
@@ -91,9 +97,9 @@ public struct ViewLayout: Layout {
         // bounds.origin을 기준으로 한 상대 좌표로 시작
         var frame = CGRect(origin: .zero, size: defaultSize)
         
-        // Apply modifiers in sequence (bounds를 기준으로)
+        // Apply modifiers in sequence (safeBounds를 기준으로)
         for modifier in modifiers {
-            frame = modifier.apply(to: frame, in: bounds)
+            frame = modifier.apply(to: frame, in: safeBounds)
             
             // BackgroundModifier 처리
             if let backgroundModifier = modifier as? BackgroundModifier {
@@ -101,20 +107,19 @@ public struct ViewLayout: Layout {
             }
         }
         
-        // 최종 프레임을 bounds.origin을 기준으로 한 상대 좌표로 변환
+        // 최종 프레임을 safeBounds.origin을 기준으로 한 상대 좌표로 변환
         let finalFrame = CGRect(
-            x: bounds.origin.x + frame.origin.x,
-            y: bounds.origin.y + frame.origin.y,
-            width: frame.width,
-            height: frame.height
+            x: safeBounds.origin.x + frame.origin.x,
+            y: safeBounds.origin.y + frame.origin.y,
+            width: max(frame.width, 1),
+            height: max(frame.height, 1)
         )
         
-        print("🔧 ViewLayout - view: \(type(of: view)), defaultSize: \(defaultSize), final frame: \(finalFrame)")
         
         return LayoutResult(frames: [view: finalFrame], totalSize: frame.size)
     }
     
-    public func extractViews() -> [UIView] {
+    @MainActor     public func extractViews() -> [UIView] {
         return [view]
     }
     

@@ -1,9 +1,9 @@
 import UIKit
 
-/// A Z-stack layout that overlays child layouts on top of each other.
+/// A z-axis stack layout that layers child layouts on top of each other.
 ///
-/// ``ZStack`` arranges its child layouts in layers, with each child positioned
-/// on top of the previous ones. It supports alignment and padding options.
+/// ``ZStack`` arranges its child layouts in layers, with later children appearing on top
+/// of earlier ones. It supports flexible spacing and various alignment options.
 ///
 /// ## Example Usage
 ///
@@ -11,11 +11,10 @@ import UIKit
 /// ZStack(alignment: .center) {
 ///     backgroundView.layout()
 ///         .size(width: 300, height: 200)
-///     overlayView.layout()
-///         .position(x: 0, y: -20)
-///     iconView.layout()
-///         .size(width: 40, height: 40)
-///         .position(x: 0, y: 20)
+///     titleLabel.layout()
+///         .size(width: 280, height: 40)
+///     actionButton.layout()
+///         .size(width: 180, height: 44)
 /// }
 /// .padding(40)
 /// ```
@@ -26,7 +25,7 @@ public class ZStack: UIView, Layout {
         fatalError("ZStack body should not be called")
     }
     
-    /// Alignment of child layouts within the stack
+    /// Alignment of child layouts
     public var alignment: Alignment
     
     /// Padding around the entire stack
@@ -34,27 +33,12 @@ public class ZStack: UIView, Layout {
     
     /// Explicit size override
     public var explicitSize: CGSize = .zero
-
+    
     /// Alignment options for ZStack
     public enum Alignment {
         case topLeading, top, topTrailing
         case leading, center, trailing
         case bottomLeading, bottom, bottomTrailing
-    }
-    
-    /// Edge options for padding
-    public struct Edge: OptionSet {
-        public let rawValue: Int
-        
-        public init(rawValue: Int) {
-            self.rawValue = rawValue
-        }
-        
-        public static let top = Edge(rawValue: 1 << 0)
-        public static let leading = Edge(rawValue: 1 << 1)
-        public static let bottom = Edge(rawValue: 1 << 2)
-        public static let trailing = Edge(rawValue: 1 << 3)
-        public static let all: Edge = [.top, .leading, .bottom, .trailing]
     }
     
     /// Creates a ZStack with the specified alignment and padding.
@@ -68,38 +52,65 @@ public class ZStack: UIView, Layout {
         
         super.init(frame: .zero)
         
-        print("🔧 ZStack - init with alignment: \(alignment)")
         
         // 자식 레이아웃을 생성하고 뷰로 변환
         let layout = children()
         
-        // TupleLayout인 경우 내부 레이아웃들을 추출
-        let childLayouts: [any Layout]
+        // TupleLayout인 경우 자식들을 직접 추출
         if let tupleLayout = layout as? TupleLayout {
-            childLayouts = tupleLayout.getLayouts()
-            print("🔧 ZStack - TupleLayout detected with \(tupleLayout.getLayouts().count) layouts")
-        } else if layout is VStack || layout is HStack || layout is ZStack {
-            childLayouts = [layout]
+            
+            // TupleLayout의 layouts 배열에서 직접 뷰들을 추출
+            for (index, childLayout) in tupleLayout.layouts.enumerated() {
+                
+                let childViews = childLayout.extractViews()
+                
+                // 각 자식 레이아웃의 뷰들을 처리
+                for (viewIndex, childView) in childViews.enumerated() {
+                    
+                    // 스택 컴포넌트인 경우 직접 추가 (자신의 자식으로)
+                    if childView is VStack || childView is HStack || childView is ZStack {
+                        addSubview(childView)
+                        continue
+                    }
+                    
+                    // 일반 뷰들도 직접 추가
+                    addSubview(childView)
+                    
+                    // UILabel이나 UIButton의 경우 텍스트 정보도 출력
+                    if let label = childView as? UILabel {
+                    } else if let button = childView as? UIButton {
+                    }
+                }
+            }
+            
+            for (index, subview) in subviews.enumerated() {
+                if let label = subview as? UILabel {
+                } else if let button = subview as? UIButton {
+                }
+            }
         } else {
-            childLayouts = layout.extractViews().isEmpty ? [] : [layout]
-        }
-        
-        // 각 레이아웃을 UIView로 변환하여 subviews에 추가
-        for childLayout in childLayouts {
-            if let childView = childLayout as? UIView {
+            // 일반적인 경우 (TupleLayout이 아닌 경우)
+            let allChildViews = layout.extractViews()
+            
+            // 각 자식 뷰의 타입 출력
+            for (index, childView) in allChildViews.enumerated() {
+            }
+            
+            // 각 자식 뷰를 subviews에 추가
+            for (index, childView) in allChildViews.enumerated() {
                 addSubview(childView)
-                print("🔧 ZStack - Added child view: \(type(of: childView))")
-            } else {
-                // ViewLayout이나 다른 Layout의 경우 extractViews() 사용
-                let extractedViews = childLayout.extractViews()
-                for view in extractedViews {
-                    addSubview(view)
-                    print("🔧 ZStack - Added extracted view: \(type(of: view))")
+                
+                // UILabel이나 UIButton의 경우 텍스트 정보도 출력
+                if let label = childView as? UILabel {
+                } else if let button = childView as? UIButton {
                 }
             }
         }
         
-        print("🔧 ZStack - init completed with \(subviews.count) subviews")
+        
+        // 최종 subviews 상태 출력
+        for (index, subview) in subviews.enumerated() {
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -111,64 +122,44 @@ public class ZStack: UIView, Layout {
     public override func layoutSubviews() {
         super.layoutSubviews()
         
-        let availableBounds = bounds.inset(by: padding)
-        print("🔧 ZStack - layoutSubviews - bounds: \(bounds)")
-        print("🔧 ZStack - layoutSubviews - availableBounds: \(availableBounds)")
-        print("🔧 ZStack - layoutSubviews - subviews count: \(subviews.count)")
         
+        // bounds가 유효하지 않은 경우 safeBounds 사용
+        let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
+        let availableBounds = safeBounds.inset(by: padding)
+        
+        // 모든 subview들을 배치
         for subview in subviews {
-            print("🔧 ZStack - Processing subview: \(type(of: subview))")
-            print("🔧 ZStack - Subview isHidden: \(subview.isHidden)")
-            print("🔧 ZStack - Subview alpha: \(subview.alpha)")
-            print("🔧 ZStack - Subview backgroundColor: \(subview.backgroundColor?.description ?? "nil")")
             
-            // intrinsicContentSize 대신 직접 크기 계산
-            let size: CGSize
-            if let label = subview as? UILabel {
-                size = label.sizeThatFits(CGSize(width: availableBounds.width, height: CGFloat.greatestFiniteMagnitude))
+            var size: CGSize
+            if let layoutView = subview as? (any Layout) {
+                // 자식 Layout에게 실제 사용 가능한 공간을 제공하여 정확한 크기 계산
+                let layoutResult = layoutView.calculateLayout(in: availableBounds)
+                size = layoutResult.totalSize
+                // 음수 값 방지
+                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
+            } else if let label = subview as? UILabel {
+                let textSize = label.sizeThatFits(CGSize(width: availableBounds.width, height: availableBounds.height))
+                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
             } else if let button = subview as? UIButton {
-                size = button.sizeThatFits(CGSize(width: availableBounds.width, height: CGFloat.greatestFiniteMagnitude))
-            } else if let vStack = subview as? VStack {
-                size = vStack.intrinsicContentSize
+                let buttonSize = button.sizeThatFits(CGSize(width: availableBounds.width, height: availableBounds.height))
+                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
             } else {
-                size = subview.intrinsicContentSize
+                let intrinsicSize = subview.intrinsicContentSize
+                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
             }
             
-            let frame = calculateFrame(for: size, in: availableBounds, alignment: alignment)
-            print("🔧 ZStack - Setting frame for \(type(of: subview)): \(frame)")
+            // 음수 값 방지
+            size = CGSize(width: max(size.width, 1), height: max(size.height, 1))
+            
+            // ZStack의 전체 bounds를 사용하여 중앙 정렬 (padding 제외)
+            let (x, y) = calculatePosition(for: size, in: safeBounds, alignment: alignment)
+            
+            let frame = CGRect(x: x, y: y, width: size.width, height: size.height)
             subview.frame = frame
-            
-            // subview가 실제로 뷰 계층에 추가되었는지 확인
-            if subview.superview == nil {
-                print("🔧 ZStack - Adding subview to hierarchy: \(type(of: subview))")
-                self.addSubview(subview)
-            }
         }
     }
     
-    public override var intrinsicContentSize: CGSize {
-        var maxWidth: CGFloat = 0
-        var maxHeight: CGFloat = 0
-        
-        for subview in subviews {
-            let size = subview.intrinsicContentSize
-            maxWidth = max(maxWidth, size.width)
-            maxHeight = max(maxHeight, size.height)
-        }
-        
-        // padding 추가
-        maxWidth += padding.left + padding.right
-        maxHeight += padding.top + padding.bottom
-        
-        // 최소 크기 보장 (자식 뷰들이 없어도)
-        maxWidth = max(maxWidth, 100)
-        maxHeight = max(maxHeight, 50)
-        
-        print("🔧 ZStack - intrinsicContentSize: \(CGSize(width: maxWidth, height: maxHeight))")
-        return CGSize(width: maxWidth, height: maxHeight)
-    }
-    
-    private func calculateFrame(for size: CGSize, in bounds: CGRect, alignment: Alignment) -> CGRect {
+    private func calculatePosition(for size: CGSize, in bounds: CGRect, alignment: Alignment) -> (CGFloat, CGFloat) {
         let x: CGFloat
         let y: CGFloat
         
@@ -202,35 +193,102 @@ public class ZStack: UIView, Layout {
             y = bounds.maxY - size.height
         }
         
-        return CGRect(x: x, y: y, width: size.width, height: size.height)
+        return (x, y)
+    }
+    
+    public override var intrinsicContentSize: CGSize {
+        var maxWidth: CGFloat = 0
+        var maxHeight: CGFloat = 0
+        
+        // 실제 자식 뷰들의 크기를 정확하게 계산
+        for subview in subviews {
+            var size: CGSize
+            
+            // Layout 프로토콜을 구현하는 뷰들 (VStack, HStack, ZStack)의 경우
+            if let layoutView = subview as? (any Layout) {
+                // Layout 뷰의 경우 calculateLayout을 사용하여 정확한 크기 계산
+                let layoutResult = layoutView.calculateLayout(in: CGRect(x: 0, y: 0, width: 375, height: 600))
+                size = layoutResult.totalSize
+                // 음수 값 방지
+                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
+            } else if let label = subview as? UILabel {
+                // UILabel의 경우 텍스트 크기에 맞춰 계산
+                let textSize = label.sizeThatFits(CGSize(width: 375, height: 600))
+                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+            } else if let button = subview as? UIButton {
+                // UIButton의 경우 버튼 크기에 맞춰 계산
+                let buttonSize = button.sizeThatFits(CGSize(width: 375, height: 600))
+                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+            } else {
+                // 다른 뷰의 경우 intrinsicContentSize 사용
+                let intrinsicSize = subview.intrinsicContentSize
+                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+            }
+            
+            maxWidth = max(maxWidth, size.width)
+            maxHeight = max(maxHeight, size.height)
+        }
+        
+        // padding 추가
+        maxWidth += padding.left + padding.right
+        maxHeight += padding.top + padding.bottom
+        
+        // 최소 크기 보장 (자식 뷰가 없는 경우에도)
+        maxWidth = max(maxWidth, 200)
+        maxHeight = max(maxHeight, 100)
+        
+        return CGSize(width: maxWidth, height: maxHeight)
     }
     
     // MARK: - Layout Protocol
+    
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        let availableBounds = bounds.inset(by: padding)
-        print("🔧 ZStack - calculateLayout - bounds: \(bounds)")
-        print("🔧 ZStack - calculateLayout - availableBounds: \(availableBounds)")
+        
+        let safeBounds = bounds.inset(by: padding)
         var frames: [UIView: CGRect] = [:]
-        // ZStack 자체를 frames에 추가
-        frames[self] = bounds
+        var totalSize = CGSize.zero
+        
+        // Calculate layout for each child
         for subview in subviews {
-            let size: CGSize
-            if let vStack = subview as? VStack {
-                size = vStack.intrinsicContentSize
+            if let layoutView = subview as? (any Layout) {
+                let childResult = layoutView.calculateLayout(in: safeBounds)
+                frames.merge(childResult.frames) { _, new in new }
+                totalSize.width = max(totalSize.width, childResult.totalSize.width)
+                totalSize.height = max(totalSize.height, childResult.totalSize.height)
             } else {
-                size = subview.intrinsicContentSize
+                // For non-Layout views, calculate their size
+                var size: CGSize
+                if subview is Spacer {
+                    size = .zero
+                } else if let label = subview as? UILabel {
+                    let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                    size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                } else if let button = subview as? UIButton {
+                    let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                    size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                } else {
+                    let intrinsicSize = subview.intrinsicContentSize
+                    size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                }
+                frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                totalSize.width = max(totalSize.width, size.width)
+                totalSize.height = max(totalSize.height, size.height)
             }
-            let frame = calculateFrame(for: size, in: availableBounds, alignment: alignment)
-            frames[subview] = frame
         }
-        return LayoutResult(frames: frames, totalSize: bounds.size)
+        
+        // Add padding to total size
+        totalSize.width += padding.left + padding.right
+        totalSize.height += padding.top + padding.bottom
+        
+        // Set frame for ZStack itself using totalSize (actual content size)
+        frames[self] = CGRect(x: 0, y: 0, width: totalSize.width, height: totalSize.height)
+        
+        
+        return LayoutResult(frames: frames, totalSize: totalSize)
     }
     
     public func extractViews() -> [UIView] {
-        // ZStack 자체와 모든 자식 뷰들을 반환
-        var views: [UIView] = [self]
-        views.append(contentsOf: subviews)
-        return views
+        return [self]
     }
     
     // MARK: - Modifier Methods
@@ -249,12 +307,12 @@ public class ZStack: UIView, Layout {
         return padding(UIEdgeInsets(top: length, left: length, bottom: length, right: length))
     }
     
-    public func padding(_ edges: Edge = .all, _ length: CGFloat) -> Self {
+    public func padding(_ edges: UIRectEdge = .all, _ length: CGFloat) -> Self {
         var insets = UIEdgeInsets.zero
         if edges.contains(.top) { insets.top = length }
-        if edges.contains(.leading) { insets.left = length }
+        if edges.contains(.left) { insets.left = length }
         if edges.contains(.bottom) { insets.bottom = length }
-        if edges.contains(.trailing) { insets.right = length }
+        if edges.contains(.right) { insets.right = length }
         return padding(insets)
     }
     
@@ -270,6 +328,32 @@ public class ZStack: UIView, Layout {
         self.explicitSize = size
         return self
     }
+    
+    public func overlay(@LayoutBuilder _ overlay: () -> any Layout) -> Self {
+        let overlayLayout = overlay()
+        
+        let overlayLayouts: [any Layout]
+        if let tupleLayout = overlayLayout as? TupleLayout {
+            // TupleLayout의 extractViews()를 사용하여 자식 뷰들을 추출
+            let views = tupleLayout.extractViews()
+            // ViewLayout으로 변환
+            overlayLayouts = views.map { ViewLayout($0) }
+        } else {
+            overlayLayouts = [overlayLayout]
+        }
+        
+        // Overlay 뷰들을 추가 (Layout 뷰들은 제외)
+        for overlayLayout in overlayLayouts {
+            let overlayViews = overlayLayout.extractViews()
+            for overlayView in overlayViews {
+                // Layout 뷰들은 추가하지 않음 (이미 자식 뷰들이 추가됨)
+                if !(overlayView is VStack || overlayView is HStack || overlayView is ZStack) {
+                    self.addSubview(overlayView)
+                }
+            }
+        }
+        
+        return self
+    }
 }
-
 

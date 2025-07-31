@@ -44,23 +44,23 @@ extension Layout {
     ///
     /// - Parameter container: The UIView to apply the layout to
     public func apply(to container: UIView) {
-        // 기존 서브뷰 제거
+        // Remove existing subviews
         for subview in container.subviews {
             subview.removeFromSuperview()
         }
         
-        // 레이아웃에서 뷰들 추출
+        // Extract views from layout
         let views = extractViews()
         
-        // 뷰들을 컨테이너에 추가
+        // Add views to container
         for view in views {
             container.addSubview(view)
         }
         
-        // 레이아웃 계산 및 적용
+        // Calculate and apply layout
         let result = calculateLayout(in: container.bounds)
         
-        // 각 뷰의 프레임 설정
+        // Set frame for each view
         for (view, frame) in result.frames {
             view.frame = frame
         }

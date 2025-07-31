@@ -37,7 +37,10 @@ public struct LazyVStack: Layout {
     
     private static func extractChildren(from content: any Layout) -> [any Layout] {
         if let tupleLayout = content as? TupleLayout {
-            return tupleLayout.getLayouts()
+            // TupleLayout의 extractViews()를 사용하여 자식 뷰들을 추출
+            let views = tupleLayout.extractViews()
+            // ViewLayout으로 변환
+            return views.map { ViewLayout($0) }
         } else {
             return [content]
         }

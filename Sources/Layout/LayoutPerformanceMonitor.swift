@@ -30,7 +30,6 @@ public struct LayoutPerformanceMonitor {
         let duration = (endTime - startTime) * 1000 // Convert to milliseconds
         
         #if DEBUG
-        print("🔧 Layout '\(name)' took \(String(format: "%.2f", duration))ms")
         #endif
         
         return result
@@ -118,7 +117,6 @@ public struct LayoutPerformanceMonitor {
         /// Prints a summary of all measurements
         public func printSummary() {
             queue.sync {
-                print("📊 Layout Performance Summary:")
                 for (name, times) in measurements {
                     let stats = Statistics(
                         totalOperations: times.count,
@@ -128,12 +126,8 @@ public struct LayoutPerformanceMonitor {
                         totalTime: times.reduce(0, +)
                     )
                     
-                    print("  \(name):")
-                    print("    Operations: \(stats.totalOperations)")
-                    print("    Average: \(String(format: "%.2f", stats.averageTime * 1000))ms")
-                    print("    Min: \(String(format: "%.2f", stats.minTime * 1000))ms")
-                    print("    Max: \(String(format: "%.2f", stats.maxTime * 1000))ms")
-                    print("    Total: \(String(format: "%.2f", stats.totalTime * 1000))ms")
+                    let summary = "\(name): Operations: \(stats.totalOperations), Average: \(String(format: "%.2f", stats.averageTime * 1000))ms, Min: \(String(format: "%.2f", stats.minTime * 1000))ms, Max: \(String(format: "%.2f", stats.maxTime * 1000))ms, Total: \(String(format: "%.2f", stats.totalTime * 1000))ms"
+                    debugLog(summary, component: "PerformanceMonitor", category: .performance)
                 }
             }
         }
