@@ -1,64 +1,88 @@
 import UIKit
 
 /// A layout that represents a tuple of layouts
-/// Simply passes through to child layouts without forcing any arrangement
+/// Automatically arranges multiple layouts vertically like a VStack when not wrapped in an explicit container
 public struct TupleLayout: Layout {
     public typealias Body = Never
     
     public let layouts: [any Layout]
+    public let spacing: CGFloat
+    public let alignment: HorizontalAlignment
     
-    public init(_ layouts: [any Layout]) {
+    /// Horizontal alignment options for TupleLayout
+    public enum HorizontalAlignment {
+        case leading, center, trailing
+    }
+    
+    public init(_ layouts: [any Layout], spacing: CGFloat = 10, alignment: HorizontalAlignment = .center) {
         self.layouts = layouts
+        self.spacing = spacing
+        self.alignment = alignment
     }
     
     public var body: Never { neverLayout("TupleLayout") }
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        debugLog("TupleLayout calculateLayout in bounds: \(bounds)", component: "TupleLayout", category: .layout)
         
         var allFrames: [UIView: CGRect] = [:]
+        var currentY: CGFloat = 0
         var maxWidth: CGFloat = 0
-        var maxHeight: CGFloat = 0
         
-        // 각 자식 레이아웃에 전체 bounds를 전달하여 자체적으로 처리하도록 함
+        // Arrange layouts vertically like a VStack
         for (index, layout) in layouts.enumerated() {
-            let result = layout.calculateLayout(in: bounds)
+            // Calculate available bounds for this layout
+            let availableHeight = max(0, bounds.height - currentY)
+            let layoutBounds = CGRect(
+                x: bounds.minX,
+                y: bounds.minY,
+                width: bounds.width,
+                height: availableHeight
+            )
             
+            let result = layout.calculateLayout(in: layoutBounds)
+            
+            // Apply horizontal alignment and adjust frames to current vertical position
             for (view, frame) in result.frames {
-                allFrames[view] = frame
+                var adjustedFrame = frame
+                
+                // Apply horizontal alignment for each view
+                switch alignment {
+                case .leading:
+                    adjustedFrame.origin.x = bounds.minX
+                case .center:
+                    adjustedFrame.origin.x = bounds.minX + (bounds.width - adjustedFrame.width) / 2
+                case .trailing:
+                    adjustedFrame.origin.x = bounds.maxX - adjustedFrame.width
+                }
+                
+                adjustedFrame.origin.y = frame.origin.y + currentY
+                allFrames[view] = adjustedFrame
+            }
+            
+            // Update position for next layout
+            currentY += result.totalSize.height
+            if index < layouts.count - 1 { // Add spacing except for last item
+                currentY += spacing
             }
             
             maxWidth = max(maxWidth, result.totalSize.width)
-            maxHeight = max(maxHeight, result.totalSize.height)
         }
         
-        return LayoutResult(frames: allFrames, totalSize: CGSize(width: maxWidth, height: maxHeight))
+        let finalSize = CGSize(width: maxWidth, height: currentY)
+        debugLog("TupleLayout final size: \(finalSize), frames count: \(allFrames.count)", component: "TupleLayout", category: .layout)
+        
+        return LayoutResult(frames: allFrames, totalSize: finalSize)
     }
     
     public func extractViews() -> [UIView] {
-        
         var allViews: [UIView] = []
         
-        for (index, layout) in layouts.enumerated() {
-            
+        for layout in layouts {
             let extractedViews = layout.extractViews()
-            
-            for (viewIndex, view) in extractedViews.enumerated() {
-                
-                // UILabel이나 UIButton의 경우 텍스트 정보도 출력
-                if let label = view as? UILabel {
-                } else if let button = view as? UIButton {
-                }
-            }
-            
-            // 모든 뷰를 추가 (스택 컴포넌트 포함)
             allViews.append(contentsOf: extractedViews)
         }
         
-        for (index, view) in allViews.enumerated() {
-            if let label = view as? UILabel {
-            } else if let button = view as? UIButton {
-            }
-        }
         return allViews
     }
 }
