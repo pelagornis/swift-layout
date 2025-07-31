@@ -57,7 +57,7 @@ class MyViewController: UIViewController, Layout {
         layoutContainer.setBody { self.body }
     }
 
-    @LayoutBuilder var body: Layout {
+    @LayoutBuilder var body: some Layout {
         // Content is automatically centered like SwiftUI
         titleLabel.layout()
             .frame(height: 30)
@@ -71,7 +71,7 @@ class MyViewController: UIViewController, Layout {
 ### Manual Layout (Advanced)
 
 ```swift
-@LayoutBuilder var body: Layout {
+@LayoutBuilder var body: some Layout {
     VStack(spacing: 24, alignment: .center) {
         Spacer(minLength: 60)
 
@@ -197,7 +197,7 @@ class UIKitViewController: UIViewController {
 ### Complex Card Layout
 
 ```swift
-@LayoutBuilder var cardLayout: Layout {
+@LayoutBuilder var cardLayout: some Layout {
     ZStack(alignment: .topLeading) {
         // Background card
         cardBackgroundView.layout()
@@ -240,7 +240,7 @@ class UIKitViewController: UIViewController {
 ### Responsive Layout
 
 ```swift
-@LayoutBuilder var responsiveLayout: Layout {
+@LayoutBuilder var responsiveLayout: some Layout {
     let isCompact = view.bounds.width < 400
     let isTablet = view.bounds.width > 768
 
