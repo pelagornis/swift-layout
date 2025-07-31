@@ -78,21 +78,27 @@ public class LayoutContainer: UIView {
         let topLevelViews = body.extractViews()
         
         
-        // Calculate center offset based on totalSize
-        let centerX = (bounds.width - result.totalSize.width) / 2
+        // Check if the body is a TupleLayout (Auto-VStack)
+        let isTupleLayout = body is TupleLayout
+        
+        // Calculate center offset based on layout type
+        let centerX = isTupleLayout ? 0 : (bounds.width - result.totalSize.width) / 2
         let centerY = (bounds.height - result.totalSize.height) / 2
+        
+        debugLog("LayoutContainer bounds: \(bounds), totalSize: \(result.totalSize), isTupleLayout: \(isTupleLayout), center offset: (\(centerX), \(centerY))", component: "LayoutContainer", category: .layout)
         
         
         for view in topLevelViews {
             addSubview(view)
             
             if let frame = result.frames[view] {
-                // Use result.totalSize for the top-level view's frame to ensure proper centering
+                // For TupleLayout: X positioning is handled by the layout itself, only apply Y center offset
+                // For other layouts: Apply both X and Y center offset
                 let adjustedFrame = CGRect(
                     x: frame.origin.x + centerX,
                     y: frame.origin.y + centerY,
-                    width: result.totalSize.width,
-                    height: result.totalSize.height
+                    width: frame.width,
+                    height: frame.height
                 )
                 view.frame = adjustedFrame
                 
