@@ -297,40 +297,83 @@ func updateLayout(animated: Bool = true) {
 }
 ```
 
-## 📊 Performance Tips
+## Debugging System
 
-### Best Practices
-
-1. **Use layout() wrapper** for all views
-2. **Batch layout updates** when possible
-3. **Avoid excessive nesting** (>10 levels)
-4. **Use ForEach for dynamic content**
-5. **Measure performance** with included tools
-
-### Performance Monitoring
+### LayoutDebugger Configuration
 
 ```swift
-// Built-in performance monitoring
-LayoutPerformanceMonitor.measureLayout(name: "Complex Layout") {
-    layoutContainer.layoutSubviews()
-}
+// Disable all debugging by default
+LayoutDebugger.shared.disableAll()
 
-// Output: 🔧 Layout 'Complex Layout' took 45.67ms
+// Selective activation
+LayoutDebugger.shared.enableBasic()        // Basic debugging
+LayoutDebugger.shared.enableSpacerOnly()   // Spacer-related only
+LayoutDebugger.shared.enableAll()          // All debugging
+
+// Individual settings
+LayoutDebugger.shared.isEnabled = true
+LayoutDebugger.shared.enableViewHierarchy = true
+LayoutDebugger.shared.enableSpacerCalculation = true
 ```
 
-### Memory Management
+### Debug Categories
+
+- 🔧 **Layout**: Layout calculation process
+- 🏗️ **Hierarchy**: View hierarchy structure
+- 📐 **Frame**: Frame setting
+- 🔲 **Spacer**: Spacer calculation
+- ⚡ **Performance**: Performance monitoring
+
+### Tree-style View Analysis
 
 ```swift
-// Views are automatically managed - no manual addSubview needed!
-layoutContainer.setBody {
-    VStack {
-        if shouldShowView {
-            myView.layout()  // Automatically added
-        }
-        // myView automatically removed when condition is false
-    }
-}
+// Analyze view hierarchy in tree format
+LayoutDebugger.shared.analyzeViewHierarchy(
+    layoutContainer,
+    title: "LAYOUT ANALYSIS"
+)
 ```
+
+**Output Example:**
+
+```
+🔍 ===== LAYOUT ANALYSIS =====
+🔍 LayoutContainer
+├─ Frame: (39.3, 170.4, 314.4, 511.2)
+├─ Background: systemYellowColor
+├─ Hidden: false
+└─ Alpha: 1.0
+  └─ Child 0: VStack
+    ├─ Frame: (40.0, 40.0, 234.4, 431.2)
+    ├─ Background: nil
+    ├─ Hidden: false
+    └─ Alpha: 1.0
+      └─ Child 0: UILabel
+        ├─ Frame: (56.0, 40.0, 82.7, 21.7)
+        ├─ Background: systemBlueColor
+        ├─ Hidden: false
+        ├─ Alpha: 1.0
+        └─ Text: "Welcome"
+```
+
+## Performance Monitoring
+
+### Using LayoutPerformanceMonitor
+
+```swift
+// Start performance measurement
+LayoutPerformanceMonitor.shared.startMeasuring("layout_calculation")
+
+// Perform layout calculation
+let result = layout.calculateLayout(in: bounds)
+
+// End performance measurement
+LayoutPerformanceMonitor.shared.endMeasuring("layout_calculation")
+
+// Print performance report
+LayoutPerformanceMonitor.shared.printPerformanceReport()
+```
+
 
 ## 📚 Documentation
 
