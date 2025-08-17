@@ -2,8 +2,23 @@ import UIKit
 
 /// Base protocol for all layout components in the ManualLayout system.
 ///
-/// Conforming types can calculate their layout within given bounds and extract
-/// the UIViews they manage for automatic view hierarchy management.
+/// The `Layout` protocol is the foundation of the ManualLayout system, providing
+/// a declarative way to define view layouts. Conforming types can calculate their
+/// layout within given bounds and extract the UIViews they manage for automatic
+/// view hierarchy management.
+///
+/// ## Overview
+///
+/// A layout represents a way to arrange views in a container. The layout system
+/// automatically handles view hierarchy management, frame calculations, and
+/// constraint-free positioning.
+///
+/// ## Key Features
+///
+/// - **Declarative Syntax**: Define layouts using a SwiftUI-like syntax
+/// - **Automatic View Management**: Views are automatically added to containers
+/// - **Flexible Sizing**: Support for intrinsic content sizing and explicit sizing
+/// - **Composable**: Combine multiple layouts to create complex arrangements
 ///
 /// ## Example Implementation
 ///
@@ -20,11 +35,30 @@ import UIKit
 ///     }
 /// }
 /// ```
+///
+/// ## Topics
+///
+/// ### Essential Methods
+/// - ``calculateLayout(in:)``
+/// - ``extractViews()``
+/// - ``intrinsicContentSize``
+///
+/// ### Layout Composition
+/// - ``overlay(_:)``
+/// - ``background(_:)``
+/// - ``cornerRadius(_:)``
 public protocol Layout {
     /// A type representing the body of this Layout.
+    ///
+    /// The `Body` associated type defines the content of the layout. For primitive
+    /// layouts like ``VStack``, ``HStack``, and ``ZStack``, this is `Never`.
     associatedtype Body: Layout
     
     /// Calculates the layout of all child views within the given bounds.
+    ///
+    /// This method is responsible for determining the position and size of all
+    /// child views within the available space. The layout system calls this method
+    /// to compute the final arrangement of views.
     ///
     /// - Parameter bounds: The available space for layout calculation
     /// - Returns: A ``LayoutResult`` containing view frames and total size
@@ -32,15 +66,35 @@ public protocol Layout {
     
     /// Extracts all UIViews managed by this layout for automatic view hierarchy management.
     ///
+    /// This method returns all UIViews that should be added to the container.
+    /// The layout system uses this to automatically manage the view hierarchy
+    /// without requiring manual `addSubview` calls.
+    ///
     /// - Returns: An array of UIViews that should be added to the container
     func extractViews() -> [UIView]
     
+    /// Returns the intrinsic content size of this layout.
+    ///
+    /// The intrinsic content size represents the natural size of the layout
+    /// without any external constraints. This is used by the layout system
+    /// to determine the appropriate size when no explicit size is provided.
+    ///
+    /// - Returns: The natural size of the layout
+    var intrinsicContentSize: CGSize { get }
+    
     /// The content and behavior of a layout.
+    ///
+    /// The `body` property defines the content of the layout. For primitive
+    /// layouts, this property is not used and should not be accessed.
     @LayoutBuilder var body: Self.Body { get }
 }
 
 extension Layout {
-    /// Applies this layout to a container view
+    /// Applies this layout to a container view.
+    ///
+    /// This method automatically manages the view hierarchy by removing existing
+    /// subviews, adding the layout's views, and calculating and applying the
+    /// final frame positions.
     ///
     /// - Parameter container: The UIView to apply the layout to
     public func apply(to container: UIView) {
@@ -66,50 +120,37 @@ extension Layout {
         }
     }
     
-    /// Adds overlay layouts on top of this layout
+    /// Adds overlay layouts on top of this layout.
+    ///
+    /// The overlay layout is positioned on top of the base layout, allowing
+    /// for layered arrangements. Both layouts are calculated within the same bounds.
+    ///
+    /// - Parameter overlay: A closure that returns the overlay layout
+    /// - Returns: An ``OverlayLayout`` that combines the base and overlay
     public func overlay(@LayoutBuilder _ overlay: () -> any Layout) -> OverlayLayout {
         return OverlayLayout(base: self, overlay: overlay())
     }
-}
-
-/// A layout that overlays another layout on top of a base layout
-public struct OverlayLayout: Layout {
-    public typealias Body = Never
     
-    public var body: Never { neverLayout("OverlayLayout") }
-    
-    private let base: any Layout
-    private let overlay: any Layout
-    
-    public init(base: any Layout, overlay: any Layout) {
-        self.base = base
-        self.overlay = overlay
+    /// Applies background color to this layout.
+    ///
+    /// This modifier sets the background color of all views in the layout.
+    /// The background is applied to the base layout's views.
+    ///
+    /// - Parameter color: The background color to apply
+    /// - Returns: A ``BackgroundLayout`` with the specified background color
+    public func background(_ color: UIColor) -> BackgroundLayout {
+        return BackgroundLayout(base: self, color: color)
     }
     
-    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        // Calculate base layout
-        let baseResult = base.calculateLayout(in: bounds)
-        
-        // Calculate overlay layout
-        let overlayResult = overlay.calculateLayout(in: bounds)
-        
-        // Combine frames
-        var allFrames = baseResult.frames
-        for (view, frame) in overlayResult.frames {
-            allFrames[view] = frame
-        }
-        
-        // Use the larger size to ensure overlay is fully visible
-        let totalSize = CGSize(
-            width: max(baseResult.totalSize.width, overlayResult.totalSize.width),
-            height: max(baseResult.totalSize.height, overlayResult.totalSize.height)
-        )
-        
-        return LayoutResult(frames: allFrames, totalSize: totalSize)
-    }
-    
-    public func extractViews() -> [UIView] {
-        return base.extractViews() + overlay.extractViews()
+    /// Applies corner radius to this layout.
+    ///
+    /// This modifier sets the corner radius of all views in the layout.
+    /// The corner radius is applied to the base layout's views.
+    ///
+    /// - Parameter radius: The corner radius to apply
+    /// - Returns: A ``CornerRadiusLayout`` with the specified corner radius
+    public func cornerRadius(_ radius: CGFloat) -> CornerRadiusLayout {
+        return CornerRadiusLayout(base: self, radius: radius)
     }
 }
 
@@ -127,6 +168,10 @@ extension Never: Layout {
     public func extractViews() -> [UIView] {
         fatalError("Never should not extract views")
     }
+    
+    public var intrinsicContentSize: CGSize {
+        fatalError("Never should not calculate intrinsic content size")
+    }
 }
 
 extension Layout where Body: Layout {
@@ -141,91 +186,16 @@ extension Layout where Body: Layout {
     public func extractViews() -> [UIView] {
         return self.body.extractViews()
     }
+    
+    @inlinable
+    public var intrinsicContentSize: CGSize {
+        return self.body.intrinsicContentSize
+    }
 }
 
 extension Layout where Body == Never {
     /// Calls `fatalError` with an explanation that a given `type` is a primitive `Layout`
     public func neverLayout(_ type: String) -> Never {
         fatalError("\(type) is a primitive `Layout`, you're not supposed to access its `body`.")
-    }
-}
-
-/// A scrollable layout that wraps content in a UIScrollView
-public struct ScrollView: Layout {
-    public typealias Body = Never
-    
-    public var body: Never {
-        neverLayout("ScrollView")
-    }
-    
-    /// The content layout to be made scrollable
-    public let content: any Layout
-    
-    /// Scroll view configuration
-    public var showsVerticalScrollIndicator: Bool
-    public var showsHorizontalScrollIndicator: Bool
-    public var isScrollEnabled: Bool
-    public var bounces: Bool
-    
-    /// Creates a scrollable layout
-    ///
-    /// - Parameters:
-    ///   - showsVerticalScrollIndicator: Whether to show vertical scroll indicator
-    ///   - showsHorizontalScrollIndicator: Whether to show horizontal scroll indicator
-    ///   - isScrollEnabled: Whether scrolling is enabled
-    ///   - bounces: Whether the scroll view bounces
-    ///   - content: The content layout to be made scrollable
-    public init(
-        showsVerticalScrollIndicator: Bool = true,
-        showsHorizontalScrollIndicator: Bool = false,
-        isScrollEnabled: Bool = true,
-        bounces: Bool = true,
-        @LayoutBuilder content: () -> any Layout
-    ) {
-        self.content = content()
-        self.showsVerticalScrollIndicator = showsVerticalScrollIndicator
-        self.showsHorizontalScrollIndicator = showsHorizontalScrollIndicator
-        self.isScrollEnabled = isScrollEnabled
-        self.bounces = bounces
-    }
-    
-    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        // Calculate content layout with unlimited height for proper sizing
-        let unlimitedBounds = CGRect(x: bounds.origin.x, y: bounds.origin.y, width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
-        let contentResult = content.calculateLayout(in: unlimitedBounds)
-        
-        // Create a UIScrollView for the content
-        let scrollView = UIScrollView()
-        scrollView.showsVerticalScrollIndicator = showsVerticalScrollIndicator
-        scrollView.showsHorizontalScrollIndicator = showsHorizontalScrollIndicator
-        scrollView.isScrollEnabled = isScrollEnabled
-        scrollView.bounces = bounces
-        
-        // Set scroll view frame to bounds
-        scrollView.frame = bounds
-        
-        // Set content size based on content layout (ensure minimum height)
-        let contentSize = CGSize(
-            width: max(contentResult.totalSize.width, bounds.width),
-            height: max(contentResult.totalSize.height, bounds.height)
-        )
-        scrollView.contentSize = contentSize
-        
-        // Add content views to scroll view with their calculated frames
-        for (view, frame) in contentResult.frames {
-            view.frame = frame
-            scrollView.addSubview(view)
-        }
-        
-        // Return scroll view as the main view with bounds size
-        return LayoutResult(
-            frames: [scrollView: bounds],
-            totalSize: bounds.size
-        )
-    }
-    
-    public func extractViews() -> [UIView] {
-        // Extract views from content layout
-        return content.extractViews()
     }
 }
