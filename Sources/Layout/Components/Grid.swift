@@ -6,6 +6,20 @@ import UIKit
 /// spacing, and alignment. It's useful for creating card layouts or
 /// photo galleries.
 ///
+/// ## Overview
+///
+/// `Grid` is a layout component that arranges child views in a grid pattern,
+/// similar to CSS Grid or SwiftUI's `LazyVGrid`. It's perfect for creating
+/// card layouts, photo galleries, or any grid-based arrangement.
+///
+/// ## Key Features
+///
+/// - **Flexible Columns**: Configurable number of columns
+/// - **Customizable Spacing**: Adjustable spacing between grid items
+/// - **Alignment Options**: Support for leading, center, and trailing alignment
+/// - **Safe Area Aware**: Automatically considers safe area insets
+/// - **Dynamic Sizing**: Items automatically size to fit available space
+///
 /// ## Example Usage
 ///
 /// ```swift
@@ -15,7 +29,28 @@ import UIKit
 ///             .size(width: 160, height: 120)
 ///     }
 /// }
+///
+/// Grid(columns: 3, spacing: 8, alignment: .leading) {
+///     ForEach(photos) { photo in
+///         photoView.layout()
+///     }
+/// }
 /// ```
+///
+/// ## Topics
+///
+/// ### Initialization
+/// - ``init(columns:spacing:alignment:content:)``
+///
+/// ### Configuration
+/// - ``columns``
+/// - ``spacing``
+/// - ``alignment``
+/// - ``padding``
+///
+/// ### Layout Behavior
+/// - ``calculateLayout(in:)``
+/// - ``extractViews()``
 public struct Grid: Layout {
     public typealias Body = Never
     
