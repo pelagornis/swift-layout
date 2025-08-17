@@ -127,7 +127,7 @@ public struct LayoutPerformanceMonitor {
                     )
                     
                     let summary = "\(name): Operations: \(stats.totalOperations), Average: \(String(format: "%.2f", stats.averageTime * 1000))ms, Min: \(String(format: "%.2f", stats.minTime * 1000))ms, Max: \(String(format: "%.2f", stats.maxTime * 1000))ms, Total: \(String(format: "%.2f", stats.totalTime * 1000))ms"
-                    debugLog(summary, component: "PerformanceMonitor", category: .performance)
+            
                 }
             }
         }
