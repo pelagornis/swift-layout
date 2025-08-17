@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
@@ -12,7 +12,7 @@ let package = Package(
             targets: ["Layout"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.4")
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.5")
     ],
     targets: [
         .target(
