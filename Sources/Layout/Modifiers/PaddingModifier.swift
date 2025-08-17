@@ -3,6 +3,32 @@ import UIKit
 /// Modifier for adding padding around views.
 ///
 /// Use ``PaddingModifier`` to add space around a view, similar to SwiftUI's `.padding()`.
+///
+/// ## Overview
+///
+/// `PaddingModifier` adds space around a view by reducing its available area.
+/// This is similar to SwiftUI's `.padding()` modifier and is useful for
+/// creating visual spacing between views and their containers.
+///
+/// ## Key Features
+///
+/// - **Flexible Insets**: Support for different padding on each side
+/// - **SwiftUI-like API**: Similar to SwiftUI's padding modifier
+/// - **Area Reduction**: Reduces the view's available space
+/// - **Chainable**: Can be combined with other modifiers
+///
+/// ## Example Usage
+///
+/// ```swift
+/// titleLabel.layout()
+///     .padding(20) // Add 20pt padding on all sides
+///
+/// contentView.layout()
+///     .padding(.init(top: 10, left: 20, bottom: 10, right: 20))
+///
+/// button.layout()
+///     .padding(.horizontal, 16) // Add horizontal padding only
+/// ```
 public struct PaddingModifier: LayoutModifier {
     /// The padding insets to apply
     public let insets: UIEdgeInsets

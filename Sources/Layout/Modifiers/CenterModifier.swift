@@ -4,6 +4,34 @@ import UIKit
 ///
 /// Use ``CenterModifier`` to center a view within the available bounds
 /// along one or both axes.
+///
+/// ## Overview
+///
+/// `CenterModifier` allows you to center a view within its container bounds.
+/// You can center horizontally, vertically, or both, providing flexible
+/// centering options for different layout needs.
+///
+/// ## Key Features
+///
+/// - **Flexible Centering**: Center horizontally, vertically, or both
+/// - **Bounds Aware**: Centers relative to the available bounds
+/// - **Size Preserving**: Maintains the view's size while centering
+/// - **Chainable**: Can be combined with other modifiers
+///
+/// ## Example Usage
+///
+/// ```swift
+/// titleLabel.layout()
+///     .size(width: 200, height: 44)
+///     .center() // Center both horizontally and vertically
+///
+/// iconView.layout()
+///     .size(width: 60, height: 60)
+///     .centerX() // Center horizontally only
+///
+/// button.layout()
+///     .centerY() // Center vertically only
+/// ```
 public struct CenterModifier: LayoutModifier {
     /// Whether to center horizontally
     public let horizontal: Bool
