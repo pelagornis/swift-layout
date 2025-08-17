@@ -4,7 +4,7 @@
 [![Swift Version](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![iOS Version](https://img.shields.io/badge/iOS-13.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CodeCov](https://img.shields.io/codecov/c/github/pelagornis/Layout)](https://codecov.io/gh/pelagornis/Layout)
+[![CodeCov](https://img.shields.io/codecov/c/github/pelagornis/swift-layout)](https://codecov.io/gh/pelagornis/swift-layout)
 [![Swift Package Manager](https://img.shields.io/badge/SwiftPM-compatible-brightgreen.svg)](https://swift.org/package-manager)
 
 A high-performance, SwiftUI-style declarative layout system that uses manual frame calculations instead of Auto Layout. Layout combines the readability of SwiftUI with the blazing speed of direct frame manipulation.
