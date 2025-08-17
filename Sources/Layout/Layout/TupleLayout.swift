@@ -23,8 +23,6 @@ public struct TupleLayout: Layout {
     public var body: Never { neverLayout("TupleLayout") }
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        debugLog("TupleLayout calculateLayout in bounds: \(bounds)", component: "TupleLayout", category: .layout)
-        
         var allFrames: [UIView: CGRect] = [:]
         var currentY: CGFloat = 0
         var maxWidth: CGFloat = 0
@@ -70,7 +68,6 @@ public struct TupleLayout: Layout {
         }
         
         let finalSize = CGSize(width: maxWidth, height: currentY)
-        debugLog("TupleLayout final size: \(finalSize), frames count: \(allFrames.count)", component: "TupleLayout", category: .layout)
         
         return LayoutResult(frames: allFrames, totalSize: finalSize)
     }

@@ -5,6 +5,38 @@ import Foundation
 /// ``LayoutBuilder`` provides a declarative syntax for creating layouts by combining
 /// multiple layout components. It automatically determines the appropriate arrangement
 /// based on the types of layouts being combined.
+///
+/// ## Overview
+///
+/// The `LayoutBuilder` enables SwiftUI-like syntax for creating layouts. It supports
+/// combining multiple layouts, conditional layouts, and array-based layouts.
+///
+/// ## Key Features
+///
+/// - **Multiple Components**: Combine up to 10 layout components
+/// - **Conditional Layouts**: Support for optional and conditional layouts
+/// - **Array Support**: Create layouts from arrays of components
+/// - **Type Safety**: Compile-time type checking for layout combinations
+///
+/// ## Example Usage
+///
+/// ```swift
+/// @LayoutBuilder
+/// func createLayout() -> some Layout {
+///     VStack {
+///         titleLabel.layout()
+///         descriptionLabel.layout()
+///     }
+///     
+///     if showButton {
+///         actionButton.layout()
+///     }
+///     
+///     ForEach(items) { item in
+///         itemView.layout()
+///     }
+/// }
+/// ```
 @resultBuilder
 public struct LayoutBuilder {
     
