@@ -78,9 +78,7 @@ public class LayoutDebugger {
     
     /// Analyze view hierarchy in tree format
     ///
-    /// Prints a detailed tree-style analysis of the view hierarchy starting from the given container.
-    /// This includes frame information, background colors, visibility state, and special properties
-    /// for certain view types like UILabel and UIButton.
+    /// Prints a simple tree-style analysis of the view hierarchy starting from the given container.
     ///
     /// - Parameters:
     ///   - container: The root view to analyze
@@ -99,23 +97,43 @@ public class LayoutDebugger {
         
         print("\(prefix) \(type(of: view))")
         print("\(indent)├─ Frame: \(view.frame)")
+        print("\(indent)├─ Bounds: \(view.bounds)")
+        print("\(indent)├─ Size: \(view.frame.size)")
         print("\(indent)├─ Background: \(view.backgroundColor?.description ?? "nil")")
         print("\(indent)├─ Hidden: \(view.isHidden)")
-        print("\(indent)└─ Alpha: \(view.alpha)")
+        print("\(indent)├─ Alpha: \(view.alpha)")
+        print("\(indent)├─ UserInteraction: \(view.isUserInteractionEnabled)")
         
         // Additional information for special view types
         if let label = view as? UILabel {
-            print("\(indent)└─ Text: \"\(label.text ?? "nil")\"")
+            print("\(indent)├─ Text: \"\(label.text ?? "nil")\"")
+            print("\(indent)├─ Font: \(label.font)")
+            print("\(indent)├─ TextColor: \(label.textColor)")
+            print("\(indent)├─ TextAlignment: \(label.textAlignment.rawValue)")
+            print("\(indent)└─ NumberOfLines: \(label.numberOfLines)")
         } else if let button = view as? UIButton {
-            print("\(indent)└─ Title: \"\(button.title(for: .normal) ?? "nil")\"")
+            print("\(indent)├─ Title: \"\(button.title(for: .normal) ?? "nil")\"")
+            print("\(indent)├─ Font: \(button.titleLabel?.font?.description ?? "nil")")
+            print("\(indent)└─ TitleColor: \(button.titleColor(for: .normal)?.description ?? "nil")")
+        } else if let imageView = view as? UIImageView {
+            print("\(indent)├─ Image: \(imageView.image?.description ?? "nil")")
+            print("\(indent)└─ ContentMode: \(imageView.contentMode.rawValue)")
+        } else if let scrollView = view as? UIScrollView {
+            print("\(indent)├─ ContentSize: \(scrollView.contentSize)")
+            print("\(indent)├─ ContentOffset: \(scrollView.contentOffset)")
+            print("\(indent)└─ ScrollEnabled: \(scrollView.isScrollEnabled)")
+        } else {
+            print("\(indent)└─ IntrinsicSize: \(view.intrinsicContentSize)")
         }
         
         // Analyze child views
         if !view.subviews.isEmpty {
-            print("\(indent)└─ \(type(of: view)) Subviews Count: \(view.subviews.count)")
+            print("\(indent)└─ Subviews Count: \(view.subviews.count)")
             for (index, subview) in view.subviews.enumerated() {
-                print("\(indent)  └─ Child \(index): \(type(of: subview))")
-                analyzeView(subview, depth: depth + 2)
+                let isLast = index == view.subviews.count - 1
+                let childPrefix = isLast ? "└─" : "├─"
+                print("\(indent)  \(childPrefix) Child \(index): \(type(of: subview))")
+                analyzeView(subview, depth: depth + 1)
             }
         }
     }
