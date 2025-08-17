@@ -107,8 +107,8 @@ public class LayoutDebugger {
         // Additional information for special view types
         if let label = view as? UILabel {
             print("\(indent)├─ Text: \"\(label.text ?? "nil")\"")
-            print("\(indent)├─ Font: \(label.font)")
-            print("\(indent)├─ TextColor: \(label.textColor)")
+            print("\(indent)├─ Font: \(String(describing: label.font))")
+            print("\(indent)├─ TextColor: \(String(describing: label.textColor))")
             print("\(indent)├─ TextAlignment: \(label.textAlignment.rawValue)")
             print("\(indent)└─ NumberOfLines: \(label.numberOfLines)")
         } else if let button = view as? UIButton {
