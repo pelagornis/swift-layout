@@ -5,6 +5,20 @@ import UIKit
 /// ``ZStack`` arranges its child layouts in layers, with later children appearing on top
 /// of earlier ones. It supports flexible spacing and various alignment options.
 ///
+/// ## Overview
+///
+/// `ZStack` is a layout container that layers child views on top of each other,
+/// similar to SwiftUI's `ZStack`. Child views are positioned according to the
+/// specified alignment, with later children appearing above earlier ones.
+///
+/// ## Key Features
+///
+/// - **Layered Arrangement**: Child views are stacked on top of each other
+/// - **Alignment Options**: Support for 9 different alignment positions
+/// - **Z-Index Control**: Later children appear above earlier ones
+/// - **Overlay Support**: Perfect for creating overlays and badges
+/// - **Flexible Sizing**: Automatically sizes to fit all child content
+///
 /// ## Example Usage
 ///
 /// ```swift
@@ -18,6 +32,22 @@ import UIKit
 /// }
 /// .padding(40)
 /// ```
+///
+/// ## Topics
+///
+/// ### Initialization
+/// - ``init(alignment:padding:children:)``
+///
+/// ### Configuration
+/// - ``alignment(_:)``
+/// - ``padding(_:)``
+/// - ``size(width:height:)``
+/// - ``overlay(_:)``
+///
+/// ### Layout Behavior
+/// - ``calculateLayout(in:)``
+/// - ``extractViews()``
+/// - ``intrinsicContentSize``
 public class ZStack: UIView, Layout {
     public typealias Body = Never
     
@@ -33,6 +63,9 @@ public class ZStack: UIView, Layout {
     
     /// Explicit size override
     public var explicitSize: CGSize = .zero
+    
+    /// Dictionary to store ViewLayout information for each subview
+    private var viewLayouts: [UIView: ViewLayout] = [:]
     
     /// Alignment options for ZStack
     public enum Alignment {
@@ -76,40 +109,20 @@ public class ZStack: UIView, Layout {
                     // 일반 뷰들도 직접 추가
                     addSubview(childView)
                     
-                    // UILabel이나 UIButton의 경우 텍스트 정보도 출력
-                    if let label = childView as? UILabel {
-                    } else if let button = childView as? UIButton {
+                    // ViewLayout 정보 저장
+                    if let viewLayout = childLayout as? ViewLayout {
+                        storeViewLayout(viewLayout, for: childView)
                     }
-                }
-            }
-            
-            for (index, subview) in subviews.enumerated() {
-                if let label = subview as? UILabel {
-                } else if let button = subview as? UIButton {
                 }
             }
         } else {
             // 일반적인 경우 (TupleLayout이 아닌 경우)
             let allChildViews = layout.extractViews()
-            
-            // 각 자식 뷰의 타입 출력
-            for (index, childView) in allChildViews.enumerated() {
-            }
-            
+
             // 각 자식 뷰를 subviews에 추가
             for (index, childView) in allChildViews.enumerated() {
                 addSubview(childView)
-                
-                // UILabel이나 UIButton의 경우 텍스트 정보도 출력
-                if let label = childView as? UILabel {
-                } else if let button = childView as? UIButton {
-                }
             }
-        }
-        
-        
-        // 최종 subviews 상태 출력
-        for (index, subview) in subviews.enumerated() {
         }
     }
     
@@ -127,25 +140,19 @@ public class ZStack: UIView, Layout {
         let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
         let availableBounds = safeBounds.inset(by: padding)
         
+        // calculateLayout을 호출하여 ViewLayout의 계산된 프레임을 가져옴
+        let layoutResult = calculateLayout(in: bounds)
+        
         // 모든 subview들을 배치
         for subview in subviews {
             
             var size: CGSize
-            if let layoutView = subview as? (any Layout) {
-                // 자식 Layout에게 실제 사용 가능한 공간을 제공하여 정확한 크기 계산
-                let layoutResult = layoutView.calculateLayout(in: availableBounds)
-                size = layoutResult.totalSize
-                // 음수 값 방지
-                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
-            } else if let label = subview as? UILabel {
-                let textSize = label.sizeThatFits(CGSize(width: availableBounds.width, height: availableBounds.height))
-                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-            } else if let button = subview as? UIButton {
-                let buttonSize = button.sizeThatFits(CGSize(width: availableBounds.width, height: availableBounds.height))
-                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+            // calculateLayout에서 계산된 프레임 사용
+            if let frame = layoutResult.frames[subview] {
+                size = frame.size
             } else {
-                let intrinsicSize = subview.intrinsicContentSize
-                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                // Fallback for views not in layoutResult
+                size = CGSize(width: 50, height: 20)
             }
             
             // 음수 값 방지
@@ -256,23 +263,54 @@ public class ZStack: UIView, Layout {
                 totalSize.width = max(totalSize.width, childResult.totalSize.width)
                 totalSize.height = max(totalSize.height, childResult.totalSize.height)
             } else {
-                // For non-Layout views, calculate their size
-                var size: CGSize
-                if subview is Spacer {
-                    size = .zero
-                } else if let label = subview as? UILabel {
-                    let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
-                    size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-                } else if let button = subview as? UIButton {
-                    let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
-                    size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                // 저장된 ViewLayout 정보가 있는지 확인
+                if let storedViewLayout = getViewLayout(for: subview) {
+                    // 저장된 ViewLayout 정보를 사용하여 calculateLayout 호출
+                    let viewResult = storedViewLayout.calculateLayout(in: safeBounds)
+                    
+                    if let frame = viewResult.frames[subview] {
+                        frames[subview] = frame
+                        totalSize.width = max(totalSize.width, frame.width)
+                        totalSize.height = max(totalSize.height, frame.height)
+
+                    } else {
+                        // Fallback: 기존 로직 사용
+                        var size: CGSize
+                        if subview is Spacer {
+                            size = .zero
+                        } else if let label = subview as? UILabel {
+                            let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                            size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                        } else if let button = subview as? UIButton {
+                            let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                            size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                        } else {
+                            let intrinsicSize = subview.intrinsicContentSize
+                            size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                        }
+                        frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                        totalSize.width = max(totalSize.width, size.width)
+                        totalSize.height = max(totalSize.height, size.height)
+                    }
                 } else {
-                    let intrinsicSize = subview.intrinsicContentSize
-                    size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                    // 저장된 ViewLayout 정보가 없는 경우 기존 로직 사용
+                    var size: CGSize
+                    if subview is Spacer {
+                        size = .zero
+                    } else if let label = subview as? UILabel {
+                        let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                        size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                    } else if let button = subview as? UIButton {
+                        let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                        size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                    } else {
+                        let intrinsicSize = subview.intrinsicContentSize
+                        size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                    }
+                    frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                    totalSize.width = max(totalSize.width, size.width)
+                    totalSize.height = max(totalSize.height, size.height)
                 }
-                frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-                totalSize.width = max(totalSize.width, size.width)
-                totalSize.height = max(totalSize.height, size.height)
             }
         }
         
@@ -289,6 +327,16 @@ public class ZStack: UIView, Layout {
     
     public func extractViews() -> [UIView] {
         return [self]
+    }
+    
+    /// Stores ViewLayout information for a specific view
+    public func storeViewLayout(_ viewLayout: ViewLayout, for view: UIView) {
+        viewLayouts[view] = viewLayout
+    }
+    
+    /// Retrieves ViewLayout information for a specific view
+    public func getViewLayout(for view: UIView) -> ViewLayout? {
+        return viewLayouts[view]
     }
     
     // MARK: - Modifier Methods
