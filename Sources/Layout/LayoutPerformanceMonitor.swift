@@ -6,13 +6,57 @@ import Foundation
 /// ``LayoutPerformanceMonitor`` provides tools to measure and optimize
 /// layout performance, similar to SwiftUI's performance monitoring.
 ///
+/// ## Overview
+///
+/// `LayoutPerformanceMonitor` helps you identify performance bottlenecks
+/// in your layout calculations by measuring execution time and collecting
+/// statistics. It's particularly useful for optimizing complex layouts
+/// and identifying slow layout operations.
+///
+/// ## Key Features
+///
+/// - **Time Measurement**: Measure execution time of layout operations
+/// - **Statistics Collection**: Track min, max, average, and total times
+/// - **Thread-Safe**: Concurrent access to performance data
+/// - **Custom Logging**: Support for custom logging functions
+/// - **Summary Reports**: Detailed performance summaries
+///
 /// ## Example Usage
 ///
 /// ```swift
+/// // Basic measurement
 /// LayoutPerformanceMonitor.measureLayout(name: "Complex Layout") {
 ///     layoutContainer.layoutSubviews()
 /// }
+///
+/// // With custom logging
+/// LayoutPerformanceMonitor.measureLayout(
+///     name: "Grid Layout",
+///     operation: { grid.calculateLayout(in: bounds) },
+///     logger: { name, duration in
+///         print("\(name) took \(duration)ms")
+///     }
+/// )
+///
+/// // Print performance summary
+/// LayoutPerformanceMonitor.printSummary()
 /// ```
+///
+/// ## Topics
+///
+/// ### Measurement
+/// - ``measureLayout(name:operation:)``
+/// - ``measureLayout(name:operation:logger:)``
+///
+/// ### Statistics
+/// - ``Statistics``
+/// - ``PerformanceCollector``
+/// - ``statistics(for:)``
+///
+/// ### Management
+/// - ``record(_:duration:)``
+/// - ``clearMeasurements()``
+/// - ``printSummary()``
 public struct LayoutPerformanceMonitor {
     
     /// Measures the time taken for a layout operation
@@ -20,7 +64,7 @@ public struct LayoutPerformanceMonitor {
     /// - Parameters:
     ///   - name: The name of the layout operation for identification
     ///   - operation: The layout operation to measure
-    /// - Returns: The time taken in milliseconds
+    /// - Returns: The result of the operation
     @discardableResult
     public static func measureLayout<T>(name: String, operation: () -> T) -> T {
         let startTime = CFAbsoluteTimeGetCurrent()
@@ -28,9 +72,10 @@ public struct LayoutPerformanceMonitor {
         let endTime = CFAbsoluteTimeGetCurrent()
         
         let duration = (endTime - startTime) * 1000 // Convert to milliseconds
+        print("📊 [LayoutPerformance] \(name): \(String(format: "%.2f", duration))ms")
         
-        #if DEBUG
-        #endif
+        // Record the measurement
+        shared.record(name, duration: duration)
         
         return result
     }
@@ -41,27 +86,50 @@ public struct LayoutPerformanceMonitor {
     ///   - name: The name of the layout operation
     ///   - operation: The layout operation to measure
     ///   - logger: Custom logging function
-    /// - Returns: The time taken in milliseconds
+    /// - Returns: The result of the operation
     @discardableResult
     public static func measureLayout<T>(name: String, operation: () -> T, logger: (String, TimeInterval) -> Void) -> T {
         let startTime = CFAbsoluteTimeGetCurrent()
         let result = operation()
         let endTime = CFAbsoluteTimeGetCurrent()
         
-        let duration = endTime - startTime
+        let duration = (endTime - startTime) * 1000 // Convert to milliseconds
         logger(name, duration)
+        
+        // Record the measurement
+        shared.record(name, duration: duration)
         
         return result
     }
     
-    /// Performance statistics for layout operations
+    /// Performance statistics for layout operations.
+    ///
+    /// Contains aggregated performance data for layout operations,
+    /// including total operations, average time, and min/max times.
     public struct Statistics {
+        /// Total number of operations measured
         public let totalOperations: Int
+        
+        /// Average time per operation in milliseconds
         public let averageTime: TimeInterval
+        
+        /// Minimum time recorded in milliseconds
         public let minTime: TimeInterval
+        
+        /// Maximum time recorded in milliseconds
         public let maxTime: TimeInterval
+        
+        /// Total time for all operations in milliseconds
         public let totalTime: TimeInterval
         
+        /// Creates performance statistics.
+        ///
+        /// - Parameters:
+        ///   - totalOperations: Total number of operations measured
+        ///   - averageTime: Average time per operation
+        ///   - minTime: Minimum time recorded
+        ///   - maxTime: Maximum time recorded
+        ///   - totalTime: Total time for all operations
         public init(totalOperations: Int, averageTime: TimeInterval, minTime: TimeInterval, maxTime: TimeInterval, totalTime: TimeInterval) {
             self.totalOperations = totalOperations
             self.averageTime = averageTime
@@ -71,7 +139,11 @@ public struct LayoutPerformanceMonitor {
         }
     }
     
-    /// Thread-safe performance statistics collector
+    /// Thread-safe performance statistics collector.
+    ///
+    /// Collects and manages performance measurements for layout operations
+    /// in a thread-safe manner. Provides methods to record measurements,
+    /// retrieve statistics, and generate performance reports.
     public class PerformanceCollector {
         private var measurements: [String: [TimeInterval]] = [:]
         private let queue = DispatchQueue(label: "LayoutPerformanceMonitor", attributes: .concurrent)
@@ -117,6 +189,9 @@ public struct LayoutPerformanceMonitor {
         /// Prints a summary of all measurements
         public func printSummary() {
             queue.sync {
+                print("📊 [LayoutPerformance] Summary:")
+                print("==================================================")
+                
                 for (name, times) in measurements {
                     let stats = Statistics(
                         totalOperations: times.count,
@@ -126,9 +201,16 @@ public struct LayoutPerformanceMonitor {
                         totalTime: times.reduce(0, +)
                     )
                     
-                    let summary = "\(name): Operations: \(stats.totalOperations), Average: \(String(format: "%.2f", stats.averageTime * 1000))ms, Min: \(String(format: "%.2f", stats.minTime * 1000))ms, Max: \(String(format: "%.2f", stats.maxTime * 1000))ms, Total: \(String(format: "%.2f", stats.totalTime * 1000))ms"
-            
+                    print("📋 \(name):")
+                    print("   Operations: \(stats.totalOperations)")
+                    print("   Average: \(String(format: "%.2f", stats.averageTime))ms")
+                    print("   Min: \(String(format: "%.2f", stats.minTime))ms")
+                    print("   Max: \(String(format: "%.2f", stats.maxTime))ms")
+                    print("   Total: \(String(format: "%.2f", stats.totalTime))ms")
+                    print("")
                 }
+                
+                print("==================================================")
             }
         }
     }
