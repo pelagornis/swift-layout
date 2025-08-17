@@ -5,6 +5,20 @@ import UIKit
 /// ``Spacer`` is equivalent to SwiftUI's Spacer and expands to fill
 /// available space in stack layouts, or uses a minimum length if specified.
 ///
+/// ## Overview
+///
+/// `Spacer` is a flexible layout component that expands to fill available space
+/// in stack layouts. It's commonly used to push other views apart or create
+/// flexible spacing between layout elements.
+///
+/// ## Key Features
+///
+/// - **Flexible Sizing**: Expands to fill available space in stack layouts
+/// - **Minimum Length**: Optional minimum length constraint
+/// - **Stack Integration**: Works seamlessly with `VStack`, `HStack`, and `ZStack`
+/// - **ScrollView Aware**: Automatically adjusts behavior in ScrollView contexts
+/// - **Non-Interactive**: Disabled user interaction by default
+///
 /// ## Example Usage
 ///
 /// ```swift
@@ -13,7 +27,27 @@ import UIKit
 ///     Spacer() // Pushes buttons apart
 ///     rightButton.layout()
 /// }
+///
+/// VStack {
+///     titleLabel.layout()
+///     Spacer(minLength: 20) // Minimum 20pt spacing
+///     footerLabel.layout()
+/// }
 /// ```
+///
+/// ## Topics
+///
+/// ### Initialization
+/// - ``init(minLength:)``
+///
+/// ### Properties
+/// - ``minLength``
+/// - ``isSpacer``
+///
+/// ### Layout Behavior
+/// - ``calculateLayout(in:)``
+/// - ``extractViews()``
+/// - ``intrinsicContentSize``
 public class Spacer: UIView, Layout {
     public typealias Body = Never
     
@@ -42,11 +76,22 @@ public class Spacer: UIView, Layout {
     
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         var frames: [UIView: CGRect] = [:]
-        frames[self] = .zero // Spacer reports its size as zero
-        return LayoutResult(frames: frames, totalSize: .zero) // Total size is also zero
+        
+        // Spacer는 사용 가능한 공간을 모두 차지하되, 최소 길이 보장
+        let spacerHeight = max(minLength ?? bounds.height, 0)
+        let spacerWidth = bounds.width
+        
+        frames[self] = CGRect(x: 0, y: 0, width: spacerWidth, height: spacerHeight)
+        return LayoutResult(frames: frames, totalSize: CGSize(width: spacerWidth, height: spacerHeight))
     }
     
     public func extractViews() -> [UIView] {
         return [self]
+    }
+    
+    public override var intrinsicContentSize: CGSize {
+        // Spacer의 intrinsic content size는 최소 길이 또는 0
+        let minSize = minLength ?? 0
+        return CGSize(width: minSize, height: minSize)
     }
 }
