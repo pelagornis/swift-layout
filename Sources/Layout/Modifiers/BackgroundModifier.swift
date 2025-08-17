@@ -20,8 +20,6 @@ public struct BackgroundModifier: LayoutModifier {
     }
     
     public func apply(to frame: CGRect, in bounds: CGRect) -> CGRect {
-        // Background color는 프레임에 영향을 주지 않으므로 프레임은 그대로 반환
-        // 실제 background color는 ViewLayout에서 적용
         return frame
     }
 } 
