@@ -86,41 +86,32 @@ public class ZStack: UIView, Layout {
         super.init(frame: .zero)
         
         
-        // 자식 레이아웃을 생성하고 뷰로 변환
         let layout = children()
         
-        // TupleLayout인 경우 자식들을 직접 추출
         if let tupleLayout = layout as? TupleLayout {
             
-            // TupleLayout의 layouts 배열에서 직접 뷰들을 추출
-            for (index, childLayout) in tupleLayout.layouts.enumerated() {
+            for (_, childLayout) in tupleLayout.layouts.enumerated() {
                 
                 let childViews = childLayout.extractViews()
                 
-                // 각 자식 레이아웃의 뷰들을 처리
-                for (viewIndex, childView) in childViews.enumerated() {
+                for (_, childView) in childViews.enumerated() {
                     
-                    // 스택 컴포넌트인 경우 직접 추가 (자신의 자식으로)
                     if childView is VStack || childView is HStack || childView is ZStack {
                         addSubview(childView)
                         continue
                     }
                     
-                    // 일반 뷰들도 직접 추가
                     addSubview(childView)
                     
-                    // ViewLayout 정보 저장
                     if let viewLayout = childLayout as? ViewLayout {
                         storeViewLayout(viewLayout, for: childView)
                     }
                 }
             }
         } else {
-            // 일반적인 경우 (TupleLayout이 아닌 경우)
             let allChildViews = layout.extractViews()
 
-            // 각 자식 뷰를 subviews에 추가
-            for (index, childView) in allChildViews.enumerated() {
+            for (_, childView) in allChildViews.enumerated() {
                 addSubview(childView)
             }
         }
@@ -136,18 +127,17 @@ public class ZStack: UIView, Layout {
         super.layoutSubviews()
         
         
-        // bounds가 유효하지 않은 경우 safeBounds 사용
+        // Use safeBounds if bounds is not valid
         let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
-        let availableBounds = safeBounds.inset(by: padding)
         
-        // calculateLayout을 호출하여 ViewLayout의 계산된 프레임을 가져옴
+        // Call calculateLayout to get the calculated frames from ViewLayout
         let layoutResult = calculateLayout(in: bounds)
         
-        // 모든 subview들을 배치
+        // Layout all subviews
         for subview in subviews {
             
             var size: CGSize
-            // calculateLayout에서 계산된 프레임 사용
+            // Use the frame calculated from calculateLayout
             if let frame = layoutResult.frames[subview] {
                 size = frame.size
             } else {
@@ -155,10 +145,10 @@ public class ZStack: UIView, Layout {
                 size = CGSize(width: 50, height: 20)
             }
             
-            // 음수 값 방지
+            // Prevent negative values
             size = CGSize(width: max(size.width, 1), height: max(size.height, 1))
             
-            // ZStack의 전체 bounds를 사용하여 중앙 정렬 (padding 제외)
+            // Use ZStack's full bounds for center alignment (excluding padding)
             let (x, y) = calculatePosition(for: size, in: safeBounds, alignment: alignment)
             
             let frame = CGRect(x: x, y: y, width: size.width, height: size.height)
@@ -207,27 +197,27 @@ public class ZStack: UIView, Layout {
         var maxWidth: CGFloat = 0
         var maxHeight: CGFloat = 0
         
-        // 실제 자식 뷰들의 크기를 정확하게 계산
+        // Calculate actual size of child views accurately
         for subview in subviews {
             var size: CGSize
             
-            // Layout 프로토콜을 구현하는 뷰들 (VStack, HStack, ZStack)의 경우
+            // For views implementing Layout protocol (VStack, HStack, ZStack)
             if let layoutView = subview as? (any Layout) {
-                // Layout 뷰의 경우 calculateLayout을 사용하여 정확한 크기 계산
+                // Use calculateLayout for Layout views to calculate accurate size
                 let layoutResult = layoutView.calculateLayout(in: CGRect(x: 0, y: 0, width: 375, height: 600))
                 size = layoutResult.totalSize
-                // 음수 값 방지
+                // Prevent negative values
                 size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
             } else if let label = subview as? UILabel {
-                // UILabel의 경우 텍스트 크기에 맞춰 계산
+                // Calculate based on text size for UILabel
                 let textSize = label.sizeThatFits(CGSize(width: 375, height: 600))
                 size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
             } else if let button = subview as? UIButton {
-                // UIButton의 경우 버튼 크기에 맞춰 계산
+                // Calculate based on button size for UIButton
                 let buttonSize = button.sizeThatFits(CGSize(width: 375, height: 600))
                 size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
             } else {
-                // 다른 뷰의 경우 intrinsicContentSize 사용
+                // Use intrinsicContentSize for other views
                 let intrinsicSize = subview.intrinsicContentSize
                 size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
             }
@@ -236,11 +226,11 @@ public class ZStack: UIView, Layout {
             maxHeight = max(maxHeight, size.height)
         }
         
-        // padding 추가
+        // Add padding
         maxWidth += padding.left + padding.right
         maxHeight += padding.top + padding.bottom
         
-        // 최소 크기 보장 (자식 뷰가 없는 경우에도)
+        // Ensure minimum size (even when no child views)
         maxWidth = max(maxWidth, 200)
         maxHeight = max(maxHeight, 100)
         
@@ -263,9 +253,9 @@ public class ZStack: UIView, Layout {
                 totalSize.width = max(totalSize.width, childResult.totalSize.width)
                 totalSize.height = max(totalSize.height, childResult.totalSize.height)
             } else {
-                // 저장된 ViewLayout 정보가 있는지 확인
+                // Check if stored ViewLayout information exists
                 if let storedViewLayout = getViewLayout(for: subview) {
-                    // 저장된 ViewLayout 정보를 사용하여 calculateLayout 호출
+                    // Call calculateLayout using stored ViewLayout information
                     let viewResult = storedViewLayout.calculateLayout(in: safeBounds)
                     
                     if let frame = viewResult.frames[subview] {
@@ -274,7 +264,7 @@ public class ZStack: UIView, Layout {
                         totalSize.height = max(totalSize.height, frame.height)
 
                     } else {
-                        // Fallback: 기존 로직 사용
+                        // Fallback: use existing logic
                         var size: CGSize
                         if subview is Spacer {
                             size = .zero
@@ -293,7 +283,7 @@ public class ZStack: UIView, Layout {
                         totalSize.height = max(totalSize.height, size.height)
                     }
                 } else {
-                    // 저장된 ViewLayout 정보가 없는 경우 기존 로직 사용
+                    // Use existing logic if no stored ViewLayout information
                     var size: CGSize
                     if subview is Spacer {
                         size = .zero
@@ -382,19 +372,19 @@ public class ZStack: UIView, Layout {
         
         let overlayLayouts: [any Layout]
         if let tupleLayout = overlayLayout as? TupleLayout {
-            // TupleLayout의 extractViews()를 사용하여 자식 뷰들을 추출
+            // Extract child views using TupleLayout's extractViews()
             let views = tupleLayout.extractViews()
-            // ViewLayout으로 변환
+            // Convert to ViewLayout
             overlayLayouts = views.map { ViewLayout($0) }
         } else {
             overlayLayouts = [overlayLayout]
         }
         
-        // Overlay 뷰들을 추가 (Layout 뷰들은 제외)
+        // Add overlay views (exclude Layout views)
         for overlayLayout in overlayLayouts {
             let overlayViews = overlayLayout.extractViews()
             for overlayView in overlayViews {
-                // Layout 뷰들은 추가하지 않음 (이미 자식 뷰들이 추가됨)
+                // Don't add Layout views (child views already added)
                 if !(overlayView is VStack || overlayView is HStack || overlayView is ZStack) {
                     self.addSubview(overlayView)
                 }

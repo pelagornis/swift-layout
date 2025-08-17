@@ -294,7 +294,7 @@ public class ScrollView: UIView, Layout {
     // MARK: - Intrinsic Content Size
     
     public override var intrinsicContentSize: CGSize {
-        guard let layout = childLayout else {
+        guard childLayout != nil else {
             return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
         }
         

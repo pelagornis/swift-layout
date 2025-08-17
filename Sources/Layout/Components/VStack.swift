@@ -83,7 +83,7 @@ public class VStack: UIView, Layout {
     /// Dictionary to store ViewLayout information for each subview
     private var viewLayouts: [UIView: ViewLayout] = [:]
     
-    /// ScrollView 감지 여부를 캐시
+    /// Cache for ScrollView detection
     private var isInsideScrollViewCache: Bool?
     
     /// Horizontal alignment options for VStack.
@@ -128,12 +128,12 @@ public class VStack: UIView, Layout {
         if let tupleLayout = layout as? TupleLayout {
             
             // Extract views directly from TupleLayout's layouts array
-            for (index, childLayout) in tupleLayout.layouts.enumerated() {
+            for (_, childLayout) in tupleLayout.layouts.enumerated() {
                 
                 let childViews = childLayout.extractViews()
                 
                 // Process views from each child layout
-                for (viewIndex, childView) in childViews.enumerated() {
+                for (_, childView) in childViews.enumerated() {
                     
                     
                     // Add stack components directly (as own children)
@@ -145,18 +145,15 @@ public class VStack: UIView, Layout {
                     // Also add regular views directly
                     addSubview(childView)
                     
-                    // ViewLayout 정보 저장
+                    // Store ViewLayout information
                     if let viewLayout = childLayout as? ViewLayout {
                         storeViewLayout(viewLayout, for: childView)
                     }
                 }
             }
         } else {
-            // 일반적인 경우 (TupleLayout이 아닌 경우)
             let allChildViews = layout.extractViews()
-            // 각 자식 뷰를 subviews에 추가
-            for (index, childView) in allChildViews.enumerated() {
-                // 모든 뷰에서 Auto Layout 비활성화
+            for (_, childView) in allChildViews.enumerated() {
                 addSubview(childView)
             }
         }
@@ -176,7 +173,7 @@ public class VStack: UIView, Layout {
         let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
         let availableBounds = safeBounds.inset(by: padding)
         
-        // calculateLayout을 호출하여 ViewLayout의 계산된 프레임을 가져옴
+        // Call calculateLayout to get the calculated frames from ViewLayout
         let layoutResult = calculateLayout(in: bounds)
         
         // First calculate fixed content height (excluding Spacers)
@@ -190,7 +187,7 @@ public class VStack: UIView, Layout {
                 spacerCount += 1
                 totalMinLength += spacer.minLength ?? 0
             } else {
-                // calculateLayout에서 계산된 프레임 사용
+                // Use the frame calculated from calculateLayout
                 if let frame = layoutResult.frames[subview] {
                     let size = frame.size
                     fixedContentHeight += size.height
@@ -208,22 +205,22 @@ public class VStack: UIView, Layout {
         // Calculate remaining space for Spacers (like SwiftUI, occupy all available space)
         let totalAvailableHeightForContent = availableBounds.height
         
-        // ScrollView 내부에 있는지 감지
+        // Detect if inside ScrollView
         let isInsideScrollView = isInsideScrollView()
         
         let remainingHeightForSpacers: CGFloat
         if isInsideScrollView {
-            // ScrollView 내부에서는 Spacer를 완전히 무시
+            // Completely ignore Spacer inside ScrollView
             remainingHeightForSpacers = 0
         } else {
-            // 일반적인 경우
+            // Normal case
             remainingHeightForSpacers = max(0, totalAvailableHeightForContent - fixedContentHeight - totalSpacing - totalMinLength)
         }
         
         let finalSpacerHeight: CGFloat
         if isInsideScrollView {
-            // ScrollView 내부에서는 Spacer가 매우 작은 공간만 차지
-            let reasonableSpacerHeight = min(remainingHeightForSpacers / CGFloat(max(spacerCount, 1)), 10) // 최대 10포인트로 제한
+            // Inside ScrollView, Spacer takes only a very small space
+            let reasonableSpacerHeight = min(remainingHeightForSpacers / CGFloat(max(spacerCount, 1)), 10) // Limit to maximum 10 points
             finalSpacerHeight = reasonableSpacerHeight
         } else {
             finalSpacerHeight = spacerCount > 0 ? (remainingHeightForSpacers / CGFloat(spacerCount)) : 0
@@ -234,29 +231,29 @@ public class VStack: UIView, Layout {
         
         // Layout all subviews
         for subview in subviews {
-            // ScrollView 내부에서는 Spacer를 완전히 무시
+            // Completely ignore Spacer inside ScrollView
             if isInsideScrollView && subview is Spacer {
                 continue
             }
             
             var size: CGSize
             
-            // Spacer 감지
+            // Detect Spacer
             if let spacer = subview as? Spacer {
                 let minLength = spacer.minLength ?? 0
                 let actualHeight: CGFloat
                 
                 if isInsideScrollView {
-                    // ScrollView 내부에서는 Spacer 높이를 0으로 설정
+                    // Set Spacer height to 0 inside ScrollView
                     actualHeight = 0
                 } else {
-                    // 일반적인 경우
+                    // Normal case
                     actualHeight = max(finalSpacerHeight + minLength, minLength)
                 }
                 
                 size = CGSize(width: availableBounds.width, height: actualHeight)
             } else {
-                // calculateLayout에서 계산된 프레임 사용
+                // Use the frame calculated from calculateLayout
                 if let frame = layoutResult.frames[subview] {
                     size = frame.size
                 } else {
@@ -283,37 +280,37 @@ public class VStack: UIView, Layout {
         var totalHeight: CGFloat = 0
         var maxWidth: CGFloat = 0
         
-        // ScrollView 내부에 있는지 감지
+        // Detect if inside ScrollView
         let isInsideScrollView = isInsideScrollView()
         
-        // intrinsicContentSize는 제약이 없을 때의 자연스러운 크기를 계산
-        // bounds에 의존하지 않고 자식 뷰들의 intrinsicContentSize를 기반으로 계산
+        // intrinsicContentSize calculates the natural size without constraints
+        // Based on children's intrinsicContentSize, not dependent on bounds
         
         for subview in subviews {
-            // ScrollView 내부에서는 Spacer를 완전히 무시
+            // Completely ignore Spacer inside ScrollView
             if isInsideScrollView && subview is Spacer {
                 continue
             }
             
             var size: CGSize
             
-            // Spacer 특별 처리
+            // Special handling for Spacer
             if subview is Spacer {
-                // Spacer는 intrinsicContentSize에서 최소한의 공간만 차지
+                // Spacer takes minimal space in intrinsicContentSize
                 size = CGSize(width: 0, height: 0)
             } else if let layoutView = subview as? (any Layout) {
-                // Layout 뷰의 경우 intrinsicContentSize 사용
+                // Use intrinsicContentSize for Layout views
                 size = layoutView.intrinsicContentSize
             } else if let label = subview as? UILabel {
-                // UILabel의 경우 텍스트 크기에 맞춰 계산
+                // Calculate based on text size for UILabel
                 let textSize = label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
                 size = textSize
             } else if let button = subview as? UIButton {
-                // UIButton의 경우 버튼 크기에 맞춰 계산
+                // Calculate based on button size for UIButton
                 let buttonSize = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
                 size = buttonSize
             } else {
-                // 다른 뷰의 경우 intrinsicContentSize 사용
+                // Use intrinsicContentSize for other views
                 size = subview.intrinsicContentSize
             }
             
@@ -321,13 +318,13 @@ public class VStack: UIView, Layout {
             maxWidth = max(maxWidth, size.width)
         }
         
-        // spacing 추가 - ScrollView 내부에서는 Spacer를 고려하지 않음
+        // Add spacing - don't consider Spacer inside ScrollView
         let effectiveSubviews = isInsideScrollView ? subviews.filter { !($0 is Spacer) } : subviews
         if effectiveSubviews.count > 1 {
             totalHeight += spacing * CGFloat(effectiveSubviews.count - 1)
         }
         
-        // padding 추가
+        // Add padding
         totalHeight += padding.top + padding.bottom
         maxWidth += padding.left + padding.right
         
@@ -336,16 +333,16 @@ public class VStack: UIView, Layout {
     
     // MARK: - Layout Protocol
     
-    // Spacer가 있을 때의 레이아웃 계산
+    // Layout calculation when Spacer is present
     private func calculateLayoutWithSpacers(in bounds: CGRect) -> LayoutResult {
         let safeBounds = bounds.inset(by: padding)
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
         
-        // ScrollView 내부에 있는지 감지
+        // Detect if inside ScrollView
         let isInsideScrollView = isInsideScrollView()
         
-        // 먼저 Spacer가 아닌 뷰들의 크기를 계산
+        // First calculate the size of views that are not Spacers
         var fixedContentHeight: CGFloat = 0
         var spacerCount: Int = 0
         
@@ -375,28 +372,28 @@ public class VStack: UIView, Layout {
             }
         }
         
-        // 무제한 높이 감지 및 제한
-        let maxReasonableHeight: CGFloat = 10000 // 10000pt 제한
+        // Detect and limit unlimited height
+        let maxReasonableHeight: CGFloat = 10000 // 10000pt limit
         if fixedContentHeight > maxReasonableHeight {
             fixedContentHeight = maxReasonableHeight
         }
         
-        // Spacer 계산 - ScrollView 내부에 있으면 Spacer 높이를 제한
+        // Spacer calculation - limit Spacer height if inside ScrollView
         let totalSpacing = subviews.count > 1 ? spacing * CGFloat(subviews.count - 1) : 0
         let remainingHeightForSpacers: CGFloat
         
         if isInsideScrollView {
-            // ScrollView 내부에 있으면 Spacer가 실제 콘텐츠 크기를 늘리지 않도록 제한
-            let maxSpacerHeight: CGFloat = 10 // Spacer 최대 높이 제한 (SwiftUI와 유사하게 매우 작게)
+            // If inside ScrollView, limit Spacer so it doesn't increase actual content size
+            let maxSpacerHeight: CGFloat = 10 // Spacer maximum height limit (very small like SwiftUI)
             remainingHeightForSpacers = min(maxSpacerHeight, max(0, safeBounds.height - fixedContentHeight - totalSpacing))
         } else {
-            // 일반적인 경우
+            // Normal case
             remainingHeightForSpacers = max(0, safeBounds.height - fixedContentHeight - totalSpacing)
         }
         
         let spacerHeight = spacerCount > 0 ? remainingHeightForSpacers / CGFloat(spacerCount) : 0
         
-        // Spacer들에 대해 계산된 크기 설정
+        // Set calculated size for Spacers
         for subview in subviews {
             if subview is Spacer {
                 frames[subview] = CGRect(x: 0, y: 0, width: safeBounds.width, height: spacerHeight)
@@ -404,16 +401,16 @@ public class VStack: UIView, Layout {
             }
         }
         
-        // 전체 높이 계산 - ScrollView 내부에 있으면 bounds를 초과하지 않도록 제한
+        // Calculate total height - limit to not exceed bounds if inside ScrollView
         let finalHeight: CGFloat
         if isInsideScrollView {
-            // ScrollView 내부에서는 Spacer 높이를 포함한 실제 콘텐츠 높이 사용
+            // Inside ScrollView, use actual content height including Spacer height
             let spacerHeight = spacerCount > 0 ? remainingHeightForSpacers / CGFloat(spacerCount) : 0
             let totalSpacerHeight = spacerHeight * CGFloat(spacerCount)
             let contentHeight = fixedContentHeight + totalSpacing + totalSpacerHeight
             finalHeight = min(contentHeight, safeBounds.height)
         } else {
-            // 일반적인 경우
+            // Normal case
             finalHeight = min(safeBounds.height, maxReasonableHeight)
         }
         
@@ -426,41 +423,41 @@ public class VStack: UIView, Layout {
         return LayoutResult(frames: frames, totalSize: totalSize)
     }
     
-    // Spacer가 없을 때의 레이아웃 계산
+    // Layout calculation when Spacer is not present
     private func calculateLayoutWithoutSpacers(in bounds: CGRect) -> LayoutResult {
         let safeBounds = bounds.inset(by: padding)
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
         
-        // ScrollView 내부에 있는지 감지
+        // Detect if inside ScrollView
         let isInsideScrollView = isInsideScrollView()
         
-        // 무한대 높이 감지 및 제한
-        let isInfiniteHeight = bounds.height > 10000 // 10000pt 이상이면 무한대로 간주
+        // Detect and limit infinite height
+        let isInfiniteHeight = bounds.height > 10000 // Consider infinite if over 10000pt
         let maxWidth = min(safeBounds.width, bounds.width)
-        let maxHeight = isInfiniteHeight ? 1000 : min(safeBounds.height, bounds.height) // 무한대면 1000pt로 제한
+        let maxHeight = isInfiniteHeight ? 1000 : min(safeBounds.height, bounds.height) // Limit to 1000pt if infinite
         
         for subview in subviews {
-            // ScrollView 내부에서는 Spacer를 완전히 무시
+            // Completely ignore Spacer inside ScrollView
             if isInsideScrollView && subview is Spacer {
-                print("🔧 [VStack] ScrollView 내부에서 Spacer 무시됨")
+                print("🔧 [VStack] Spacer ignored inside ScrollView")
                 continue
             }
             if let layoutView = subview as? (any Layout) {
-                // 자식 레이아웃에 제한된 크기 전달 (무한대 방지)
+                // Pass limited size to child layout (prevent infinite)
                 let childBounds = CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight)
                 let childResult = layoutView.calculateLayout(in: childBounds)
                 frames.merge(childResult.frames) { _, new in new }
                 
-                // 크기 제한 적용
+                // Apply size limits
                 let limitedWidth = min(childResult.totalSize.width, maxWidth)
                 let limitedHeight = min(childResult.totalSize.height, maxHeight)
                 totalSize.width = max(totalSize.width, limitedWidth)
                 totalSize.height += limitedHeight
             } else {
-                // 저장된 ViewLayout 정보가 있는지 확인
+                // Check if stored ViewLayout information exists
                 if let storedViewLayout = getViewLayout(for: subview) {
-                    // 저장된 ViewLayout 정보를 사용하여 calculateLayout 호출
+                    // Call calculateLayout using stored ViewLayout information
                     let viewResult = storedViewLayout.calculateLayout(in: CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight))
                     
                     if let frame = viewResult.frames[subview] {
@@ -469,7 +466,7 @@ public class VStack: UIView, Layout {
                         totalSize.height += frame.height
 
                     } else {
-                        // Fallback: 기존 로직 사용
+                        // Fallback: use existing logic
                         var size: CGSize
                         if let label = subview as? UILabel {
                             let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
@@ -486,7 +483,7 @@ public class VStack: UIView, Layout {
                         totalSize.height += size.height
                     }
                 } else {
-                    // 저장된 ViewLayout 정보가 없는 경우 기존 로직 사용
+                    // Use existing logic if no stored ViewLayout information
                     var size: CGSize
                     if let label = subview as? UILabel {
                         let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
@@ -505,27 +502,27 @@ public class VStack: UIView, Layout {
             }
         }
         
-        // spacing 추가 - ScrollView 내부에서는 Spacer를 고려하지 않음
+        // Add spacing - don't consider Spacer inside ScrollView
         let effectiveSubviews = isInsideScrollView ? subviews.filter { !($0 is Spacer) } : subviews
         if effectiveSubviews.count > 1 {
             totalSize.height += spacing * CGFloat(effectiveSubviews.count - 1)
         }
         
-        // padding 추가
+        // Add padding
         totalSize.width += padding.left + padding.right
         totalSize.height += padding.top + padding.bottom
         
-        // 무제한 높이 감지 및 제한
-        let maxReasonableHeight: CGFloat = 10000 // 10000pt 제한
+        // Detect and limit unlimited height
+        let maxReasonableHeight: CGFloat = 10000 // 10000pt limit
         if totalSize.height > maxReasonableHeight {
             totalSize.height = maxReasonableHeight
         }
         
-        // alignment가 설정되어 있으면 전체 width 사용
+        // Use full width if alignment is set
         if alignment != .leading {
             totalSize.width = bounds.width
         } else {
-            // 최종 크기 제한 적용
+            // Apply final size limits
             totalSize.width = min(totalSize.width, bounds.width)
         }
         totalSize.height = min(totalSize.height, bounds.height)
@@ -537,21 +534,21 @@ public class VStack: UIView, Layout {
 
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         
-        // Spacer가 있는지 확인
+        // Check if Spacer exists
         let hasSpacers = subviews.contains { $0 is Spacer }
         
-        // ScrollView 내부에 있는지 감지
+        // Detect if inside ScrollView
         let isInsideScrollView = isInsideScrollView()
         
         if hasSpacers && isInsideScrollView {
-            // ScrollView 내부에 Spacer가 있는 경우: Spacer를 무시하고 실제 콘텐츠만 계산
-            print("🔧 [VStack] ScrollView 내부에서 Spacer 감지됨 - WithoutSpacer 모드로 전환")
+            // If Spacer exists inside ScrollView: ignore Spacer and calculate only actual content
+            print("🔧 [VStack] Spacer detected inside ScrollView - switching to WithoutSpacer mode")
             return calculateLayoutWithoutSpacers(in: bounds)
         } else if hasSpacers {
-            // 일반적인 경우에 Spacer가 있는 경우
+            // Normal case when Spacer exists
             return calculateLayoutWithSpacers(in: bounds)
         } else {
-            // Spacer가 없는 경우
+            // When Spacer doesn't exist
             return calculateLayoutWithoutSpacers(in: bounds)
         }
     }
@@ -572,14 +569,14 @@ public class VStack: UIView, Layout {
         return viewLayouts[view]
     }
     
-    /// ScrollView 내부에 있는지 감지하는 메서드
+    /// Method to detect if inside ScrollView
     private func isInsideScrollView() -> Bool {
-        // 캐시된 값이 있으면 반환
+        // Return cached value if exists
         if let cached = isInsideScrollViewCache {
             return cached
         }
         
-        // 부모 뷰를 따라가면서 ScrollView 찾기
+        // Traverse parent views to find ScrollView
         var currentView: UIView? = self.superview
         while let view = currentView {
             if view is UIScrollView || view is ScrollView {
@@ -589,7 +586,7 @@ public class VStack: UIView, Layout {
             currentView = view.superview
         }
         
-        // bounds.height가 매우 큰 경우도 ScrollView 내부로 간주
+        // Consider inside ScrollView if bounds.height is very large
         if bounds.height > 1000 {
             isInsideScrollViewCache = true
             return true
@@ -647,19 +644,19 @@ public class VStack: UIView, Layout {
         
         let overlayLayouts: [any Layout]
         if let tupleLayout = overlayLayout as? TupleLayout {
-            // TupleLayout의 extractViews()를 사용하여 자식 뷰들을 추출
+            // Extract child views using TupleLayout's extractViews()
             let views = tupleLayout.extractViews()
-            // ViewLayout으로 변환
+            // Convert to ViewLayout
             overlayLayouts = views.map { ViewLayout($0) }
         } else {
             overlayLayouts = [overlayLayout]
         }
         
-        // Overlay 뷰들을 추가 (Layout 뷰들은 제외)
+        // Add overlay views (exclude Layout views)
         for overlayLayout in overlayLayouts {
             let overlayViews = overlayLayout.extractViews()
             for overlayView in overlayViews {
-                // Layout 뷰들은 추가하지 않음 (이미 자식 뷰들이 추가됨)
+                // Don't add Layout views (child views already added)
                 if !(overlayView is VStack || overlayView is HStack || overlayView is ZStack) {
                     self.addSubview(overlayView)
                 }
