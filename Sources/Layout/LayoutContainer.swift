@@ -90,11 +90,24 @@ public class LayoutContainer: UIView {
             return
         }
         
-        let result = body.calculateLayout(in: bounds)
-        let topLevelViews = body.extractViews()
+        // SwiftUI처럼 Stack을 사용하지 않으면 자동으로 VStack으로 감싸기
+        if isStackLayout(body) {
+            // 이미 Stack이면 기존 방식 사용
+            applyLayout(body)
+        } else {
+            // Stack이 아니면 VStack으로 감싸기
+            let autoVStack = createAutoVStack(from: body)
+            applyLayout(autoVStack)
+        }
+    }
+    
+    /// Apply layout to views
+    private func applyLayout(_ layout: any Layout) {
+        let result = layout.calculateLayout(in: bounds)
+        let topLevelViews = layout.extractViews()
         
         // Check if the body is a ScrollView or contains ScrollView
-        let isScrollView = body is ScrollView || topLevelViews.contains { $0 is ScrollView }
+        let isScrollView = layout is ScrollView || topLevelViews.contains { $0 is ScrollView }
         
         for view in topLevelViews {
             addSubview(view)
@@ -128,6 +141,37 @@ public class LayoutContainer: UIView {
                     button.layoutIfNeeded()
                 }
             }
+        }
+    }
+    
+    /// Check if the layout is a Stack type (VStack, HStack, ZStack)
+    private func isStackLayout(_ layout: any Layout) -> Bool {
+        let views = layout.extractViews()
+        return views.contains { $0 is VStack || $0 is HStack || $0 is ZStack }
+    }
+    
+    /// Create an automatic VStack from non-stack layout
+    private func createAutoVStack(from layout: any Layout) -> VStack {
+        if let tupleLayout = layout as? TupleLayout {
+            let vstack = VStack(spacing: 20) {
+                for childLayout in tupleLayout.layouts {
+                    let views = childLayout.extractViews()
+                    for view in views {
+                        view.layout()
+                    }
+                }
+            }
+            return vstack
+        } else {
+            // 단일 레이아웃인 경우 VStack으로 감싸기
+            let vstack = VStack(alignment: .center, spacing: 20) {
+                // 단일 레이아웃의 뷰들을 추출하여 추가
+                let views = layout.extractViews()
+                for view in views {
+                    view.layout()
+                }
+            }
+            return vstack
         }
     }
     
