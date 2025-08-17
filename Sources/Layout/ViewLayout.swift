@@ -35,9 +35,11 @@ public struct ViewLayout: Layout {
         self.view = view
     }
     
-    @MainActor public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        // bounds가 유효하지 않은 경우 기본값 사용
-        let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
+    public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        
+        
+        // bounds가 유효하지 않은 경우 기본값 사용 (width가 0이어도 height는 사용 가능할 수 있음)
+        let safeBounds = bounds.width > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
         
         let intrinsicSize = view.intrinsicContentSize
         
@@ -72,35 +74,13 @@ public struct ViewLayout: Layout {
         // 음수 값 방지
         defaultSize = CGSize(width: max(defaultSize.width, 1), height: max(defaultSize.height, 1))
         
-        // size 모디파이어가 있는지 확인
-        var hasSizeModifier = false
-        var explicitWidth: CGFloat?
-        var explicitHeight: CGFloat?
-        
-        for modifier in modifiers {
-            if let sizeModifier = modifier as? SizeModifier {
-                hasSizeModifier = true
-                explicitWidth = sizeModifier.width
-                explicitHeight = sizeModifier.height
-                break
-            }
-        }
-        
-        // size 모디파이어가 있으면 해당 크기 사용
-        if hasSizeModifier {
-            defaultSize = CGSize(
-                width: explicitWidth ?? defaultSize.width,
-                height: explicitHeight ?? defaultSize.height
-            )
-        }
-        
         // bounds.origin을 기준으로 한 상대 좌표로 시작
         var frame = CGRect(origin: .zero, size: defaultSize)
         
         // Apply modifiers in sequence (safeBounds를 기준으로)
         for modifier in modifiers {
             frame = modifier.apply(to: frame, in: safeBounds)
-            
+
             // BackgroundModifier 처리
             if let backgroundModifier = modifier as? BackgroundModifier {
                 view.backgroundColor = backgroundModifier.color
@@ -115,12 +95,16 @@ public struct ViewLayout: Layout {
             height: max(frame.height, 1)
         )
         
-        
         return LayoutResult(frames: [view: finalFrame], totalSize: frame.size)
     }
     
-    @MainActor     public func extractViews() -> [UIView] {
+    public func extractViews() -> [UIView] {
         return [view]
+    }
+    
+    public var intrinsicContentSize: CGSize {
+        // Return the view's intrinsic content size
+        return view.intrinsicContentSize
     }
     
     // MARK: - Size Modifiers
