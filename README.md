@@ -377,12 +377,6 @@ LayoutPerformanceMonitor.shared.printPerformanceReport()
 
 ## 📚 Documentation
 
-## 🛠️ Requirements
-
-- iOS 13.0+ / macOS 10.15+
-- Xcode 16.0+
-- Swift 6.0+
-
 ## 🎯 Migration Guide
 
 ### From Auto Layout
