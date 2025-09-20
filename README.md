@@ -26,7 +26,7 @@ A high-performance, SwiftUI-style declarative layout system that uses manual fra
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/pelagornis/swift-layout.git", from: "1.0.0")
+    .package(url: "https://github.com/pelagornis/swift-layout.git", from: "vTag")
 ]
 ```
 
