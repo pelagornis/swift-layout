@@ -14,12 +14,12 @@ concurrency:
 
 jobs:
   xcodebuild-latest:
-    name: xcodebuild (16.0)
+    name: xcodebuild (16.4)
     runs-on: macos-15
     strategy:
       matrix:
         platform: [IOS]
-        xcode: ["16.0"]
+        xcode: ["16.4"]
     steps:
       - uses: actions/checkout@v4
 
@@ -52,10 +52,7 @@ jobs:
         run: |
           case ${{ matrix.platform }} in
             "IOS")
-              xcodebuild -workspace Layout.xcworkspace \
-                -scheme Layout \
-                -destination 'generic/platform=iOS Simulator' \
-                build
+              xcodebuild -workspace Layout.xcworkspace -scheme Layout -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5' build
               ;;
           esac
 
@@ -64,7 +61,7 @@ jobs:
           xcodebuild test \
             -workspace Layout.xcworkspace \
             -scheme Layout \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES
 
@@ -73,7 +70,7 @@ jobs:
     runs-on: macos-15
     strategy:
       matrix:
-        xcode: ["16.0"]
+        xcode: ["16.4"]
     steps:
       - uses: actions/checkout@v4
 
@@ -103,5 +100,5 @@ jobs:
           xcodebuild build \
             -workspace Layout.xcworkspace \
             -scheme Example \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5' \
             -derivedDataPath ~/.derivedData
