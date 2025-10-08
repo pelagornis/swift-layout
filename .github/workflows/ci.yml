@@ -58,9 +58,4 @@ jobs:
 
       - name: Test
         run: |
-          xcodebuild test \
-            -workspace Layout.xcworkspace \
-            -scheme Layout \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0' \
-            -derivedDataPath ~/.derivedData \
-            -enableCodeCoverage YES
+          swift test
