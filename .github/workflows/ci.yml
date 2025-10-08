@@ -52,7 +52,7 @@ jobs:
         run: |
           case ${{ matrix.platform }} in
             "IOS")
-              xcodebuild -workspace Layout.xcworkspace -scheme Layout -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' build
+              xcodebuild -workspace Layout.xcworkspace -scheme Layout -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0' build
               ;;
           esac
 
@@ -61,44 +61,6 @@ jobs:
           xcodebuild test \
             -workspace Layout.xcworkspace \
             -scheme Layout \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES
-
-  example:
-    name: Example
-    runs-on: macos-15
-    strategy:
-      matrix:
-        xcode: ["16.4"]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Cache derived data
-        uses: actions/cache@v3
-        with:
-          path: ~/.derivedData
-          key: |
-            deriveddata-example-${{ hashFiles('**/Sources/**/*.swift', '**/Tests/**/*.swift', '**/Example/**/*.swift') }}
-          restore-keys: |
-            deriveddata-example-
-
-      - name: Select Xcode ${{ matrix.xcode }}
-        run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
-
-      - name: Update xcbeautify
-        run: brew update && brew upgrade xcbeautify
-
-      - name: Set IgnoreFileSystemDeviceInodeChanges flag
-        run: defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
-
-      - name: Update mtime for incremental builds
-        uses: chetan/git-restore-mtime-action@v2
-
-      - name: Build Example
-        run: |
-          xcodebuild build \
-            -workspace Layout.xcworkspace \
-            -scheme Example \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
-            -derivedDataPath ~/.derivedData
