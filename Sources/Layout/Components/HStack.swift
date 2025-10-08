@@ -102,17 +102,12 @@ public class HStack: UIView, Layout {
                 let childViews = childLayout.extractViews()
 
                 for (_, childView) in childViews.enumerated() {
-                    if childView is VStack || childView is HStack || childView is ZStack {
-                        addSubview(childView)
-                        continue
-                    }
-
                     addSubview(childView)
-
+                    
+                    // Store ViewLayout information for all views (including Stack components)
                     if let viewLayout = childLayout as? ViewLayout {
                         storeViewLayout(viewLayout, for: childView)
                     }
-                    
                 }
             }
         } else {
@@ -375,46 +370,18 @@ public class HStack: UIView, Layout {
             if isInsideScrollView && subview is Spacer {
                 continue
             }
-            if let layoutView = subview as? (any Layout) {
-                // Pass limited size to child layout
-                let limitedBounds = CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight)
-                let childResult = layoutView.calculateLayout(in: limitedBounds)
-                frames.merge(childResult.frames) { _, new in new }
+            
+            // Check if stored ViewLayout information exists (PRIORITY: check ViewLayout first!)
+            if let storedViewLayout = getViewLayout(for: subview) {
+                // Call calculateLayout using stored ViewLayout information
+                let viewResult = storedViewLayout.calculateLayout(in: CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight))
                 
-                // Apply size limits
-                let limitedWidth = min(childResult.totalSize.width, maxWidth)
-                let limitedHeight = min(childResult.totalSize.height, maxHeight)
-                totalSize.width += limitedWidth
-                totalSize.height = max(totalSize.height, limitedHeight)
-            } else {
-                // Check if stored ViewLayout information exists
-                if let storedViewLayout = getViewLayout(for: subview) {
-                    // Call calculateLayout using stored ViewLayout information
-                    let viewResult = storedViewLayout.calculateLayout(in: CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight))
-                    
-                    if let frame = viewResult.frames[subview] {
-                        frames[subview] = frame
-                        totalSize.width += frame.width
-                        totalSize.height = max(totalSize.height, frame.height)
-                    } else {
-                        // Fallback: use existing logic
-                        var size: CGSize
-                        if let label = subview as? UILabel {
-                            let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-                            size = CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
-                        } else if let button = subview as? UIButton {
-                            let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-                            size = CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
-                        } else {
-                            let intrinsicSize = subview.intrinsicContentSize
-                            size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
-                        }
-                        frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-                        totalSize.width += size.width
-                        totalSize.height = max(totalSize.height, size.height)
-                    }
+                if let frame = viewResult.frames[subview] {
+                    frames[subview] = frame
+                    totalSize.width += frame.width
+                    totalSize.height = max(totalSize.height, frame.height)
                 } else {
-                    // Use existing logic if no stored ViewLayout information
+                    // Fallback: use existing logic
                     var size: CGSize
                     if let label = subview as? UILabel {
                         let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
@@ -430,6 +397,33 @@ public class HStack: UIView, Layout {
                     totalSize.width += size.width
                     totalSize.height = max(totalSize.height, size.height)
                 }
+            } else if let layoutView = subview as? (any Layout) {
+                // Pass limited size to child layout
+                let limitedBounds = CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight)
+                let childResult = layoutView.calculateLayout(in: limitedBounds)
+                frames.merge(childResult.frames) { _, new in new }
+                
+                // Apply size limits
+                let limitedWidth = min(childResult.totalSize.width, maxWidth)
+                let limitedHeight = min(childResult.totalSize.height, maxHeight)
+                totalSize.width += limitedWidth
+                totalSize.height = max(totalSize.height, limitedHeight)
+            } else {
+                // Use existing logic if no stored ViewLayout information
+                var size: CGSize
+                if let label = subview as? UILabel {
+                    let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
+                    size = CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
+                } else if let button = subview as? UIButton {
+                    let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
+                    size = CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
+                } else {
+                    let intrinsicSize = subview.intrinsicContentSize
+                    size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
+                }
+                frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                totalSize.width += size.width
+                totalSize.height = max(totalSize.height, size.height)
             }
         }
         

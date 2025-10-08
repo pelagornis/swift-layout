@@ -95,14 +95,9 @@ public class ZStack: UIView, Layout {
                 let childViews = childLayout.extractViews()
                 
                 for (_, childView) in childViews.enumerated() {
-                    
-                    if childView is VStack || childView is HStack || childView is ZStack {
-                        addSubview(childView)
-                        continue
-                    }
-                    
                     addSubview(childView)
                     
+                    // Store ViewLayout information for all views (including Stack components)
                     if let viewLayout = childLayout as? ViewLayout {
                         storeViewLayout(viewLayout, for: childView)
                     }
@@ -113,6 +108,10 @@ public class ZStack: UIView, Layout {
 
             for (_, childView) in allChildViews.enumerated() {
                 addSubview(childView)
+                
+                if let viewLayout = layout as? ViewLayout {
+                    storeViewLayout(viewLayout, for: childView)
+                }
             }
         }
     }
