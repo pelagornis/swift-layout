@@ -61,7 +61,7 @@ jobs:
           xcodebuild test \
             -workspace Layout.xcworkspace \
             -scheme Layout \
-            -destination 'platform=iOS Simulator,name=iPhone iPhone 16,OS=18.5'' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES
 
@@ -100,5 +100,5 @@ jobs:
           xcodebuild build \
             -workspace Layout.xcworkspace \
             -scheme Example \
-            -destination 'platform=iOS Simulator,name=iPhone iPhone 16,OS=18.5' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
             -derivedDataPath ~/.derivedData
