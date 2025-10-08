@@ -52,7 +52,10 @@ jobs:
         run: |
           case ${{ matrix.platform }} in
             "IOS")
-              xcodebuild -workspace Layout.xcworkspace -scheme Layout -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=18.0' build
+              xcodebuild -workspace Layout.xcworkspace \
+                -scheme Layout \
+                -destination 'generic/platform=iOS Simulator' \
+                build
               ;;
           esac
 
@@ -61,7 +64,7 @@ jobs:
           xcodebuild test \
             -workspace Layout.xcworkspace \
             -scheme Layout \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=18.0' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES
 
@@ -100,5 +103,5 @@ jobs:
           xcodebuild build \
             -workspace Layout.xcworkspace \
             -scheme Example \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=18.0' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath ~/.derivedData
