@@ -60,7 +60,7 @@ class MyViewController: UIViewController, Layout {
     @LayoutBuilder var body: some Layout {
         // Content is automatically centered like SwiftUI
         titleLabel.layout()
-            .frame(height: 30)
+            .size(height: 30)
 
         actionButton.layout()
             .size(width: 240, height: 50)
@@ -76,7 +76,7 @@ class MyViewController: UIViewController, Layout {
         Spacer(minLength: 60)
 
         titleLabel.layout()
-            .frame(height: 30)
+            .size(height: 30)
 
         actionButton.layout()
             .size(width: 240, height: 50)
@@ -128,10 +128,10 @@ ForEach(items) { item in
 // Conditional layouts
 if isExpanded {
     detailView.layout()
-        .frame(height: 200)
+        .size(height: 200)
 } else {
     summaryView.layout()
-        .frame(height: 60)
+        .size(height: 60)
 }
 ```
 
@@ -158,11 +158,11 @@ struct MySwiftUIView: View {
             // Use any UIKit view in SwiftUI!
             UILabel()
                 .swiftui  // ← Magic conversion!
-                .frame(height: 50)
+                .size(height: 50)
 
             createCustomUIKitView()
                 .swiftui
-                .frame(height: 100)
+                .size(height: 100)
         }
     }
 
@@ -212,8 +212,8 @@ class UIKitViewController: UIViewController {
                     .size(width: 40, height: 40)
 
                 VStack(spacing: 4, alignment: .leading) {
-                    nameLabel.layout().frame(height: 20)
-                    timeLabel.layout().frame(height: 16)
+                    nameLabel.layout().size(height: 20)
+                    timeLabel.layout().size(height: 16)
                 }
 
                 Spacer()
@@ -223,12 +223,12 @@ class UIKitViewController: UIViewController {
 
             // Content
             messageLabel.layout()
-                .frame(height: 40)
+                .size(height: 40)
 
             // Actions
             HStack(spacing: 24, alignment: .center) {
-                likeButton.layout().frame(width: 60, height: 30)
-                shareButton.layout().frame(width: 60, height: 30)
+                likeButton.layout().size(width: 60, height: 30)
+                shareButton.layout().size(width: 60, height: 30)
                 Spacer()
             }
         }

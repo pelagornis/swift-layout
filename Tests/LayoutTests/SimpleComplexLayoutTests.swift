@@ -4,30 +4,30 @@ import XCTest
 final class SimpleComplexLayoutTests: XCTestCase {
     
     func testComplexLayoutStructure() {
-        // 복잡한 레이아웃 구조 테스트 - UIKit 없이
+        // Complex layout structure test - without UIKit
         let complexLayout = createComplexLayout()
         
-        // 레이아웃 구조 검증
+        // Validate layout structure
         XCTAssertNotNil(complexLayout)
         
-        // 레이아웃 계산 시뮬레이션
+        // Simulate layout calculation
         let bounds = CGRect(x: 0, y: 0, width: 400, height: 600)
         let result = simulateLayoutCalculation(complexLayout, in: bounds)
         
-        // 결과 검증
+        // Validate results
         XCTAssertNotNil(result)
         XCTAssertGreaterThan(result.totalWidth, 0)
         XCTAssertGreaterThan(result.totalHeight, 0)
         XCTAssertLessThanOrEqual(result.totalWidth, bounds.width)
         
-        print("복잡한 레이아웃 구조 테스트 결과:")
-        print("- 전체 크기: \(result.totalWidth) x \(result.totalHeight)")
-        print("- 컴포넌트 개수: \(result.componentCount)")
-        print("- 레이아웃 타입: \(result.layoutType)")
+        print("Complex layout structure test result:")
+        print("- Total size: \(result.totalWidth) x \(result.totalHeight)")
+        print("- Component count: \(result.componentCount)")
+        print("- Layout type: \(result.layoutType)")
     }
     
     func testNestedLayoutPerformance() {
-        // 중첩된 레이아웃 성능 테스트
+        // Nested layout performance test
         let complexLayout = createNestedLayout()
         
         let bounds = CGRect(x: 0, y: 0, width: 500, height: 800)
@@ -42,17 +42,17 @@ final class SimpleComplexLayoutTests: XCTestCase {
         XCTAssertGreaterThan(result.totalWidth, 0)
         XCTAssertGreaterThan(result.totalHeight, 0)
         
-        print("중첩된 레이아웃 성능 테스트:")
-        print("- 실행 시간: \(executionTime * 1000)ms")
-        print("- 전체 크기: \(result.totalWidth) x \(result.totalHeight)")
-        print("- 컴포넌트 개수: \(result.componentCount)")
+        print("Nested layout performance test:")
+        print("- Execution time: \(executionTime * 1000)ms")
+        print("- Total size: \(result.totalWidth) x \(result.totalHeight)")
+        print("- Component count: \(result.componentCount)")
         
-        // 성능 기준: 1ms 이내
+        // Performance criteria: within 1ms
         XCTAssertLessThan(executionTime, 0.001)
     }
     
     func testMixedLayoutTypes() {
-        // 다양한 레이아웃 타입 혼합 테스트
+        // Mixed layout types test
         let mixedLayout = createMixedLayout()
         
         let bounds = CGRect(x: 0, y: 0, width: 400, height: 600)
@@ -62,18 +62,18 @@ final class SimpleComplexLayoutTests: XCTestCase {
         XCTAssertGreaterThan(result.totalWidth, 0)
         XCTAssertGreaterThan(result.totalHeight, 0)
         
-        print("혼합 레이아웃 타입 테스트:")
-        print("- 전체 크기: \(result.totalWidth) x \(result.totalHeight)")
-        print("- 레이아웃 타입: \(result.layoutType)")
-        print("- 컴포넌트 개수: \(result.componentCount)")
+        print("Mixed layout types test:")
+        print("- Total size: \(result.totalWidth) x \(result.totalHeight)")
+        print("- Layout type: \(result.layoutType)")
+        print("- Component count: \(result.componentCount)")
         
-        // 다양한 레이아웃 타입이 포함되었는지 확인
+        // Check if various layout types are included
         XCTAssertTrue(result.layoutType.contains("VStack"))
         XCTAssertTrue(result.layoutType.contains("HStack"))
         XCTAssertTrue(result.layoutType.contains("ZStack"))
     }
     
-    // MARK: - 헬퍼 메서드들
+    // MARK: - Helper Methods
     
     private func createComplexLayout() -> ComplexLayoutNode {
         return ComplexLayoutNode(
@@ -242,7 +242,7 @@ final class SimpleComplexLayoutTests: XCTestCase {
     }
 }
 
-// MARK: - 헬퍼 구조체들
+// MARK: - Helper Structures
 
 struct ComplexLayoutNode {
     let type: String

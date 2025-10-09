@@ -1,6 +1,5 @@
 import XCTest
 import UIKit
-import SwiftUI
 @testable import Layout
 
 /// Integration tests for complex scenarios
@@ -33,7 +32,7 @@ class IntegrationTests: XCTestCase {
                 }
                 
                 // Content
-                VStack(spacing: 16, alignment: .center) {
+                VStack(alignment: .center, spacing: 16) {
                     
                     subtitleLabel.layout()
                         .size(width: 280, height: 40)

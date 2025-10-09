@@ -107,7 +107,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
         let viewLayout = testView.layout()
             .size(width: 100, height: 50)
             .centerX()
-            .position(y: 10)
+            .position(x: 0, y: 10)
             .offset(x: 5, y: 0)
         
         let bounds = CGRect(x: 0, y: 0, width: 400, height: 300)

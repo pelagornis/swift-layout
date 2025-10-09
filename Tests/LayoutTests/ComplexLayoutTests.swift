@@ -4,9 +4,9 @@ import XCTest
 final class ComplexLayoutTests: XCTestCase {
     
     func testComplexVStackLayout() {
-        // 복잡한 VStack 테스트 - UIKit 없이
+        // Complex VStack test - without UIKit
         let complexLayout = VStack(spacing: 10) {
-            // 첫 번째 섹션: 헤더
+            // First section: Header
             HStack(spacing: 8) {
                 createMockLayout(width: 40, height: 40, color: "blue")
                 VStack(spacing: 4) {
@@ -17,57 +17,57 @@ final class ComplexLayoutTests: XCTestCase {
                 createMockLayout(width: 60, height: 30, color: "button")
             }
             
-            // 두 번째 섹션: 통계 카드들
+            // Second section: Stats cards
             HStack(spacing: 12) {
-                createStatCard(title: "팔로워", value: "1,234", color: "blue")
-                createStatCard(title: "팔로잉", value: "567", color: "green")
-                createStatCard(title: "게시물", value: "89", color: "orange")
+                createStatCard(title: "Followers", value: "1,234", color: "blue")
+                createStatCard(title: "Following", value: "567", color: "green")
+                createStatCard(title: "Posts", value: "89", color: "orange")
             }
             
-            // 세 번째 섹션: 갤러리
+            // Third section: Gallery
             VStack(spacing: 8) {
                 createMockLayout(width: 200, height: 24, color: "section_title")
                 createPhotoGrid()
             }
             
-            // 네 번째 섹션: 액션 버튼들
+            // Fourth section: Action buttons
             HStack(spacing: 12) {
                 createMockLayout(width: 120, height: 44, color: "primary_button")
                 createMockLayout(width: 100, height: 44, color: "secondary_button")
             }
             
-            // 다섯 번째 섹션: 중첩된 ZStack
+            // Fifth section: Nested ZStack
             ZStack {
                 createMockLayout(width: 300, height: 80, color: "background")
                 VStack(spacing: 8) {
-                    createIconLabel(icon: "⭐️", text: "프리미엄 기능")
-                    createIconLabel(icon: "🔒", text: "보안 설정")
+                    createIconLabel(icon: "⭐️", text: "Premium Feature")
+                    createIconLabel(icon: "🔒", text: "Security Settings")
                 }
                 .padding(16)
             }
-            .frame(height: 80)
+            .size(height: 80)
         }
         .padding(16)
         
-        // 레이아웃 계산
+        // Calculate layout
         let bounds = CGRect(x: 0, y: 0, width: 350, height: 600)
         let result = complexLayout.calculateLayout(in: bounds)
         
-        // 기본 검증
+        // Basic validation
         XCTAssertNotNil(result)
         XCTAssertGreaterThan(result.totalSize.width, 0)
         XCTAssertGreaterThan(result.totalSize.height, 0)
         XCTAssertLessThanOrEqual(result.totalSize.width, bounds.width)
         
-        // 프레임 개수 검증 (예상되는 뷰 개수)
-        let expectedViewCount = 15 // 헤더(4) + 통계(6) + 갤러리(7) + 버튼(2) + ZStack(3) + 기타
+        // Frame count validation (expected number of views)
+        let expectedViewCount = 15 // Header(4) + Stats(6) + Gallery(7) + Buttons(2) + ZStack(3) + Others
         XCTAssertGreaterThanOrEqual(result.frames.count, expectedViewCount)
         
-        print("복잡한 VStack 레이아웃 결과:")
-        print("- 전체 크기: \(result.totalSize)")
-        print("- 프레임 개수: \(result.frames.count)")
+        print("Complex VStack layout result:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
         
-        // 각 섹션별 검증
+        // Validate each section
         validateHeaderSection(result)
         validateStatsSection(result)
         validateGallerySection(result)
@@ -76,16 +76,16 @@ final class ComplexLayoutTests: XCTestCase {
     }
     
     func testComplexHStackLayout() {
-        // 복잡한 HStack 테스트
+        // Complex HStack test
         let complexLayout = HStack(spacing: 16) {
-            // 왼쪽 패널
+            // Left panel
             VStack(spacing: 12) {
                 createMockLayout(width: 80, height: 80, color: "profile")
                 createMockLayout(width: 80, height: 20, color: "name")
                 createMockLayout(width: 80, height: 16, color: "status")
             }
             
-            // 중앙 패널
+            // Center panel
             VStack(spacing: 8) {
                 createMockLayout(width: 120, height: 24, color: "title")
                 createMockLayout(width: 120, height: 16, color: "description")
@@ -95,7 +95,7 @@ final class ComplexLayoutTests: XCTestCase {
                 }
             }
             
-            // 오른쪽 패널
+            // Right panel
             VStack(spacing: 8) {
                 createMockLayout(width: 60, height: 30, color: "action1")
                 createMockLayout(width: 60, height: 30, color: "action2")
@@ -110,18 +110,18 @@ final class ComplexLayoutTests: XCTestCase {
         XCTAssertGreaterThan(result.totalSize.width, 0)
         XCTAssertGreaterThan(result.totalSize.height, 0)
         
-        print("복잡한 HStack 레이아웃 결과:")
-        print("- 전체 크기: \(result.totalSize)")
-        print("- 프레임 개수: \(result.frames.count)")
+        print("Complex HStack layout result:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
     }
     
     func testNestedZStackLayout() {
-        // 중첩된 ZStack 테스트
+        // Nested ZStack test
         let complexLayout = ZStack {
-            // 배경
+            // Background
             createMockLayout(width: 300, height: 200, color: "background")
             
-            // 중앙 콘텐츠
+            // Center content
             VStack(spacing: 12) {
                 createMockLayout(width: 100, height: 40, color: "title")
                 HStack(spacing: 16) {
@@ -131,14 +131,13 @@ final class ComplexLayoutTests: XCTestCase {
                 }
             }
             
-            // 오버레이
+            // Overlay
             ZStack {
                 createMockLayout(width: 80, height: 30, color: "overlay")
                 createMockLayout(width: 40, height: 20, color: "badge")
             }
-            .offset(x: 100, y: -50)
         }
-        .frame(width: 300, height: 200)
+        .size(width: 300, height: 200)
         
         let bounds = CGRect(x: 0, y: 0, width: 300, height: 200)
         let result = complexLayout.calculateLayout(in: bounds)
@@ -147,13 +146,13 @@ final class ComplexLayoutTests: XCTestCase {
         XCTAssertEqual(result.totalSize.width, 300)
         XCTAssertEqual(result.totalSize.height, 200)
         
-        print("중첩된 ZStack 레이아웃 결과:")
-        print("- 전체 크기: \(result.totalSize)")
-        print("- 프레임 개수: \(result.frames.count)")
+        print("Nested ZStack layout result:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
     }
     
     func testMixedLayoutPerformance() {
-        // 성능 테스트: 복잡한 레이아웃의 계산 시간 측정
+        // Performance test: Measure calculation time of complex layout
         let complexLayout = createComplexMixedLayout()
         
         let bounds = CGRect(x: 0, y: 0, width: 400, height: 800)
@@ -168,16 +167,16 @@ final class ComplexLayoutTests: XCTestCase {
         XCTAssertGreaterThan(result.totalSize.width, 0)
         XCTAssertGreaterThan(result.totalSize.height, 0)
         
-        print("복잡한 레이아웃 성능 테스트:")
-        print("- 실행 시간: \(executionTime * 1000)ms")
-        print("- 전체 크기: \(result.totalSize)")
-        print("- 프레임 개수: \(result.frames.count)")
+        print("Complex layout performance test:")
+        print("- Execution time: \(executionTime * 1000)ms")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
         
-        // 성능 기준: 10ms 이내
+        // Performance criteria: within 10ms
         XCTAssertLessThan(executionTime, 0.01)
     }
     
-    // MARK: - 헬퍼 메서드들
+    // MARK: - Helper Methods
     
     private func createMockLayout(width: CGFloat, height: CGFloat, color: String) -> MockLayout {
         return MockLayout(size: CGSize(width: width, height: height), color: color)
@@ -214,7 +213,7 @@ final class ComplexLayoutTests: XCTestCase {
     
     private func createComplexMixedLayout() -> VStack {
         return VStack(spacing: 16) {
-            // 헤더
+            // Header
             HStack(spacing: 12) {
                 createMockLayout(width: 50, height: 50, color: "avatar")
                 VStack(spacing: 4) {
@@ -225,19 +224,19 @@ final class ComplexLayoutTests: XCTestCase {
                 createMockLayout(width: 80, height: 32, color: "menu")
             }
             
-            // 콘텐츠 섹션들
+            // Content sections
             ForEach(0..<5) { index in
                 VStack(spacing: 8) {
-                    createMockLayout(width: 300, height: 24, color: "section_\(index)")
+                    self.createMockLayout(width: 300, height: 24, color: "section_\(index)")
                     HStack(spacing: 8) {
                         ForEach(0..<3) { subIndex in
-                            createMockLayout(width: 80, height: 60, color: "item_\(index)_\(subIndex)")
+                            self.createMockLayout(width: 80, height: 60, color: "item_\(index)_\(subIndex)")
                         }
                     }
                 }
             }
             
-            // 푸터
+            // Footer
             HStack(spacing: 12) {
                 createMockLayout(width: 100, height: 44, color: "action1")
                 createMockLayout(width: 100, height: 44, color: "action2")
@@ -247,10 +246,10 @@ final class ComplexLayoutTests: XCTestCase {
         }
     }
     
-    // MARK: - 검증 메서드들
+    // MARK: - Validation Methods
     
     private func validateHeaderSection(_ result: LayoutResult) {
-        // 헤더 섹션 검증 로직
+        // Header section validation logic
         let headerFrames = result.frames.filter { _, frame in
             frame.height <= 50 && frame.width > 0
         }
@@ -258,7 +257,7 @@ final class ComplexLayoutTests: XCTestCase {
     }
     
     private func validateStatsSection(_ result: LayoutResult) {
-        // 통계 섹션 검증 로직
+        // Stats section validation logic
         let statsFrames = result.frames.filter { _, frame in
             frame.height <= 80 && frame.width <= 100
         }
@@ -266,7 +265,7 @@ final class ComplexLayoutTests: XCTestCase {
     }
     
     private func validateGallerySection(_ result: LayoutResult) {
-        // 갤러리 섹션 검증 로직
+        // Gallery section validation logic
         let galleryFrames = result.frames.filter { _, frame in
             frame.width == 60 && frame.height == 60
         }
@@ -274,7 +273,7 @@ final class ComplexLayoutTests: XCTestCase {
     }
     
     private func validateActionSection(_ result: LayoutResult) {
-        // 액션 섹션 검증 로직
+        // Action section validation logic
         let actionFrames = result.frames.filter { _, frame in
             frame.height == 44 && frame.width >= 80
         }
@@ -282,7 +281,7 @@ final class ComplexLayoutTests: XCTestCase {
     }
     
     private func validateZStackSection(_ result: LayoutResult) {
-        // ZStack 섹션 검증 로직
+        // ZStack section validation logic
         let zstackFrames = result.frames.filter { _, frame in
             frame.height <= 80 && frame.width > 0
         }
@@ -302,9 +301,8 @@ class MockLayout: Layout {
     init(size: CGSize, color: String) {
         self.size = size
         self.color = color
-        self.mockView = MockView()
-        self.mockView.frame = CGRect(origin: .zero, size: size)
-        self.mockView.backgroundColor = color
+        self.mockView = MockView(frame: CGRect(origin: .zero, size: size))
+        self.mockView.colorName = color
     }
     
     public var body: Never {
@@ -323,7 +321,6 @@ class MockLayout: Layout {
 
 // MARK: - Mock View
 
-class MockView {
-    var frame: CGRect = .zero
-    var backgroundColor: String = "default"
+class MockView: UIView {
+    var colorName: String = "default"
 } 
