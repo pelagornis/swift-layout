@@ -107,14 +107,17 @@ final class HomeViewController: BaseViewController, Layout {
                 createFeatureCard(icon: "🎨", title: "Design", color: .systemPink)
                     .layout()
                     .size(width: 110, height: 140)
+                    .cornerRadius(16)
                 
                 createFeatureCard(icon: "⚡️", title: "Performance", color: .systemOrange)
                     .layout()
                     .size(width: 110, height: 140)
+                    .cornerRadius(16)
                 
                 createFeatureCard(icon: "🚀", title: "Simplicity", color: .systemBlue)
                     .layout()
                     .size(width: 110, height: 140)
+                    .cornerRadius(16)
             }
             .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
         }
@@ -154,7 +157,6 @@ final class HomeViewController: BaseViewController, Layout {
     private func createFeatureCard(icon: String, title: String, color: UIColor) -> UIView {
         let container = UIView()
         container.backgroundColor = color.withAlphaComponent(0.1)
-        container.layer.cornerRadius = 16
         container.layer.masksToBounds = true
         
         let iconLabel = UILabel()
