@@ -1,7 +1,7 @@
 import UIKit
 
 /// A layout that applies corner radius to its base layout
-public struct CornerRadiusLayout: Layout {
+public struct CornerRadiusLayout: @preconcurrency Layout {
     public typealias Body = Never
     
     public var body: Never { neverLayout("CornerRadiusLayout") }
@@ -14,6 +14,7 @@ public struct CornerRadiusLayout: Layout {
         self.radius = radius
     }
     
+    @MainActor
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         let result = base.calculateLayout(in: bounds)
         

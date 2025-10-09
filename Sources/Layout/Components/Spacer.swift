@@ -48,7 +48,7 @@ import UIKit
 /// - ``calculateLayout(in:)``
 /// - ``extractViews()``
 /// - ``intrinsicContentSize``
-public class Spacer: UIView, Layout {
+public class Spacer: UIView, @preconcurrency Layout {
     public typealias Body = Never
     
     public let minLength: CGFloat?

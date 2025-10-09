@@ -43,7 +43,7 @@ import UIKit
 /// - ``BackgroundModifier``
 /// - ``CornerRadiusModifier``
 /// - ``AspectRatioModifier``
-public protocol LayoutModifier {
+public protocol LayoutModifier: Sendable {
     /// Applies the modifier transformation to a frame within the given bounds.
     ///
     /// This method is called during layout calculation to transform a view's frame.

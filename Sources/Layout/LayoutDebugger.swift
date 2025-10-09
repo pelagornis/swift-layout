@@ -17,7 +17,8 @@ import UIKit
 /// LayoutDebugger.shared.enableViewHierarchy = true
 /// LayoutDebugger.shared.enableSpacerCalculation = true
 /// ```
-public class LayoutDebugger {
+@MainActor
+public class LayoutDebugger: @unchecked Sendable {
     
     /// Shared singleton instance
     public static let shared = LayoutDebugger()
@@ -83,7 +84,7 @@ public class LayoutDebugger {
     /// - Parameters:
     ///   - container: The root view to analyze
     ///   - title: A custom title for the analysis output
-    public func analyzeViewHierarchy(_ container: UIView, title: String = "VIEW HIERARCHY") {
+    @MainActor public func analyzeViewHierarchy(_ container: UIView, title: String = "VIEW HIERARCHY") {
         guard isEnabled && enableViewHierarchy else { return }
         
         print("🔍 ===== \(title) =====")
@@ -91,7 +92,7 @@ public class LayoutDebugger {
         print("🔍 ===== END \(title) =====")
     }
     
-    private func analyzeView(_ view: UIView, depth: Int) {
+    @MainActor private func analyzeView(_ view: UIView, depth: Int) {
         let indent = String(repeating: "  ", count: depth)
         let prefix = depth == 0 ? "🔍" : "🔍" + String(repeating: " ", count: depth * 2) + "└─"
         
@@ -192,6 +193,7 @@ public class LayoutDebugger {
 ///   - message: The debug message to log
 ///   - component: The component name (optional)
 ///   - category: The debug category for routing the message
+@MainActor
 public func debugLog(_ message: String, component: String = "", category: LayoutDebugCategory = .layout) {
     switch category {
     case .layout:
@@ -210,7 +212,7 @@ public func debugLog(_ message: String, component: String = "", category: Layout
 /// Debug category enumeration
 ///
 /// Defines the different categories of debug output available in the layout system.
-public enum LayoutDebugCategory {
+public enum LayoutDebugCategory: Sendable {
     /// Layout calculation debugging
     case layout
     /// View hierarchy debugging

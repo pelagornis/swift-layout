@@ -61,6 +61,7 @@ import UIKit
 ///
 /// ### Layout Updates
 /// - ``updateLayoutForOrientationChange()``
+@MainActor
 public class LayoutContainer: UIView {
     private var _body: (() -> any Layout)?
     private var managedViews: Set<UIView> = []
@@ -71,7 +72,7 @@ public class LayoutContainer: UIView {
     }
     
     /// Sets the body with SwiftUI-style automatic centering
-    public func setBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
+    public func setBody(@LayoutBuilder _ content: @escaping @MainActor () -> any Layout) {
         _body = content
         updateViewHierarchy()
     }

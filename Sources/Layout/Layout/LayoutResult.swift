@@ -23,7 +23,8 @@ import UIKit
 /// let result = layout.calculateLayout(in: bounds)
 /// result.applying(to: containerView)
 /// ```
-public struct LayoutResult {
+@preconcurrency
+public struct LayoutResult: @unchecked Sendable {
     /// Dictionary mapping UIViews to their calculated frames.
     ///
     /// Each key-value pair represents a view and its calculated position and size

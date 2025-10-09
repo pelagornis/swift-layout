@@ -97,6 +97,7 @@ extension Layout {
     /// final frame positions.
     ///
     /// - Parameter container: The UIView to apply the layout to
+    @MainActor
     public func apply(to container: UIView) {
         // Remove existing subviews
         for subview in container.subviews {

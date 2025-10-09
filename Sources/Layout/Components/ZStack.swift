@@ -48,7 +48,7 @@ import UIKit
 /// - ``calculateLayout(in:)``
 /// - ``extractViews()``
 /// - ``intrinsicContentSize``
-public class ZStack: UIView, Layout {
+public class ZStack: UIView, @preconcurrency Layout {
     public typealias Body = Never
     
     public var body: Never {

@@ -12,7 +12,7 @@ import UIKit
 ///     .background(.systemBlue)
 ///     .size(width: 200, height: 100)
 /// ```
-public struct BackgroundModifier: LayoutModifier {
+public struct BackgroundModifier: LayoutModifier, @unchecked Sendable {
     public let color: UIColor
     
     public init(color: UIColor) {

@@ -66,7 +66,7 @@ public struct LayoutPerformanceMonitor {
     ///   - operation: The layout operation to measure
     /// - Returns: The result of the operation
     @discardableResult
-    public static func measureLayout<T>(name: String, operation: () -> T) -> T {
+    @MainActor public static func measureLayout<T>(name: String, operation: () -> T) -> T {
         let startTime = CFAbsoluteTimeGetCurrent()
         let result = operation()
         let endTime = CFAbsoluteTimeGetCurrent()
@@ -88,7 +88,7 @@ public struct LayoutPerformanceMonitor {
     ///   - logger: Custom logging function
     /// - Returns: The result of the operation
     @discardableResult
-    public static func measureLayout<T>(name: String, operation: () -> T, logger: (String, TimeInterval) -> Void) -> T {
+    @MainActor public static func measureLayout<T>(name: String, operation: () -> T, logger: (String, TimeInterval) -> Void) -> T {
         let startTime = CFAbsoluteTimeGetCurrent()
         let result = operation()
         let endTime = CFAbsoluteTimeGetCurrent()
@@ -106,7 +106,7 @@ public struct LayoutPerformanceMonitor {
     ///
     /// Contains aggregated performance data for layout operations,
     /// including total operations, average time, and min/max times.
-    public struct Statistics {
+    public struct Statistics: Sendable {
         /// Total number of operations measured
         public let totalOperations: Int
         
@@ -144,7 +144,7 @@ public struct LayoutPerformanceMonitor {
     /// Collects and manages performance measurements for layout operations
     /// in a thread-safe manner. Provides methods to record measurements,
     /// retrieve statistics, and generate performance reports.
-    public class PerformanceCollector {
+    public class PerformanceCollector: @unchecked Sendable {
         private var measurements: [String: [TimeInterval]] = [:]
         private let queue = DispatchQueue(label: "LayoutPerformanceMonitor", attributes: .concurrent)
         
@@ -216,25 +216,25 @@ public struct LayoutPerformanceMonitor {
     }
     
     /// Shared performance collector instance
-    public static let shared = PerformanceCollector()
+    @MainActor public static let shared = PerformanceCollector()
     
     /// Records a measurement using the shared collector
-    public static func record(_ name: String, duration: TimeInterval) {
+    @MainActor public static func record(_ name: String, duration: TimeInterval) {
         shared.record(name, duration: duration)
     }
     
     /// Gets statistics for a named operation from the shared collector
-    public static func statistics(for name: String) -> Statistics? {
+    @MainActor public static func statistics(for name: String) -> Statistics? {
         return shared.statistics(for: name)
     }
     
     /// Clears all measurements from the shared collector
-    public static func clearMeasurements() {
+    @MainActor public static func clearMeasurements() {
         shared.clear()
     }
     
     /// Prints a summary of all measurements from the shared collector
-    public static func printSummary() {
+    @MainActor public static func printSummary() {
         shared.printSummary()
     }
 }

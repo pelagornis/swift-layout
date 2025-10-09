@@ -12,7 +12,7 @@ public struct AspectRatioModifier: LayoutModifier {
     public let contentMode: ContentMode
     
     /// Content mode for aspect ratio application
-    public enum ContentMode {
+    public enum ContentMode: Sendable {
         /// Fit the view within the bounds while maintaining aspect ratio
         case fit
         /// Fill the bounds while maintaining aspect ratio (may clip)

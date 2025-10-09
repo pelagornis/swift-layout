@@ -1,7 +1,7 @@
 import UIKit
 
 /// A layout that applies background color to its base layout
-public struct BackgroundLayout: Layout {
+public struct BackgroundLayout: @preconcurrency Layout {
     public typealias Body = Never
     
     public var body: Never { neverLayout("BackgroundLayout") }
@@ -14,6 +14,7 @@ public struct BackgroundLayout: Layout {
         self.color = color
     }
     
+    @MainActor
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         let result = base.calculateLayout(in: bounds)
         
