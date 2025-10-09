@@ -15,16 +15,14 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
+    strategy:
+      matrix:
+        swift: ["6.2.0"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2.3.0
-        with:
-          swift-version: "6.2.0"
 
       - name: Checkout gh-pages Branch
         uses: actions/checkout@v4
