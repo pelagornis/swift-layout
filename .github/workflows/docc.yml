@@ -14,10 +14,10 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-26
-    strategy:
+    runs-on: macos-15
+      strategy:
       matrix:
-        xcode: ["26.1"]
+        xcode: ["16.4"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4

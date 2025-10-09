@@ -15,11 +15,12 @@ concurrency:
 jobs:
   xcodebuild-latest:
     name: xcodebuild (16.4)
-    runs-on: macos-26
+    runs-on: macos-15
     strategy:
       matrix:
         platform: [IOS]
-        xcode: ["26.1"]
+        xcode: ["16.4"]
+
     steps:
       - uses: actions/checkout@v4
 
