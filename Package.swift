@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
@@ -16,9 +16,17 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "Layout"),
+            name: "Layout",
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency")
+            ]
+        ),
         .testTarget(
             name: "LayoutTests",
-            dependencies: ["Layout"]),
+            dependencies: ["Layout"],
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency")
+            ]
+        ),
     ]
 )
