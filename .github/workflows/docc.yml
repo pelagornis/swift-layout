@@ -15,14 +15,16 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    strategy:
-      matrix:
-        xcode: ["16.4"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2.3.0
+        with:
+          swift-version: "6.1.0"
 
       - name: Checkout gh-pages Branch
         uses: actions/checkout@v4
@@ -78,7 +80,7 @@ jobs:
                 git checkout -f "$tag"
               fi
 
-              # Use Swift DocC directly
+              # Use Swift DocC directly (built into Swift 6.0)
               swift package \
                 --allow-writing-to-directory docs-out/"$tag" \
                 generate-documentation \
