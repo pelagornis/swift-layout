@@ -17,7 +17,7 @@ jobs:
     runs-on: macos-26
     strategy:
       matrix:
-        swift: ["6.2.0"]
+        xcode: ["26.1"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4
@@ -78,7 +78,7 @@ jobs:
                 git checkout -f "$tag"
               fi
 
-              # Use Swift DocC directly (built into Swift 6.0)
+              # Use Swift DocC directly
               swift package \
                 --allow-writing-to-directory docs-out/"$tag" \
                 generate-documentation \
