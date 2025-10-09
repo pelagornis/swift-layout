@@ -7,22 +7,30 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
-  group: docc-${{ github.head_ref }}
+  group: docc-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: macos-26
+    name: Build Documentation
+    runs-on: macos-15
     strategy:
       matrix:
-        swift: ["6.1.0"]
+        xcode: ["16.1"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Select Xcode ${{ matrix.xcode }}
+        run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
+
+      - name: Show Swift version
+        run: swift --version
 
       - name: Checkout gh-pages Branch
         uses: actions/checkout@v4
@@ -41,12 +49,14 @@ jobs:
             git config user.email "actions@github.com"
             git commit --allow-empty -m "Initial commit"
           fi
+
       - name: Build documentation
         run: |
           swift package reset
           rm -rf docs-out/.git
           rm -rf docs-out/main
           rm -rf docs-out/latest
+
           # Get all tags, if less than 94 tags exist, use all available tags
           tag_count=$(git tag | wc -l)
           if [ $tag_count -lt 94 ]; then
@@ -54,10 +64,13 @@ jobs:
           else
             tags=$(git tag | tail -n +94)
           fi
+
           # Add main and latest to the list
           all_releases="main latest $tags"
+
           for tag in $all_releases; do
             echo "⏳ Generating documentation for $tag release."
+            
             if [ -d "docs-out/$tag" ]; then
               echo "✅ Documentation for $tag already exists."
             else
@@ -72,7 +85,8 @@ jobs:
               else
                 git checkout -f "$tag"
               fi
-              # Use Swift DocC directly (built into Swift 6.0)
+              
+              # Use Swift DocC directly
               swift package \
                 --allow-writing-to-directory docs-out/"$tag" \
                 generate-documentation \
@@ -84,8 +98,9 @@ jobs:
                 || echo "⚠️ Documentation failed for $tag."
             fi
           done
+
       - name: Fix permissions
-        run: "sudo chown -R $USER docs-out"
+        run: sudo chown -R $USER docs-out
 
       - name: Publish documentation to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
