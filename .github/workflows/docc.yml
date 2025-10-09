@@ -7,10 +7,9 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 concurrency:
-  group: docc-${{ github.ref }}
+  group: docc-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
     runs-on: macos-15
     strategy:
       matrix:
-        xcode: ["16.1"]
+        xcode: ["16.4"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4
