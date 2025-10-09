@@ -15,10 +15,10 @@ concurrency:
 jobs:
   test:
     name: Test
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       matrix:
-        xcode: ["16.4"]
+        xcode: ["26.1"]
     steps:
       - uses: actions/checkout@v4
 
@@ -62,10 +62,10 @@ jobs:
 
   build:
     name: Build
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       matrix:
-        xcode: ["16.1"]
+        xcode: ["26.1"]
     steps:
       - uses: actions/checkout@v4
 
@@ -99,10 +99,10 @@ jobs:
 
   example:
     name: Build Example
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       matrix:
-        xcode: ["16.1"]
+        xcode: ["26.1"]
     steps:
       - uses: actions/checkout@v4
 
