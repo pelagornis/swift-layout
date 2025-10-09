@@ -14,17 +14,15 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
+    strategy:
+      matrix:
+        swift: ["6.1.0"]
     steps:
       - name: Checkout Package
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2.3.0
-        with:
-          swift-version: "6.1.0"
 
       - name: Checkout gh-pages Branch
         uses: actions/checkout@v4
@@ -43,14 +41,12 @@ jobs:
             git config user.email "actions@github.com"
             git commit --allow-empty -m "Initial commit"
           fi
-
       - name: Build documentation
         run: |
           swift package reset
           rm -rf docs-out/.git
           rm -rf docs-out/main
           rm -rf docs-out/latest
-
           # Get all tags, if less than 94 tags exist, use all available tags
           tag_count=$(git tag | wc -l)
           if [ $tag_count -lt 94 ]; then
@@ -58,13 +54,10 @@ jobs:
           else
             tags=$(git tag | tail -n +94)
           fi
-
           # Add main and latest to the list
           all_releases="main latest $tags"
-
           for tag in $all_releases; do
             echo "⏳ Generating documentation for $tag release."
-
             if [ -d "docs-out/$tag" ]; then
               echo "✅ Documentation for $tag already exists."
             else
@@ -79,7 +72,6 @@ jobs:
               else
                 git checkout -f "$tag"
               fi
-
               # Use Swift DocC directly (built into Swift 6.0)
               swift package \
                 --allow-writing-to-directory docs-out/"$tag" \
@@ -92,7 +84,6 @@ jobs:
                 || echo "⚠️ Documentation failed for $tag."
             fi
           done
-
       - name: Fix permissions
         run: "sudo chown -R $USER docs-out"
 

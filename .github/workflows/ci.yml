@@ -41,7 +41,6 @@ jobs:
             deriveddata-xcodebuild-${{ matrix.platform }}-${{ matrix.xcode }}-${{ hashFiles('**/Sources/**/*.swift', '**/Tests/**/*.swift') }}
           restore-keys: |
             deriveddata-xcodebuild-${{ matrix.platform }}-${{ matrix.xcode }}-
-
       - name: Set IgnoreFileSystemDeviceInodeChanges flag
         run: defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
 
@@ -52,15 +51,14 @@ jobs:
         run: |
           case ${{ matrix.platform }} in
             "IOS")
-              xcodebuild -workspace Layout.xcworkspace -scheme Layout -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' build
+              xcodebuild -workspace Layout.xcworkspace -scheme Layout -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0' build
               ;;
           esac
-
       - name: Test
         run: |
           xcodebuild test \
             -workspace Layout.xcworkspace \
             -scheme LayoutTests \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES
