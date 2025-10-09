@@ -77,7 +77,7 @@ public class Spacer: UIView, @preconcurrency Layout {
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         var frames: [UIView: CGRect] = [:]
         
-        // Spacer는 사용 가능한 공간을 모두 차지하되, 최소 길이 보장
+        // Spacer takes all available space while ensuring minimum length
         let spacerHeight = max(minLength ?? bounds.height, 0)
         let spacerWidth = bounds.width
         
@@ -90,7 +90,7 @@ public class Spacer: UIView, @preconcurrency Layout {
     }
     
     public override var intrinsicContentSize: CGSize {
-        // Spacer의 intrinsic content size는 최소 길이 또는 0
+        // Spacer's intrinsic content size is minimum length or 0
         let minSize = minLength ?? 0
         return CGSize(width: minSize, height: minSize)
     }

@@ -91,12 +91,12 @@ public class LayoutContainer: UIView {
             return
         }
         
-        // SwiftUI처럼 Stack을 사용하지 않으면 자동으로 VStack으로 감싸기
+        // Like SwiftUI, automatically wrap in VStack if not using Stack
         if isStackLayout(body) {
-            // 이미 Stack이면 기존 방식 사용
+            // If already Stack, use existing approach
             applyLayout(body)
         } else {
-            // Stack이 아니면 VStack으로 감싸기
+            // If not Stack, wrap in VStack
             let autoVStack = createAutoVStack(from: body)
             applyLayout(autoVStack)
         }
@@ -164,9 +164,9 @@ public class LayoutContainer: UIView {
             }
             return vstack
         } else {
-            // 단일 레이아웃인 경우 VStack으로 감싸기
+            // For single layout, wrap in VStack
             let vstack = VStack(alignment: .center, spacing: 20) {
-                // 단일 레이아웃의 뷰들을 추출하여 추가
+                // Extract and add views from single layout
                 let views = layout.extractViews()
                 for view in views {
                     view.layout()

@@ -38,56 +38,56 @@ public struct ViewLayout: @preconcurrency Layout {
     @MainActor
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
 
-        // bounds가 유효하지 않은 경우 기본값 사용 (width가 0이어도 height는 사용 가능할 수 있음)
+        // Use default bounds if invalid (width can be 0 while height is available)
         let safeBounds = bounds.width > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
         
         let intrinsicSize = view.intrinsicContentSize
         
-        // 더 정확한 기본 크기 계산
+        // Calculate more accurate default size
         var defaultSize: CGSize
         
         if intrinsicSize.width == UIView.noIntrinsicMetric || intrinsicSize.height == UIView.noIntrinsicMetric {
-            // intrinsicContentSize가 설정되지 않은 경우
+            // When intrinsicContentSize is not set
             if let label = view as? UILabel {
-                // UILabel의 경우 text 크기를 기반으로 계산
+                // For UILabel, calculate based on text size
                 let textSize = label.text?.size(withAttributes: [.font: label.font ?? UIFont.systemFont(ofSize: 17)]) ?? .zero
                 defaultSize = CGSize(
-                    width: max(textSize.width + 20, 100), // 최소 너비 보장
-                    height: max(textSize.height + 10, 30) // 최소 높이 보장
+                    width: max(textSize.width + 20, 100), // Ensure minimum width
+                    height: max(textSize.height + 10, 30) // Ensure minimum height
                 )
             } else if let button = view as? UIButton {
-                // UIButton의 경우 title 크기를 기반으로 계산
+                // For UIButton, calculate based on title size
                 let titleSize = button.title(for: .normal)?.size(withAttributes: [.font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 17)]) ?? .zero
                 defaultSize = CGSize(
-                    width: max(titleSize.width + 40, 120), // 최소 너비 보장
-                    height: max(titleSize.height + 20, 44) // 최소 높이 보장
+                    width: max(titleSize.width + 40, 120), // Ensure minimum width
+                    height: max(titleSize.height + 20, 44) // Ensure minimum height
                 )
             } else {
-                // 기타 UIView의 경우 기본값 사용
+                // For other UIViews, use default values
                 defaultSize = CGSize(width: 100, height: 30)
             }
         } else {
-            // intrinsicContentSize가 설정된 경우 그대로 사용
+            // Use intrinsicContentSize as is when set
             defaultSize = intrinsicSize
         }
         
-        // 음수 값 방지
+        // Prevent negative values
         defaultSize = CGSize(width: max(defaultSize.width, 1), height: max(defaultSize.height, 1))
         
-        // bounds.origin을 기준으로 한 상대 좌표로 시작
+        // Start with relative coordinates based on bounds.origin
         var frame = CGRect(origin: .zero, size: defaultSize)
         
-        // Apply modifiers in sequence (safeBounds를 기준으로)
+        // Apply modifiers in sequence (based on safeBounds)
         for modifier in modifiers {
             frame = modifier.apply(to: frame, in: safeBounds)
 
-            // BackgroundModifier 처리
+            // Handle BackgroundModifier
             if let backgroundModifier = modifier as? BackgroundModifier {
                 view.backgroundColor = backgroundModifier.color
             }
         }
         
-        // 최종 프레임을 safeBounds.origin을 기준으로 한 상대 좌표로 변환
+        // Convert final frame to relative coordinates based on safeBounds.origin
         let finalFrame = CGRect(
             x: safeBounds.origin.x + frame.origin.x,
             y: safeBounds.origin.y + frame.origin.y,
@@ -213,11 +213,11 @@ public struct ViewLayout: @preconcurrency Layout {
     ///
     /// - Parameter radius: The corner radius
     /// - Returns: A new ``ViewLayout`` with the corner radius modifier applied
-    @MainActor public func cornerRadius(_ radius: CGFloat) -> ViewLayout {
+    @MainActor     public func cornerRadius(_ radius: CGFloat) -> ViewLayout {
         var copy = self
         copy.modifiers.append(CornerRadiusModifier(radius: radius))
         
-        // Corner radius를 layer에 즉시 적용
+        // Apply corner radius to layer immediately
         view.layer.cornerRadius = radius
         view.layer.masksToBounds = true
         

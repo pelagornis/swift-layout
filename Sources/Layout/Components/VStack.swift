@@ -435,7 +435,6 @@ public class VStack: UIView, @preconcurrency Layout {
         for subview in subviews {
             // Completely ignore Spacer inside ScrollView
             if isInsideScrollView && subview is Spacer {
-                print("🔧 [VStack] Spacer ignored inside ScrollView")
                 continue
             }
             // Check if stored ViewLayout information exists (PRIORITY: check ViewLayout first!)
@@ -535,7 +534,6 @@ public class VStack: UIView, @preconcurrency Layout {
         
         if hasSpacers && isInsideScrollView {
             // If Spacer exists inside ScrollView: ignore Spacer and calculate only actual content
-            print("🔧 [VStack] Spacer detected inside ScrollView - switching to WithoutSpacer mode")
             return calculateLayoutWithoutSpacers(in: bounds)
         } else if hasSpacers {
             // Normal case when Spacer exists
