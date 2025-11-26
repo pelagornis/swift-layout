@@ -104,28 +104,8 @@ public class LayoutDebugger: @unchecked Sendable {
         print("\(indent)├─ Hidden: \(view.isHidden)")
         print("\(indent)├─ Alpha: \(view.alpha)")
         print("\(indent)├─ UserInteraction: \(view.isUserInteractionEnabled)")
-        
-        // Additional information for special view types
-        if let label = view as? UILabel {
-            print("\(indent)├─ Text: \"\(label.text ?? "nil")\"")
-            print("\(indent)├─ Font: \(String(describing: label.font))")
-            print("\(indent)├─ TextColor: \(String(describing: label.textColor))")
-            print("\(indent)├─ TextAlignment: \(label.textAlignment.rawValue)")
-            print("\(indent)└─ NumberOfLines: \(label.numberOfLines)")
-        } else if let button = view as? UIButton {
-            print("\(indent)├─ Title: \"\(button.title(for: .normal) ?? "nil")\"")
-            print("\(indent)├─ Font: \(button.titleLabel?.font?.description ?? "nil")")
-            print("\(indent)└─ TitleColor: \(button.titleColor(for: .normal)?.description ?? "nil")")
-        } else if let imageView = view as? UIImageView {
-            print("\(indent)├─ Image: \(imageView.image?.description ?? "nil")")
-            print("\(indent)└─ ContentMode: \(imageView.contentMode.rawValue)")
-        } else if let scrollView = view as? UIScrollView {
-            print("\(indent)├─ ContentSize: \(scrollView.contentSize)")
-            print("\(indent)├─ ContentOffset: \(scrollView.contentOffset)")
-            print("\(indent)└─ ScrollEnabled: \(scrollView.isScrollEnabled)")
-        } else {
-            print("\(indent)└─ IntrinsicSize: \(view.intrinsicContentSize)")
-        }
+        print("\(indent)└─ IntrinsicSize: \(view.intrinsicContentSize)")
+
         
         // Analyze child views
         if !view.subviews.isEmpty {
