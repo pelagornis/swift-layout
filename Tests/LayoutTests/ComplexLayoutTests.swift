@@ -4,7 +4,7 @@ import XCTest
 final class ComplexLayoutTests: XCTestCase {
     
     // Disabled: Test expectations don't match actual implementation
-    func xtestComplexVStackLayout() {
+    @MainActor func xtestComplexVStackLayout() {
         // Complex VStack test - without UIKit
         let complexLayout = VStack(spacing: 10) {
             // First section: Header
@@ -76,7 +76,7 @@ final class ComplexLayoutTests: XCTestCase {
         validateZStackSection(result)
     }
     
-    func testComplexHStackLayout() {
+    @MainActor func testComplexHStackLayout() {
         // Complex HStack test
         let complexLayout = HStack(spacing: 16) {
             // Left panel
@@ -117,7 +117,7 @@ final class ComplexLayoutTests: XCTestCase {
     }
     
     // Disabled: Test expectations don't match actual implementation
-    func xtestNestedZStackLayout() {
+    @MainActor func xtestNestedZStackLayout() {
         // Nested ZStack test
         let complexLayout = ZStack {
             // Background
@@ -153,7 +153,7 @@ final class ComplexLayoutTests: XCTestCase {
         print("- Frame count: \(result.frames.count)")
     }
     
-    func testMixedLayoutPerformance() {
+    @MainActor func testMixedLayoutPerformance() {
         // Performance test: Measure calculation time of complex layout
         let complexLayout = createComplexMixedLayout()
         
@@ -178,20 +178,137 @@ final class ComplexLayoutTests: XCTestCase {
         XCTAssertLessThan(executionTime, 0.01)
     }
     
+    // MARK: - Spacer MinLength Tests
+    
+    @MainActor func testSpacerMinLengthInVStack() {
+        // Test Spacer with minLength in VStack
+        let layout = VStack(spacing: 0) {
+            createMockLayout(width: 100, height: 50, color: "top")
+            Spacer(minLength: 100)
+            createMockLayout(width: 100, height: 50, color: "bottom")
+        }
+        
+        let bounds = CGRect(x: 0, y: 0, width: 300, height: 400)
+        let result = layout.calculateLayout(in: bounds)
+        
+        XCTAssertNotNil(result)
+        
+        // Verify the total size includes the spacer's minLength
+        // top (50) + spacer (100 or more) + bottom (50) = at least 200
+        XCTAssertGreaterThanOrEqual(result.totalSize.height, 200)
+        
+        print("Spacer minLength in VStack test:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
+    }
+    
+    @MainActor func testSpacerMinLengthInHStack() {
+        // Test Spacer with minLength in HStack
+        let layout = HStack(spacing: 0) {
+            createMockLayout(width: 50, height: 100, color: "left")
+            Spacer(minLength: 80)
+            createMockLayout(width: 50, height: 100, color: "right")
+        }
+        
+        let bounds = CGRect(x: 0, y: 0, width: 400, height: 300)
+        let result = layout.calculateLayout(in: bounds)
+        
+        XCTAssertNotNil(result)
+        
+        // Verify the total size includes the spacer's minLength
+        // left (50) + spacer (80 or more) + right (50) = at least 180
+        XCTAssertGreaterThanOrEqual(result.totalSize.width, 180)
+        
+        print("Spacer minLength in HStack test:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
+    }
+    
+    @MainActor func testMultipleSpacersWithMinLength() {
+        // Test multiple spacers with different minLengths
+        let layout = VStack(spacing: 0) {
+            createMockLayout(width: 100, height: 30, color: "view1")
+            Spacer(minLength: 50)
+            createMockLayout(width: 100, height: 30, color: "view2")
+            Spacer(minLength: 70)
+            createMockLayout(width: 100, height: 30, color: "view3")
+        }
+        
+        let bounds = CGRect(x: 0, y: 0, width: 300, height: 500)
+        let result = layout.calculateLayout(in: bounds)
+        
+        XCTAssertNotNil(result)
+        
+        // Total should be at least: 30 + 50 + 30 + 70 + 30 = 210
+        XCTAssertGreaterThanOrEqual(result.totalSize.height, 210)
+        
+        print("Multiple spacers with minLength test:")
+        print("- Total size: \(result.totalSize)")
+    }
+    
+    @MainActor func testSpacerInScrollView() {
+        // Test Spacer with minLength in ScrollView
+        let layout = ScrollView {
+            VStack(spacing: 0) {
+                createMockLayout(width: 100, height: 50, color: "content1")
+                Spacer(minLength: 120)
+                createMockLayout(width: 100, height: 50, color: "content2")
+            }
+        }
+        
+        let bounds = CGRect(x: 0, y: 0, width: 300, height: 400)
+        let result = layout.calculateLayout(in: bounds)
+        
+        XCTAssertNotNil(result)
+        
+        // In ScrollView, the spacer should still respect minLength
+        // Total content: 50 + 120 + 50 = 220
+        XCTAssertGreaterThanOrEqual(result.totalSize.height, 220)
+        
+        print("Spacer in ScrollView test:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
+    }
+    
+    @MainActor func testNestedStacksWithSpacer() {
+        // Test Spacer in nested stacks
+        let layout = VStack(spacing: 10) {
+            HStack(spacing: 0) {
+                createMockLayout(width: 40, height: 40, color: "icon")
+                Spacer(minLength: 60)
+                createMockLayout(width: 80, height: 40, color: "button")
+            }
+            createMockLayout(width: 200, height: 100, color: "content")
+            Spacer(minLength: 50)
+            createMockLayout(width: 200, height: 44, color: "footer")
+        }
+        
+        let bounds = CGRect(x: 0, y: 0, width: 350, height: 400)
+        let result = layout.calculateLayout(in: bounds)
+        
+        XCTAssertNotNil(result)
+        XCTAssertGreaterThan(result.totalSize.width, 0)
+        XCTAssertGreaterThan(result.totalSize.height, 0)
+        
+        print("Nested stacks with spacer test:")
+        print("- Total size: \(result.totalSize)")
+        print("- Frame count: \(result.frames.count)")
+    }
+    
     // MARK: - Helper Methods
     
-    private func createMockLayout(width: CGFloat, height: CGFloat, color: String) -> MockLayout {
+    @MainActor private func createMockLayout(width: CGFloat, height: CGFloat, color: String) -> MockLayout {
         return MockLayout(size: CGSize(width: width, height: height), color: color)
     }
     
-    private func createStatCard(title: String, value: String, color: String) -> VStack {
+    @MainActor private func createStatCard(title: String, value: String, color: String) -> VStack {
         return VStack(spacing: 4) {
             createMockLayout(width: 60, height: 24, color: "\(color)_value")
             createMockLayout(width: 60, height: 16, color: "\(color)_title")
         }
     }
     
-    private func createPhotoGrid() -> VStack {
+    @MainActor private func createPhotoGrid() -> some Layout {
         return VStack(spacing: 8) {
             HStack(spacing: 8) {
                 createMockLayout(width: 60, height: 60, color: "photo1")
@@ -206,14 +323,14 @@ final class ComplexLayoutTests: XCTestCase {
         }
     }
     
-    private func createIconLabel(icon: String, text: String) -> HStack {
+    @MainActor private func createIconLabel(icon: String, text: String) -> HStack {
         return HStack(spacing: 8) {
             createMockLayout(width: 20, height: 20, color: "icon")
             createMockLayout(width: 80, height: 20, color: "text")
         }
     }
     
-    private func createComplexMixedLayout() -> VStack {
+    @MainActor private func createComplexMixedLayout() -> VStack {
         return VStack(spacing: 16) {
             // Header
             HStack(spacing: 12) {

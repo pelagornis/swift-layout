@@ -75,6 +75,70 @@ final class SimpleComplexLayoutTests: XCTestCase {
         // XCTAssertTrue(result.layoutType.contains("ZStack"))
     }
     
+    func testSpacerWithMinLength() {
+        // Test layout with Spacer that has minLength
+        let layoutWithSpacer = createLayoutWithSpacerMinLength()
+        
+        let bounds = CGRect(x: 0, y: 0, width: 400, height: 600)
+        let result = simulateLayoutCalculation(layoutWithSpacer, in: bounds)
+        
+        XCTAssertNotNil(result)
+        XCTAssertGreaterThan(result.totalWidth, 0)
+        XCTAssertGreaterThan(result.totalHeight, 0)
+        
+        // The height should include the minLength of the Spacer (100)
+        // View1 (50) + Spacer (100) + View2 (50) = 200
+        XCTAssertGreaterThanOrEqual(result.totalHeight, 200)
+        
+        print("Spacer with minLength test:")
+        print("- Total size: \(result.totalWidth) x \(result.totalHeight)")
+        print("- Component count: \(result.componentCount)")
+    }
+    
+    func testMultipleSpacersWithMinLength() {
+        // Test layout with multiple Spacers with minLength
+        let layout = ComplexLayoutNode(
+            type: "VStack",
+            children: [
+                ComplexLayoutNode(type: "View", size: CGSize(width: 100, height: 30)),
+                ComplexLayoutNode(type: "Spacer", minLength: 50),
+                ComplexLayoutNode(type: "View", size: CGSize(width: 100, height: 30)),
+                ComplexLayoutNode(type: "Spacer", minLength: 50),
+                ComplexLayoutNode(type: "View", size: CGSize(width: 100, height: 30))
+            ]
+        )
+        
+        let bounds = CGRect(x: 0, y: 0, width: 400, height: 600)
+        let result = simulateLayoutCalculation(layout, in: bounds)
+        
+        // 3 views (30 each) + 2 spacers (50 each) = 90 + 100 = 190
+        XCTAssertGreaterThanOrEqual(result.totalHeight, 190)
+        
+        print("Multiple spacers with minLength test:")
+        print("- Total height: \(result.totalHeight)")
+    }
+    
+    func testHStackWithSpacerMinLength() {
+        // Test HStack with Spacer that has minLength
+        let layout = ComplexLayoutNode(
+            type: "HStack",
+            children: [
+                ComplexLayoutNode(type: "View", size: CGSize(width: 50, height: 100)),
+                ComplexLayoutNode(type: "Spacer", minLength: 80),
+                ComplexLayoutNode(type: "View", size: CGSize(width: 50, height: 100))
+            ]
+        )
+        
+        let bounds = CGRect(x: 0, y: 0, width: 400, height: 300)
+        let result = simulateLayoutCalculation(layout, in: bounds)
+        
+        // Width should be at least: 50 + 80 + 50 = 180
+        XCTAssertGreaterThanOrEqual(result.totalWidth, 180)
+        
+        print("HStack with spacer minLength test:")
+        print("- Total width: \(result.totalWidth)")
+    }
+    
     // MARK: - Helper Methods
     
     private func createComplexLayout() -> ComplexLayoutNode {
@@ -175,6 +239,17 @@ final class SimpleComplexLayoutTests: XCTestCase {
         )
     }
     
+    private func createLayoutWithSpacerMinLength() -> ComplexLayoutNode {
+        return ComplexLayoutNode(
+            type: "VStack",
+            children: [
+                ComplexLayoutNode(type: "View", size: CGSize(width: 200, height: 50)),
+                ComplexLayoutNode(type: "Spacer", minLength: 100),
+                ComplexLayoutNode(type: "View", size: CGSize(width: 200, height: 50))
+            ]
+        )
+    }
+    
     private func simulateLayoutCalculation(_ layout: ComplexLayoutNode, in bounds: CGRect) -> LayoutSimulationResult {
         var totalWidth: CGFloat = 0
         var totalHeight: CGFloat = 0
@@ -221,7 +296,9 @@ final class SimpleComplexLayoutTests: XCTestCase {
                 return (maxWidth, maxHeight)
                 
             case "Spacer":
-                return (bounds.width - x, 0)
+                // Spacer uses minLength if specified, otherwise flexible
+                let minLength = node.minLength ?? 0
+                return (max(bounds.width - x, minLength), minLength)
                 
             case "View":
                 return (node.size?.width ?? 0, node.size?.height ?? 0)
@@ -250,11 +327,13 @@ struct ComplexLayoutNode {
     let type: String
     let children: [ComplexLayoutNode]
     let size: CGSize?
+    let minLength: CGFloat?
     
-    init(type: String, children: [ComplexLayoutNode] = [], size: CGSize? = nil) {
+    init(type: String, children: [ComplexLayoutNode] = [], size: CGSize? = nil, minLength: CGFloat? = nil) {
         self.type = type
         self.children = children
         self.size = size
+        self.minLength = minLength
     }
 }
 

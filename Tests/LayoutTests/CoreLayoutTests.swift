@@ -47,7 +47,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
     
     // MARK: - ViewLayout Tests
     
-    func testViewLayoutBasicCreation() {
+    @MainActor func testViewLayoutBasicCreation() {
         let viewLayout = ViewLayout(testView)
         
         XCTAssertTrue(viewLayout.view === testView)
