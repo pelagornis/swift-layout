@@ -54,7 +54,7 @@ jobs:
           xcodebuild test \
             -workspace Layout.xcworkspace \
             -scheme Layout-Package \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES \
             CODE_SIGN_IDENTITY="" \
@@ -92,7 +92,7 @@ jobs:
           xcodebuild build \
             -workspace Layout.xcworkspace \
             -scheme Layout \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -derivedDataPath ~/.derivedData \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO
@@ -129,7 +129,7 @@ jobs:
           xcodebuild build \
             -workspace Layout.xcworkspace \
             -scheme Example \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -derivedDataPath ~/.derivedData \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO
