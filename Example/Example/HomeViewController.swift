@@ -4,7 +4,6 @@ import Layout
 final class HomeViewController: BaseViewController, Layout {
     
     // MARK: - UI Components
-    
     private let profileImageView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemIndigo
@@ -81,8 +80,10 @@ final class HomeViewController: BaseViewController, Layout {
             VStack(alignment: .center, spacing: 24) {
                 profileSection
                 statisticsCard
+                horizontalScrollSection  // HStack ScrollView 예시
                 featureCardsSection
                 benefitsSection
+                spacerTestSection  // Spacer 테스트 섹션
                 actionButtonView
                 Spacer(minLength: 50)
             }
@@ -135,6 +136,45 @@ final class HomeViewController: BaseViewController, Layout {
         }
     }
     
+    private var horizontalScrollSection: some Layout {
+        VStack(alignment: .center, spacing: 12) {
+            createSectionTitle(text: "Horizontal Scroll (HStack)")
+                .layout()
+                .size(width: 350, height: 30)
+            
+            // HStack with horizontal scrolling
+            ScrollView(.horizontal) {
+                HStack(alignment: .center, spacing: 16) {
+                    Spacer(minLength: 20)  // Left padding spacer
+                    
+                    createScrollCard(title: "Card 1", color: .systemRed)
+                        .layout()
+                        .size(width: 150, height: 100)
+                    
+                    createScrollCard(title: "Card 2", color: .systemGreen)
+                        .layout()
+                        .size(width: 150, height: 100)
+                    
+                    createScrollCard(title: "Card 3", color: .systemBlue)
+                        .layout()
+                        .size(width: 150, height: 100)
+                    
+                    createScrollCard(title: "Card 4", color: .systemPurple)
+                        .layout()
+                        .size(width: 150, height: 100)
+                    
+                    createScrollCard(title: "Card 5", color: .systemTeal)
+                        .layout()
+                        .size(width: 150, height: 100)
+                    
+                    Spacer(minLength: 20)  // Right padding spacer
+                }
+            }
+            .layout()
+            .size(width: 390, height: 120)  // Full width for horizontal scroll
+        }
+    }
+    
     private var benefitsSection: some Layout {
         VStack(alignment: .center, spacing: 16) {
             createSectionTitle(text: "Benefits")
@@ -154,6 +194,61 @@ final class HomeViewController: BaseViewController, Layout {
                     .layout()
                     .size(width: 350, height: 40)
             }
+        }
+        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
+    }
+    
+    private var spacerTestSection: some Layout {
+        VStack(alignment: .center, spacing: 12) {
+            createSectionTitle(text: "Spacer Test")
+                .layout()
+                .size(width: 350, height: 30)
+            
+            // VStack with Spacer minLength test
+            VStack(alignment: .center, spacing: 0) {
+                createSpacerTestLabel(text: "Top", color: .systemRed)
+                    .layout()
+                    .size(width: 100, height: 40)
+                
+                Spacer(minLength: 60)  // Should have at least 60pt height
+                
+                createSpacerTestLabel(text: "Middle", color: .systemGreen)
+                    .layout()
+                    .size(width: 100, height: 40)
+                
+                Spacer(minLength: 60)  // Should have at least 60pt height
+                
+                createSpacerTestLabel(text: "Bottom", color: .systemBlue)
+                    .layout()
+                    .size(width: 100, height: 40)
+            }
+            .layout()
+            .size(width: 350, height: 240)
+            .background(.tertiarySystemFill)
+            .cornerRadius(16)
+            
+            // HStack with Spacer minLength test
+            HStack(alignment: .center, spacing: 0) {
+                createSpacerTestLabel(text: "L", color: .systemOrange)
+                    .layout()
+                    .size(width: 50, height: 50)
+                
+                Spacer(minLength: 40)  // Should have at least 40pt width
+                
+                createSpacerTestLabel(text: "C", color: .systemPink)
+                    .layout()
+                    .size(width: 50, height: 50)
+                
+                Spacer(minLength: 40)  // Should have at least 40pt width
+                
+                createSpacerTestLabel(text: "R", color: .systemCyan)
+                    .layout()
+                    .size(width: 50, height: 50)
+            }
+            .layout()
+            .size(width: 350, height: 70)
+            .background(.tertiarySystemFill)
+            .cornerRadius(16)
         }
         .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
@@ -290,6 +385,50 @@ final class HomeViewController: BaseViewController, Layout {
         container.addSubview(hStack)
         hStack.frame = CGRect(x: 0, y: 0, width: 350, height: 40)
         return container
+    }
+    
+    private func createScrollCard(title: String, color: UIColor) -> UIView {
+        let container = UIView()
+        container.backgroundColor = color.withAlphaComponent(0.15)
+        container.layer.cornerRadius = 16
+        container.layer.masksToBounds = true
+        container.layer.borderWidth = 2
+        container.layer.borderColor = color.withAlphaComponent(0.3).cgColor
+        
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = .systemFont(ofSize: 18, weight: .bold)
+        titleLabel.textColor = color
+        titleLabel.textAlignment = .center
+        
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "Scroll →"
+        subtitleLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        subtitleLabel.textColor = color.withAlphaComponent(0.7)
+        subtitleLabel.textAlignment = .center
+        
+        let vStack = VStack(alignment: .center, spacing: 8) {
+            titleLabel.layout().size(width: 130, height: 30)
+            subtitleLabel.layout().size(width: 130, height: 20)
+        }
+        .padding(16)
+        
+        container.addSubview(vStack)
+        vStack.frame = CGRect(x: 0, y: 0, width: 150, height: 100)
+        
+        return container
+    }
+    
+    private func createSpacerTestLabel(text: String, color: UIColor) -> UIView {
+        let label = UILabel()
+        label.text = text
+        label.font = .systemFont(ofSize: 14, weight: .bold)
+        label.textColor = .white
+        label.textAlignment = .center
+        label.backgroundColor = color
+        label.layer.cornerRadius = 8
+        label.layer.masksToBounds = true
+        return label
     }
     
     // MARK: - Actions
