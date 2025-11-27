@@ -84,7 +84,7 @@ final class HomeViewController: BaseViewController, Layout {
                 featureCardsSection
                 benefitsSection
                 actionButtonView
-                Spacer(minLength: 40)
+                Spacer(minLength: 50)
             }
         }
     }
