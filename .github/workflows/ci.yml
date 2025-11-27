@@ -52,11 +52,11 @@ jobs:
       - name: Run Tests
         run: |
           xcodebuild test \
-            -workspace Layout.xcworkspace \
             -scheme Layout \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES \
+            -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO
 
