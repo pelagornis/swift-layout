@@ -7,58 +7,45 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DCB813142ED821520060761D /* Layout in Frameworks */ = {isa = PBXBuildFile; productRef = DCB813132ED821520060761D /* Layout */; };
+		DCB813EE2ED8AEED0060761D /* Layout in Frameworks */ = {isa = PBXBuildFile; productRef = DCB813ED2ED8AEED0060761D /* Layout */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		DC6833B92E870D0D00BC0666 /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCB8136A2ED8AD880060761D /* LayoutExample-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "LayoutExample-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		DC6833CB2E870D0E00BC0666 /* Exceptions for "Example" folder in "Example" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = DC6833B82E870D0D00BC0666 /* Example */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		DC6833BB2E870D0D00BC0666 /* Example */ = {
+		DCB8136C2ED8AD880060761D /* Example */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				DC6833CB2E870D0E00BC0666 /* Exceptions for "Example" folder in "Example" target */,
-			);
 			path = Example;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		DC6833B62E870D0D00BC0666 /* Frameworks */ = {
+		DCB813672ED8AD880060761D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DCB813142ED821520060761D /* Layout in Frameworks */,
+				DCB813EE2ED8AEED0060761D /* Layout in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		DC6833B02E870D0D00BC0666 = {
+		DCB813612ED8AD880060761D = {
 			isa = PBXGroup;
 			children = (
-				DC6833BB2E870D0D00BC0666 /* Example */,
-				DC6833BA2E870D0D00BC0666 /* Products */,
+				DCB8136C2ED8AD880060761D /* Example */,
+				DCB8136B2ED8AD880060761D /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		DC6833BA2E870D0D00BC0666 /* Products */ = {
+		DCB8136B2ED8AD880060761D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DC6833B92E870D0D00BC0666 /* Example.app */,
+				DCB8136A2ED8AD880060761D /* LayoutExample-macOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -66,68 +53,68 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		DC6833B82E870D0D00BC0666 /* Example */ = {
+		DCB813692ED8AD880060761D /* LayoutExample-macOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DC6833CC2E870D0E00BC0666 /* Build configuration list for PBXNativeTarget "Example" */;
+			buildConfigurationList = DCB813782ED8AD8A0060761D /* Build configuration list for PBXNativeTarget "LayoutExample-macOS" */;
 			buildPhases = (
-				DC6833B52E870D0D00BC0666 /* Sources */,
-				DC6833B62E870D0D00BC0666 /* Frameworks */,
-				DC6833B72E870D0D00BC0666 /* Resources */,
+				DCB813662ED8AD880060761D /* Sources */,
+				DCB813672ED8AD880060761D /* Frameworks */,
+				DCB813682ED8AD880060761D /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				DC6833BB2E870D0D00BC0666 /* Example */,
+				DCB8136C2ED8AD880060761D /* Example */,
 			);
-			name = Example;
+			name = "LayoutExample-macOS";
 			packageProductDependencies = (
-				DCB813132ED821520060761D /* Layout */,
+				DCB813ED2ED8AEED0060761D /* Layout */,
 			);
-			productName = Example;
-			productReference = DC6833B92E870D0D00BC0666 /* Example.app */;
+			productName = "LayoutExample-macOS";
+			productReference = DCB8136A2ED8AD880060761D /* LayoutExample-macOS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		DC6833B12E870D0D00BC0666 /* Project object */ = {
+		DCB813622ED8AD880060761D /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2600;
+				LastSwiftUpdateCheck = 2610;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
-					DC6833B82E870D0D00BC0666 = {
-						CreatedOnToolsVersion = 26.0;
+					DCB813692ED8AD880060761D = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
-			buildConfigurationList = DC6833B42E870D0D00BC0666 /* Build configuration list for PBXProject "Example" */;
+			buildConfigurationList = DCB813652ED8AD880060761D /* Build configuration list for PBXProject "LayoutExample-macOS" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = DC6833B02E870D0D00BC0666;
+			mainGroup = DCB813612ED8AD880060761D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				DCB813122ED821520060761D /* XCLocalSwiftPackageReference "../../swift-layout" */,
+				DCB813EC2ED8AEEC0060761D /* XCLocalSwiftPackageReference "../../../swift-layout" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = DC6833BA2E870D0D00BC0666 /* Products */;
+			productRefGroup = DCB8136B2ED8AD880060761D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DC6833B82E870D0D00BC0666 /* Example */,
+				DCB813692ED8AD880060761D /* LayoutExample-macOS */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		DC6833B72E870D0D00BC0666 /* Resources */ = {
+		DCB813682ED8AD880060761D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -137,7 +124,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		DC6833B52E870D0D00BC0666 /* Sources */ = {
+		DCB813662ED8AD880060761D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -147,69 +134,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		DC6833CD2E870D0E00BC0666 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Example/Info.plist;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pelagornis.Layout.Example;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		DC6833CE2E870D0E00BC0666 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Example/Info.plist;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pelagornis.Layout.Example;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		DC6833CF2E870D0E00BC0666 /* Debug */ = {
+		DCB813762ED8AD8A0060761D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -244,7 +169,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 7JA353ZJMP;
+				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -262,18 +187,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
+				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		DC6833D02E870D0E00BC0666 /* Release */ = {
+		DCB813772ED8AD8A0060761D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -308,7 +233,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 7JA353ZJMP;
+				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -320,33 +245,98 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = iphoneos;
+				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DCB813792ED8AD8A0060761D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.pelagornis.LayoutExample-macOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		DCB8137A2ED8AD8A0060761D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.pelagornis.LayoutExample-macOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DC6833B42E870D0D00BC0666 /* Build configuration list for PBXProject "Example" */ = {
+		DCB813652ED8AD880060761D /* Build configuration list for PBXProject "LayoutExample-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DC6833CF2E870D0E00BC0666 /* Debug */,
-				DC6833D02E870D0E00BC0666 /* Release */,
+				DCB813762ED8AD8A0060761D /* Debug */,
+				DCB813772ED8AD8A0060761D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DC6833CC2E870D0E00BC0666 /* Build configuration list for PBXNativeTarget "Example" */ = {
+		DCB813782ED8AD8A0060761D /* Build configuration list for PBXNativeTarget "LayoutExample-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DC6833CD2E870D0E00BC0666 /* Debug */,
-				DC6833CE2E870D0E00BC0666 /* Release */,
+				DCB813792ED8AD8A0060761D /* Debug */,
+				DCB8137A2ED8AD8A0060761D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -354,18 +344,18 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		DCB813122ED821520060761D /* XCLocalSwiftPackageReference "../../swift-layout" */ = {
+		DCB813EC2ED8AEEC0060761D /* XCLocalSwiftPackageReference "../../../swift-layout" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../swift-layout";
+			relativePath = "../../../swift-layout";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		DCB813132ED821520060761D /* Layout */ = {
+		DCB813ED2ED8AEED0060761D /* Layout */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Layout;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = DC6833B12E870D0D00BC0666 /* Project object */;
+	rootObject = DCB813622ED8AD880060761D /* Project object */;
 }
