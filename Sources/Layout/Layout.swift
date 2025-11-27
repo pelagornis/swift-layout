@@ -47,6 +47,10 @@ import UIKit
 /// - ``overlay(_:)``
 /// - ``background(_:)``
 /// - ``cornerRadius(_:)``
+///
+/// - Note: This protocol is MainActor-isolated because it works with UIView,
+///   which requires main thread access. All layout calculations and view
+///   manipulations are performed on the main actor.
 @MainActor
 public protocol Layout {
     /// A type representing the body of this Layout.
