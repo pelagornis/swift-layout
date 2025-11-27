@@ -335,8 +335,10 @@ public class HStack: UIView, Layout {
         
         // Set calculated size for Spacers
         for subview in subviews {
-            if subview is Spacer {
-                frames[subview] = CGRect(x: 0, y: 0, width: spacerWidth, height: safeBounds.height)
+            if let spacer = subview as? Spacer {
+                let minLength = spacer.minLength ?? 0
+                let actualWidth = max(spacerWidth, minLength)  // Ensure minLength is respected
+                frames[subview] = CGRect(x: 0, y: 0, width: actualWidth, height: safeBounds.height)
                 totalSize.height = max(totalSize.height, safeBounds.height)
             }
         }

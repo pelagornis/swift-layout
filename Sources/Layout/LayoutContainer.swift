@@ -65,6 +65,9 @@ import UIKit
 public class LayoutContainer: UIView {
     private var _body: (() -> any Layout)?
     private var managedViews: Set<UIView> = []
+    private var cachedLayout: (any Layout)?
+    private var lastBounds: CGRect = .zero
+    private var needsHierarchyUpdate: Bool = false
     
     public var body: (any Layout)? {
         get { _body?() }
@@ -74,11 +77,13 @@ public class LayoutContainer: UIView {
     /// Sets the body with SwiftUI-style automatic centering
     public func setBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
         _body = content
-        updateViewHierarchy()
+        needsHierarchyUpdate = true
+        setNeedsLayout()
     }
     
     /// Updates layout for orientation changes
     public func updateLayoutForOrientationChange() {
+        needsHierarchyUpdate = true
         setNeedsLayout()
         layoutIfNeeded()
     }
@@ -86,24 +91,35 @@ public class LayoutContainer: UIView {
     private func updateViewHierarchy() {
         // Remove all existing subviews
         subviews.forEach { $0.removeFromSuperview() }
+        cachedLayout = nil
         
         guard let body = body else {
             return
         }
         
         // Like SwiftUI, automatically wrap in VStack if not using Stack
+        let layout: any Layout
         if isStackLayout(body) {
             // If already Stack, use existing approach
-            applyLayout(body)
+            layout = body
         } else {
             // If not Stack, wrap in VStack
-            let autoVStack = createAutoVStack(from: body)
-            applyLayout(autoVStack)
+            layout = createAutoVStack(from: body)
+        }
+        
+        cachedLayout = layout
+        
+        // Add views to hierarchy (without setting frames yet)
+        let topLevelViews = layout.extractViews()
+        for view in topLevelViews {
+            addSubview(view)
         }
     }
     
-    /// Apply layout to views
-    private func applyLayout(_ layout: any Layout) {
+    /// Apply layout to views (only updates frames, doesn't modify hierarchy)
+    private func applyLayout() {
+        guard let layout = cachedLayout else { return }
+        
         let result = layout.calculateLayout(in: bounds)
         let topLevelViews = layout.extractViews()
         
@@ -111,16 +127,10 @@ public class LayoutContainer: UIView {
         let isScrollView = layout is ScrollView || topLevelViews.contains { $0 is ScrollView }
         
         for view in topLevelViews {
-            addSubview(view)
-            
             if let frame = result.frames[view] {
                 if isScrollView {
                     // For ScrollView, use the frame directly without centering
                     view.frame = frame
-                    
-                    // Force layout update for ScrollView
-                    view.setNeedsLayout()
-                    view.layoutIfNeeded()
                 } else {
                     // Calculate center offset for other layouts
                     let centerX = max(0, (bounds.width - result.totalSize.width) / 2)
@@ -134,12 +144,6 @@ public class LayoutContainer: UIView {
                         height: frame.height
                     )
                     view.frame = adjustedFrame
-                }
-                if let button = view as? UIButton {
-                    button.frame = view.frame
-                    
-                    button.setNeedsLayout()
-                    button.layoutIfNeeded()
                 }
             }
         }
@@ -177,9 +181,20 @@ public class LayoutContainer: UIView {
     }
     
     public override func layoutSubviews() {
-        super.layoutSubviews()    
-        if bounds.width > 0 && bounds.height > 0 {
+        super.layoutSubviews()
+        
+        guard bounds.width > 0 && bounds.height > 0 else { return }
+        
+        // Only update hierarchy when needed (setBody was called)
+        if needsHierarchyUpdate {
+            needsHierarchyUpdate = false
             updateViewHierarchy()
+        }
+        
+        // Only update frames if bounds changed
+        if lastBounds != bounds {
+            lastBounds = bounds
+            applyLayout()
         }
     }
 }
