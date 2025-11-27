@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DC6833D62E8710E900BC0666 /* Layout in Frameworks */ = {isa = PBXBuildFile; productRef = DC6833D52E8710E900BC0666 /* Layout */; };
+		DCB813142ED821520060761D /* Layout in Frameworks */ = {isa = PBXBuildFile; productRef = DCB813132ED821520060761D /* Layout */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,7 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DC6833D62E8710E900BC0666 /* Layout in Frameworks */,
+				DCB813142ED821520060761D /* Layout in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,7 +83,7 @@
 			);
 			name = Example;
 			packageProductDependencies = (
-				DC6833D52E8710E900BC0666 /* Layout */,
+				DCB813132ED821520060761D /* Layout */,
 			);
 			productName = Example;
 			productReference = DC6833B92E870D0D00BC0666 /* Example.app */;
@@ -114,7 +114,7 @@
 			mainGroup = DC6833B02E870D0D00BC0666;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				DC6833D42E8710E900BC0666 /* XCLocalSwiftPackageReference "../../swift-layout" */,
+				DCB813122ED821520060761D /* XCLocalSwiftPackageReference "../../swift-layout" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DC6833BA2E870D0D00BC0666 /* Products */;
@@ -154,7 +154,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7JA353ZJMP;
+				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Example/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -166,7 +166,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pelagornis.Example;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pelagornis.Layout.Example;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -185,7 +185,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7JA353ZJMP;
+				DEVELOPMENT_TEAM = PG5KXQ6FWQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Example/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -197,7 +197,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pelagornis.Example;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pelagornis.Layout.Example;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -354,14 +354,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		DC6833D42E8710E900BC0666 /* XCLocalSwiftPackageReference "../../swift-layout" */ = {
+		DCB813122ED821520060761D /* XCLocalSwiftPackageReference "../../swift-layout" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../swift-layout";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		DC6833D52E8710E900BC0666 /* Layout */ = {
+		DCB813132ED821520060761D /* Layout */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Layout;
 		};
