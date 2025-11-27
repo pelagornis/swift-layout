@@ -37,6 +37,7 @@ import Foundation
 ///     }
 /// }
 /// ```
+@MainActor
 @resultBuilder
 public struct LayoutBuilder {
     

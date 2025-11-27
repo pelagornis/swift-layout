@@ -50,7 +50,7 @@ import UIKit
 /// - ``calculateLayout(in:)``
 /// - ``extractViews()``
 /// - ``intrinsicContentSize``
-public class HStack: UIView, @preconcurrency Layout {
+public class HStack: UIView, Layout {
     public typealias Body = Never
     
     public var body: Never {

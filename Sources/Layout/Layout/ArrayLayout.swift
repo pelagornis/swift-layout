@@ -1,8 +1,7 @@
 import UIKit
 
 /// A layout that represents an array of layouts
-@preconcurrency
-public struct ArrayLayout<Content: Layout>: Layout, @unchecked Sendable {
+public struct ArrayLayout<Content: Layout>: Layout {
     public typealias Body = Never
     
     let content: [Content]

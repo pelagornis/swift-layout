@@ -18,7 +18,7 @@ import UIKit
 /// LayoutDebugger.shared.enableSpacerCalculation = true
 /// ```
 @MainActor
-public class LayoutDebugger: @unchecked Sendable {
+public final class LayoutDebugger {
     
     /// Shared singleton instance
     public static let shared = LayoutDebugger()
@@ -84,7 +84,7 @@ public class LayoutDebugger: @unchecked Sendable {
     /// - Parameters:
     ///   - container: The root view to analyze
     ///   - title: A custom title for the analysis output
-    @MainActor public func analyzeViewHierarchy(_ container: UIView, title: String = "VIEW HIERARCHY") {
+    public func analyzeViewHierarchy(_ container: UIView, title: String = "VIEW HIERARCHY") {
         guard isEnabled && enableViewHierarchy else { return }
         
         print("🔍 ===== \(title) =====")
@@ -92,7 +92,7 @@ public class LayoutDebugger: @unchecked Sendable {
         print("🔍 ===== END \(title) =====")
     }
     
-    @MainActor private func analyzeView(_ view: UIView, depth: Int) {
+    private func analyzeView(_ view: UIView, depth: Int) {
         let indent = String(repeating: "  ", count: depth)
         let prefix = depth == 0 ? "🔍" : "🔍" + String(repeating: " ", count: depth * 2) + "└─"
         

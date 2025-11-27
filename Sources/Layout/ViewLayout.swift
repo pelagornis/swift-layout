@@ -14,8 +14,7 @@ import UIKit
 ///     .centerX()
 ///     .offset(y: 20)
 /// ```
-@preconcurrency
-public struct ViewLayout: @preconcurrency Layout {
+public struct ViewLayout: Layout {
     public typealias Body = Never
     
     public var body: Never {
@@ -35,7 +34,6 @@ public struct ViewLayout: @preconcurrency Layout {
         self.view = view
     }
 
-    @MainActor
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
 
         // Use default bounds if invalid (width can be 0 while height is available)
@@ -102,7 +100,6 @@ public struct ViewLayout: @preconcurrency Layout {
         return [view]
     }
     
-    @MainActor
     public var intrinsicContentSize: CGSize {
         // Return the view's intrinsic content size
         return view.intrinsicContentSize
@@ -213,7 +210,7 @@ public struct ViewLayout: @preconcurrency Layout {
     ///
     /// - Parameter radius: The corner radius
     /// - Returns: A new ``ViewLayout`` with the corner radius modifier applied
-    @MainActor     public func cornerRadius(_ radius: CGFloat) -> ViewLayout {
+    public func cornerRadius(_ radius: CGFloat) -> ViewLayout {
         var copy = self
         copy.modifiers.append(CornerRadiusModifier(radius: radius))
         

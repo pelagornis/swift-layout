@@ -2,8 +2,7 @@ import UIKit
 
 /// A layout that represents a tuple of layouts
 /// Automatically arranges multiple layouts vertically like a VStack when not wrapped in an explicit container
-@preconcurrency
-public struct TupleLayout: Layout, @unchecked Sendable {
+public struct TupleLayout: Layout {
     public typealias Body = Never
     
     public let layouts: [any Layout]

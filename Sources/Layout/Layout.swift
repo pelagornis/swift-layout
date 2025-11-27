@@ -47,6 +47,7 @@ import UIKit
 /// - ``overlay(_:)``
 /// - ``background(_:)``
 /// - ``cornerRadius(_:)``
+@MainActor
 public protocol Layout {
     /// A type representing the body of this Layout.
     ///
@@ -97,7 +98,6 @@ extension Layout {
     /// final frame positions.
     ///
     /// - Parameter container: The UIView to apply the layout to
-    @MainActor
     public func apply(to container: UIView) {
         // Remove existing subviews
         for subview in container.subviews {

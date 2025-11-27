@@ -49,7 +49,7 @@ import UIKit
 /// - ``calculateLayout(in:)``
 /// - ``extractViews()``
 /// - ``intrinsicContentSize``
-public class VStack: UIView, @preconcurrency Layout {
+public class VStack: UIView, Layout {
     public typealias Body = Never
     
     public var body: Never {

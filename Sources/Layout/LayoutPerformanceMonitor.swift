@@ -66,7 +66,7 @@ public struct LayoutPerformanceMonitor {
     ///   - operation: The layout operation to measure
     /// - Returns: The result of the operation
     @discardableResult
-    @MainActor public static func measureLayout<T>(name: String, operation: () -> T) -> T {
+    public static func measureLayout<T>(name: String, operation: () -> T) -> T {
         let startTime = CFAbsoluteTimeGetCurrent()
         let result = operation()
         let endTime = CFAbsoluteTimeGetCurrent()
@@ -88,7 +88,7 @@ public struct LayoutPerformanceMonitor {
     ///   - logger: Custom logging function
     /// - Returns: The result of the operation
     @discardableResult
-    @MainActor public static func measureLayout<T>(name: String, operation: () -> T, logger: (String, TimeInterval) -> Void) -> T {
+    public static func measureLayout<T>(name: String, operation: () -> T, logger: (String, TimeInterval) -> Void) -> T {
         let startTime = CFAbsoluteTimeGetCurrent()
         let result = operation()
         let endTime = CFAbsoluteTimeGetCurrent()
@@ -216,25 +216,25 @@ public struct LayoutPerformanceMonitor {
     }
     
     /// Shared performance collector instance
-    @MainActor public static let shared = PerformanceCollector()
+    public static let shared = PerformanceCollector()
     
     /// Records a measurement using the shared collector
-    @MainActor public static func record(_ name: String, duration: TimeInterval) {
+    public static func record(_ name: String, duration: TimeInterval) {
         shared.record(name, duration: duration)
     }
     
     /// Gets statistics for a named operation from the shared collector
-    @MainActor public static func statistics(for name: String) -> Statistics? {
+    public static func statistics(for name: String) -> Statistics? {
         return shared.statistics(for: name)
     }
     
     /// Clears all measurements from the shared collector
-    @MainActor public static func clearMeasurements() {
+    public static func clearMeasurements() {
         shared.clear()
     }
     
     /// Prints a summary of all measurements from the shared collector
-    @MainActor public static func printSummary() {
+    public static func printSummary() {
         shared.printSummary()
     }
 }

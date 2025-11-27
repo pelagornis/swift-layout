@@ -47,7 +47,7 @@ import UIKit
 /// - ``calculateLayout(in:)``
 /// - ``extractViews()``
 /// - ``intrinsicContentSize``
-public class ScrollView: UIView, @preconcurrency Layout {
+public class ScrollView: UIView, Layout {
     public typealias Body = Never
     
     public var body: Never {

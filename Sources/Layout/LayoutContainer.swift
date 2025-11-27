@@ -72,7 +72,7 @@ public class LayoutContainer: UIView {
     }
     
     /// Sets the body with SwiftUI-style automatic centering
-    public func setBody(@LayoutBuilder _ content: @escaping @MainActor () -> any Layout) {
+    public func setBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
         _body = content
         updateViewHierarchy()
     }
