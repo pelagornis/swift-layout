@@ -141,15 +141,14 @@ public class HStack: UIView, Layout {
         // Based on children's intrinsicContentSize, not dependent on bounds
         
         for subview in subviews {
-            // Completely ignore Spacer inside ScrollView
-            if isInsideScrollView && subview is Spacer {
-                continue
-            }
-            
             var size: CGSize
             
-            // For views implementing Layout protocol (VStack, HStack, ZStack)
-            if let layoutView = subview as? (any Layout) {
+            // Special handling for Spacer
+            if let spacer = subview as? Spacer {
+                let minLength = spacer.minLength ?? 0
+                // Spacer uses minLength in intrinsicContentSize
+                size = CGSize(width: minLength, height: minLength)
+            } else if let layoutView = subview as? (any Layout) {
                 // Use intrinsicContentSize for Layout views
                 size = layoutView.intrinsicContentSize
             } else if let label = subview as? UILabel {
@@ -169,8 +168,18 @@ public class HStack: UIView, Layout {
             maxHeight = max(maxHeight, size.height)
         }
         
-        // Add spacing - don't consider Spacer inside ScrollView
-        let effectiveSubviews = isInsideScrollView ? subviews.filter { !($0 is Spacer) } : subviews
+        // Add spacing - consider Spacers with minLength
+        let effectiveSubviews: [UIView]
+        if isInsideScrollView {
+            effectiveSubviews = subviews.filter { subview in
+                if let spacer = subview as? Spacer {
+                    return (spacer.minLength ?? 0) > 0
+                }
+                return true
+            }
+        } else {
+            effectiveSubviews = subviews
+        }
         if effectiveSubviews.count > 1 {
             totalWidth += spacing * CGFloat(effectiveSubviews.count - 1)
         }
@@ -200,16 +209,13 @@ public class HStack: UIView, Layout {
         var fixedContentWidth: CGFloat = 0
         var nonSpacerSubviews: [(UIView, CGSize)] = []
         var spacerCount: Int = 0
+        var totalMinLength: CGFloat = 0
         
         for subview in subviews {
-            // Ignore Spacer inside ScrollView
-            if isInsideScrollView && subview is Spacer {
-                continue
-            }
-            
             // Detect Spacer
-            if subview is Spacer {
+            if let spacer = subview as? Spacer {
                 spacerCount += 1
+                totalMinLength += spacer.minLength ?? 0
             } else {
                 var size: CGSize
                 // Use the frame calculated from calculateLayout
@@ -224,19 +230,29 @@ public class HStack: UIView, Layout {
             }
         }
         
-        // Calculate total spacing - don't consider Spacer inside ScrollView
-        let effectiveSubviews = isInsideScrollView ? subviews.filter { !($0 is Spacer) } : subviews
+        // Calculate total spacing - consider Spacers with minLength
+        let effectiveSubviews: [UIView]
+        if isInsideScrollView {
+            effectiveSubviews = subviews.filter { subview in
+                if let spacer = subview as? Spacer {
+                    return (spacer.minLength ?? 0) > 0
+                }
+                return true
+            }
+        } else {
+            effectiveSubviews = subviews
+        }
         let totalSpacing = effectiveSubviews.count > 1 ? spacing * CGFloat(effectiveSubviews.count - 1) : 0
         
         // Calculate remaining space for Spacers
         let totalAvailableWidthForContent = availableBounds.width
         let remainingWidthForSpacers: CGFloat
         if isInsideScrollView {
-            // Completely ignore Spacer inside ScrollView
+            // Inside ScrollView: no flexible space
             remainingWidthForSpacers = 0
         } else {
             // Normal case
-            remainingWidthForSpacers = max(0, totalAvailableWidthForContent - fixedContentWidth - totalSpacing)
+            remainingWidthForSpacers = max(0, totalAvailableWidthForContent - fixedContentWidth - totalSpacing - totalMinLength)
         }
         let finalSpacerWidth = spacerCount > 0 ? remainingWidthForSpacers / CGFloat(spacerCount) : 0
         
@@ -246,21 +262,21 @@ public class HStack: UIView, Layout {
         
         // Layout all subviews
         for subview in subviews {
-            // Completely ignore Spacer inside ScrollView
-            if isInsideScrollView && subview is Spacer {
-                continue
-            }
-            
             var size: CGSize
             
             // Detect Spacer
-            if subview is Spacer {
+            if let spacer = subview as? Spacer {
+                let minLength = spacer.minLength ?? 0
+                let actualWidth: CGFloat
+                
                 if isInsideScrollView {
-                    // Set Spacer width to 0 inside ScrollView
-                    size = CGSize(width: 0, height: availableBounds.height)
+                    // Inside ScrollView: only use minLength
+                    actualWidth = minLength
                 } else {
-                    size = CGSize(width: finalSpacerWidth, height: availableBounds.height)
+                    // Normal case: flexible space + minLength
+                    actualWidth = max(finalSpacerWidth + minLength, minLength)
                 }
+                size = CGSize(width: actualWidth, height: availableBounds.height)
             } else {
                 // Use the frame calculated from calculateLayout
                 if let frame = layoutResult.frames[subview] {
@@ -298,9 +314,13 @@ public class HStack: UIView, Layout {
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
         
+        // Detect if inside ScrollView
+        let isInsideScrollView = isInsideScrollView()
+        
         // First calculate the size of views that are not Spacers
         var fixedContentWidth: CGFloat = 0
         var spacerCount: Int = 0
+        var totalMinLength: CGFloat = 0
         
         for subview in subviews {
             if let layoutView = subview as? (any Layout) {
@@ -308,8 +328,9 @@ public class HStack: UIView, Layout {
                 frames.merge(childResult.frames) { _, new in new }
                 totalSize.height = max(totalSize.height, childResult.totalSize.height)
                 fixedContentWidth += childResult.totalSize.width
-            } else if subview is Spacer {
+            } else if let spacer = subview as? Spacer {
                 spacerCount += 1
+                totalMinLength += spacer.minLength ?? 0
             } else {
                 var size: CGSize
                 if let label = subview as? UILabel {
@@ -330,21 +351,37 @@ public class HStack: UIView, Layout {
         
         // Spacer calculation
         let totalSpacing = subviews.count > 1 ? spacing * CGFloat(subviews.count - 1) : 0
-        let remainingWidthForSpacers = max(0, safeBounds.width - fixedContentWidth - totalSpacing)
+        let remainingWidthForSpacers: CGFloat
+        if isInsideScrollView {
+            remainingWidthForSpacers = 0
+        } else {
+            remainingWidthForSpacers = max(0, safeBounds.width - fixedContentWidth - totalSpacing - totalMinLength)
+        }
         let spacerWidth = spacerCount > 0 ? remainingWidthForSpacers / CGFloat(spacerCount) : 0
         
         // Set calculated size for Spacers
         for subview in subviews {
             if let spacer = subview as? Spacer {
                 let minLength = spacer.minLength ?? 0
-                let actualWidth = max(spacerWidth, minLength)  // Ensure minLength is respected
+                let actualWidth: CGFloat
+                if isInsideScrollView {
+                    actualWidth = minLength
+                } else {
+                    actualWidth = max(spacerWidth + minLength, minLength)
+                }
                 frames[subview] = CGRect(x: 0, y: 0, width: actualWidth, height: safeBounds.height)
                 totalSize.height = max(totalSize.height, safeBounds.height)
             }
         }
         
-        // Use all available space
-        totalSize.width = safeBounds.width
+        // Calculate total width
+        if isInsideScrollView {
+            // Inside ScrollView: calculate actual content width including Spacer minLengths
+            totalSize.width = fixedContentWidth + totalSpacing + totalMinLength
+        } else {
+            // Use all available space
+            totalSize.width = safeBounds.width
+        }
         totalSize.width += padding.left + padding.right
         totalSize.height += padding.top + padding.bottom
         
@@ -368,8 +405,16 @@ public class HStack: UIView, Layout {
         let maxHeight = min(safeBounds.height, bounds.height)
         
         for subview in subviews {
-            // Completely ignore Spacer inside ScrollView
-            if isInsideScrollView && subview is Spacer {
+            // Handle Spacer with minLength inside ScrollView
+            if let spacer = subview as? Spacer {
+                let minLength = spacer.minLength ?? 0
+                if isInsideScrollView {
+                    // Inside ScrollView: only use minLength
+                    let size = CGSize(width: minLength, height: maxHeight)
+                    frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+                    totalSize.width += size.width
+                    totalSize.height = max(totalSize.height, size.height)
+                }
                 continue
             }
             
@@ -429,8 +474,18 @@ public class HStack: UIView, Layout {
             }
         }
         
-        // Add spacing - don't consider Spacer inside ScrollView
-        let effectiveSubviews = isInsideScrollView ? subviews.filter { !($0 is Spacer) } : subviews
+        // Add spacing - consider Spacers with minLength inside ScrollView
+        let effectiveSubviews: [UIView]
+        if isInsideScrollView {
+            effectiveSubviews = subviews.filter { subview in
+                if let spacer = subview as? Spacer {
+                    return (spacer.minLength ?? 0) > 0
+                }
+                return true
+            }
+        } else {
+            effectiveSubviews = subviews
+        }
         if effectiveSubviews.count > 1 {
             totalSize.width += spacing * CGFloat(effectiveSubviews.count - 1)
         }
