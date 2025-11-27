@@ -53,6 +53,18 @@ final class HomeViewController: BaseViewController, Layout {
         title = "Home"
         view.backgroundColor = .systemBackground
         actionButton.addTarget(self, action: #selector(actionButtonTapped), for: .touchUpInside)
+        
+        // Enable layout debugging
+        enableLayoutDebugging = true
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // Print performance summary after layout is complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.printLayoutPerformanceSummary()
+        }
     }
     
     override func setLayout() {

@@ -1,12 +1,42 @@
 import UIKit
+import Layout
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Configure Layout debugging in DEBUG builds
+        #if DEBUG
+        configureLayoutDebugging()
+        #endif
+        
         return true
     }
+    
+    // MARK: - Layout Debugging Configuration
+    
+    #if DEBUG
+    private func configureLayoutDebugging() {
+        // Enable all layout debugging features
+        LayoutDebugger.shared.enableAll()
+        
+        // Or enable only specific features:
+        // LayoutDebugger.shared.isEnabled = true
+        // LayoutDebugger.shared.enableLayoutCalculation = true
+        // LayoutDebugger.shared.enableViewHierarchy = true
+        // LayoutDebugger.shared.enableFrameSettings = true
+        // LayoutDebugger.shared.enableSpacerCalculation = true
+        // LayoutDebugger.shared.enablePerformanceMonitoring = true
+        
+        print("🔧 [Layout] Debug mode enabled")
+        print("📊 Available debug categories:")
+        print("   - Layout Calculation: \(LayoutDebugger.shared.enableLayoutCalculation)")
+        print("   - View Hierarchy: \(LayoutDebugger.shared.enableViewHierarchy)")
+        print("   - Frame Settings: \(LayoutDebugger.shared.enableFrameSettings)")
+        print("   - Spacer Calculation: \(LayoutDebugger.shared.enableSpacerCalculation)")
+        print("   - Performance Monitoring: \(LayoutDebugger.shared.enablePerformanceMonitoring)")
+    }
+    #endif
 
     // MARK: UISceneSession Lifecycle
 

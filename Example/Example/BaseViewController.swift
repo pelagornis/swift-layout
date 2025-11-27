@@ -6,6 +6,19 @@ open class BaseViewController: UIViewController {
     
     // MARK: - Core layout container
     let layoutContainer = LayoutContainer()
+    
+    // MARK: - Debug & Monitoring
+    
+    /// Enable layout debugging for this view controller
+    open var enableLayoutDebugging: Bool = false {
+        didSet {
+            if enableLayoutDebugging {
+                LayoutDebugger.shared.enableAll()
+            } else {
+                LayoutDebugger.shared.disableAll()
+            }
+        }
+    }
 
     // MARK: - View lifecycle
     open override func viewDidLoad() {
@@ -13,12 +26,25 @@ open class BaseViewController: UIViewController {
 
         view.backgroundColor = .systemBackground
         setupLayoutContainer()
-        setLayout()
+        
+        // Measure layout setup time
+        LayoutPerformanceMonitor.measureLayout(name: "\(type(of: self)).setLayout") {
+            setLayout()
+        }
     }
 
     open override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         layoutContainer.frame = view.bounds
+    }
+    
+    open override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // Log view hierarchy when debugging is enabled
+        if enableLayoutDebugging {
+            LayoutDebugger.shared.analyzeViewHierarchy(layoutContainer, title: "\(type(of: self)) Layout")
+        }
     }
 
     // MARK: - Setup and update methods
@@ -39,13 +65,29 @@ open class BaseViewController: UIViewController {
 
     /// Allows dynamic re-layout during runtime.
     public func reloadLayout(animated: Bool = false) {
-        if animated {
-            UIView.animate(withDuration: 0.25) {
-                self.setLayout()
-                self.view.layoutIfNeeded()
+        LayoutPerformanceMonitor.measureLayout(name: "\(type(of: self)).reloadLayout") {
+            if animated {
+                UIView.animate(withDuration: 0.25) {
+                    self.setLayout()
+                    self.view.layoutIfNeeded()
+                }
+            } else {
+                setLayout()
             }
-        } else {
-            setLayout()
         }
+    }
+    
+    // MARK: - Debug Helpers
+    
+    /// Print current layout performance summary
+    public func printLayoutPerformanceSummary() {
+        LayoutPerformanceMonitor.printSummary()
+    }
+    
+    /// Analyze and print view hierarchy
+    public func analyzeLayoutHierarchy() {
+        LayoutDebugger.shared.isEnabled = true
+        LayoutDebugger.shared.enableViewHierarchy = true
+        LayoutDebugger.shared.analyzeViewHierarchy(layoutContainer, title: "\(type(of: self)) Layout")
     }
 }
