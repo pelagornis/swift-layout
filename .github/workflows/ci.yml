@@ -52,7 +52,7 @@ jobs:
       - name: Run Tests
         run: |
           xcodebuild test \
-            -scheme Layout \
+            -scheme swift-layout \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -derivedDataPath ~/.derivedData \
             -enableCodeCoverage YES \
