@@ -1,28 +1,45 @@
 # Layout
 
 ![Official](https://badge.pelagornis.com/official.svg)
-[![Swift Version](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org)
+[![Swift Version](https://img.shields.io/badge/Swift-6.0+-orange.svg)](https://swift.org)
 [![iOS Version](https://img.shields.io/badge/iOS-13.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CodeCov](https://img.shields.io/codecov/c/github/pelagornis/swift-layout)](https://codecov.io/gh/pelagornis/swift-layout)
 [![Swift Package Manager](https://img.shields.io/badge/SwiftPM-compatible-brightgreen.svg)](https://swift.org/package-manager)
 
-A high-performance, SwiftUI-style declarative layout system that uses manual frame calculations instead of Auto Layout. Layout combines the readability of SwiftUI with the blazing speed of direct frame manipulation.
+A high-performance, SwiftUI-style declarative layout system built on **frame-based calculations** — no Auto Layout constraints. Layout combines the readability of SwiftUI with the blazing speed of direct frame manipulation.
+
+## Why Layout?
+
+| Feature            | Auto Layout                  | Layout                    |
+| ------------------ | ---------------------------- | ------------------------- |
+| **Performance**    | Constraint solving overhead  | Direct frame calculation  |
+| **Syntax**         | Imperative constraints       | Declarative SwiftUI-style |
+| **Debugging**      | Complex constraint conflicts | Simple frame inspection   |
+| **Learning Curve** | Steep                        | Familiar to SwiftUI users |
 
 ## ✨ Features
 
-🚀 **High Performance** - Frame-based calculations instead of Auto Layout constraints  
+🚀 **High Performance** - Pure frame-based calculations, zero Auto Layout overhead  
 📱 **SwiftUI-Style API** - Familiar declarative syntax with `@LayoutBuilder`  
+📐 **GeometryReader** - Access container size and position dynamically  
 🔄 **Automatic View Management** - Smart view hierarchy handling  
 🌉 **UIKit ↔ SwiftUI Bridge** - Seamless integration between frameworks  
-📐 **Flexible Layouts** - VStack, HStack, ZStack, and custom layouts  
+📦 **Flexible Layouts** - VStack, HStack, ZStack, ScrollView, and more  
 🎯 **Zero Dependencies** - Pure UIKit with optional SwiftUI integration  
-♿ **Accessibility Ready** - Full VoiceOver and accessibility support  
-📚 **DocC Documentation** - Complete API documentation
+⚡ **Animation Engine** - Built-in spring and timing animations  
+🔧 **Environment System** - Color scheme, layout direction support  
+📊 **Performance Profiler** - Real-time FPS and layout metrics  
+💾 **Layout Caching** - Intelligent caching for repeated layouts  
+🎨 **Preferences System** - Pass values up the view hierarchy
+
+---
 
 ## 📦 Installation
 
 ### Swift Package Manager
+
+Add the following to your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -30,402 +47,828 @@ dependencies: [
 ]
 ```
 
+Then add `Layout` to your target dependencies:
+
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: ["Layout"]
+)
+```
+
+### Xcode
+
+1. File → Add Package Dependencies
+2. Enter: `https://github.com/pelagornis/swift-layout.git`
+3. Select version and add to your project
+
+---
+
 ## 🚀 Quick Start
 
-### SwiftUI-Style Usage
+### Basic Setup
 
 ```swift
 import Layout
 
 class MyViewController: UIViewController, Layout {
+    // 1. Create a layout container
     let layoutContainer = LayoutContainer()
+
+    // 2. Create your UI components
+    let titleLabel = UILabel()
+    let subtitleLabel = UILabel()
+    let actionButton = UIButton(type: .system)
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // 3. Configure views
+        titleLabel.text = "Welcome to Layout!"
+        titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
+
+        subtitleLabel.text = "High-performance declarative layouts"
+        subtitleLabel.font = .systemFont(ofSize: 16)
+        subtitleLabel.textColor = .secondaryLabel
+
+        actionButton.setTitle("Get Started", for: .normal)
+        actionButton.backgroundColor = .systemBlue
+        actionButton.setTitleColor(.white, for: .normal)
+        actionButton.layer.cornerRadius = 12
+
+        // 4. Add container to view
+        view.addSubview(layoutContainer)
+        layoutContainer.frame = view.bounds
+        layoutContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+
+        // 5. Set the layout body
+        layoutContainer.setBody { self.body }
+    }
+
+    // 6. Define your layout declaratively
+    @LayoutBuilder var body: some Layout {
+        VStack(alignment: .center, spacing: 16) {
+            Spacer(minLength: 100)
+
+            titleLabel.layout()
+                .size(width: 300, height: 34)
+
+            subtitleLabel.layout()
+                .size(width: 300, height: 20)
+
+            Spacer(minLength: 40)
+
+            actionButton.layout()
+                .size(width: 280, height: 50)
+
+            Spacer()
+        }
+        .padding(20)
+    }
+}
+```
+
+### Using BaseViewController (Recommended)
+
+For cleaner code, extend `BaseViewController`:
+
+```swift
+class MyViewController: BaseViewController, Layout {
     let titleLabel = UILabel()
     let actionButton = UIButton()
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupViews()
+    }
 
-        // Setup views
-        titleLabel.text = "Welcome to Layout!"
-        actionButton.setTitle("Get Started", for: .normal)
-
-        // Add container to view
-        view.addSubview(layoutContainer)
-        layoutContainer.frame = view.bounds
-
-        // SwiftUI-style: Content is automatically centered!
+    override func setLayout() {
         layoutContainer.setBody { self.body }
     }
 
     @LayoutBuilder var body: some Layout {
-        // Content is automatically centered like SwiftUI
-        titleLabel.layout()
-            .size(height: 30)
-
-        actionButton.layout()
-            .size(width: 240, height: 50)
+        VStack(alignment: .center, spacing: 24) {
+            titleLabel.layout().size(width: 280, height: 30)
+            actionButton.layout().size(width: 240, height: 50)
+        }
     }
 }
 ```
 
-### Manual Layout (Advanced)
-
-```swift
-@LayoutBuilder var body: some Layout {
-    VStack(spacing: 24, alignment: .center) {
-        Spacer(minLength: 60)
-
-        titleLabel.layout()
-            .size(height: 30)
-
-        actionButton.layout()
-            .size(width: 240, height: 50)
-
-        Spacer()
-    }
-    .padding(20)
-}
-```
+---
 
 ## 🎨 Layout Components
 
-### Stack Layouts
+### VStack (Vertical Stack)
+
+Arranges children vertically from top to bottom.
 
 ```swift
-// Vertical Stack (like VStack)
-VStack(spacing: 16, alignment: .center) {
-    titleLabel.layout()
-    subtitleLabel.layout()
-    actionButton.layout()
-}
+VStack(alignment: .center, spacing: 16) {
+    headerView.layout()
+        .size(width: 300, height: 60)
 
-// Horizontal Stack (like HStack)
-HStack(spacing: 12, alignment: .center) {
-    profileImage.layout().size(width: 50, height: 50)
-    nameLabel.layout()
+    contentView.layout()
+        .size(width: 300, height: 200)
+
+    footerView.layout()
+        .size(width: 300, height: 40)
+}
+```
+
+**Parameters:**
+
+- `alignment`: `.leading`, `.center`, `.trailing` (default: `.center`)
+- `spacing`: Space between children (default: `0`)
+
+### HStack (Horizontal Stack)
+
+Arranges children horizontally from leading to trailing.
+
+```swift
+HStack(alignment: .center, spacing: 12) {
+    iconView.layout()
+        .size(width: 44, height: 44)
+
+    VStack(alignment: .leading, spacing: 4) {
+        titleLabel.layout().size(width: 200, height: 20)
+        subtitleLabel.layout().size(width: 200, height: 16)
+    }
+
     Spacer()
-    statusBadge.layout()
-}
 
-// Overlay Stack (like ZStack)
+    chevronIcon.layout()
+        .size(width: 24, height: 24)
+}
+.padding(16)
+```
+
+**Parameters:**
+
+- `alignment`: `.top`, `.center`, `.bottom` (default: `.center`)
+- `spacing`: Space between children (default: `0`)
+
+### ZStack (Overlay Stack)
+
+Overlays children on top of each other.
+
+```swift
 ZStack(alignment: .topTrailing) {
-    backgroundView.layout()
-    overlayLabel.layout()
-    closeButton.layout().size(width: 30, height: 30)
+    // Background (bottom layer)
+    backgroundImage.layout()
+        .size(width: 300, height: 200)
+
+    // Content (middle layer)
+    contentView.layout()
+        .size(width: 280, height: 180)
+
+    // Badge (top layer, positioned at top-trailing)
+    badgeView.layout()
+        .size(width: 30, height: 30)
+        .offset(x: -10, y: 10)
 }
 ```
 
-### Dynamic Content
+**Parameters:**
+
+- `alignment`: Any combination of vertical (`.top`, `.center`, `.bottom`) and horizontal (`.leading`, `.center`, `.trailing`)
+
+### ScrollView
+
+Adds scrolling capability to content.
 
 ```swift
-// ForEach for dynamic content
-ForEach(items) { item in
-    item.layout()
-        .size(width: 280, height: 44)
-        .centerX()
-}
+ScrollView {
+    VStack(alignment: .center, spacing: 20) {
+        // Header
+        headerView.layout()
+            .size(width: 350, height: 200)
 
-// Conditional layouts
-if isExpanded {
-    detailView.layout()
-        .size(height: 200)
-} else {
-    summaryView.layout()
-        .size(height: 60)
+        // Multiple content sections
+        ForEach(sections) { section in
+            sectionView.layout()
+                .size(width: 350, height: 150)
+        }
+
+        // Bottom spacing
+        Spacer(minLength: 100)
+    }
 }
 ```
 
-### Layout Modifiers
+### Spacer
+
+Flexible space that expands to fill available room.
 
 ```swift
+VStack(alignment: .center, spacing: 0) {
+    Spacer(minLength: 20)  // At least 20pt, can grow
+
+    titleLabel.layout()
+
+    Spacer()  // Flexible space, takes remaining room
+
+    buttonView.layout()
+
+    Spacer(minLength: 40)  // Safe area padding
+}
+```
+
+---
+
+## 🎛️ Layout Modifiers
+
+### Size
+
+```swift
+// Fixed size
 myView.layout()
-    .size(width: 200, height: 100)          // Set explicit size
-    .center()                               // Center in container
-    .offset(x: 10, y: 20)                   // Apply offset
-    .aspectRatio(16/9, contentMode: .fit)   // Maintain aspect ratio
+    .size(width: 200, height: 100)
+
+// Width only (height flexible)
+myView.layout()
+    .size(width: 200)
+
+// Height only (width flexible)
+myView.layout()
+    .size(height: 50)
 ```
+
+### Padding
+
+```swift
+// Uniform padding
+VStack { ... }
+    .padding(20)
+
+// Edge-specific padding
+VStack { ... }
+    .padding(UIEdgeInsets(top: 20, left: 16, bottom: 40, right: 16))
+```
+
+### Offset
+
+```swift
+// Move view from its calculated position
+myView.layout()
+    .size(width: 100, height: 100)
+    .offset(x: 10, y: -5)
+```
+
+### Background & Corner Radius
+
+```swift
+VStack { ... }
+    .layout()
+    .size(width: 300, height: 200)
+    .background(.systemBlue)
+    .cornerRadius(16)
+```
+
+### Chaining Modifiers
+
+```swift
+cardView.layout()
+    .size(width: 320, height: 180)
+    .padding(16)
+    .background(.tertiarySystemBackground)
+    .cornerRadius(20)
+    .offset(y: 10)
+```
+
+---
+
+## 📐 GeometryReader
+
+`GeometryReader` provides access to its container's size and position, enabling dynamic layouts.
+
+### Declarative Style (with @LayoutBuilder)
+
+```swift
+GeometryReader { proxy in
+    // Use proxy.size for dynamic sizing
+    VStack(alignment: .center, spacing: 8) {
+        topBox.layout()
+            .size(width: proxy.size.width * 0.8, height: 60)
+
+        bottomBox.layout()
+            .size(width: proxy.size.width * 0.6, height: 40)
+    }
+}
+.layout()
+.size(width: 360, height: 140)
+```
+
+### Imperative Style (for Complex Layouts)
+
+When you need direct control over view placement:
+
+```swift
+GeometryReader { proxy, container in
+    // Calculate dimensions based on container size
+    let availableWidth = proxy.size.width - 32
+    let columnWidth = (availableWidth - 16) / 2
+
+    // Create and position views manually
+    let leftColumn = createColumn()
+    leftColumn.frame = CGRect(x: 16, y: 16, width: columnWidth, height: 100)
+    container.addSubview(leftColumn)
+
+    let rightColumn = createColumn()
+    rightColumn.frame = CGRect(x: 16 + columnWidth + 16, y: 16, width: columnWidth, height: 100)
+    container.addSubview(rightColumn)
+}
+```
+
+### GeometryProxy Properties
+
+```swift
+GeometryReader { proxy, container in
+    // Container dimensions
+    let width = proxy.size.width      // CGFloat
+    let height = proxy.size.height    // CGFloat
+
+    // Safe area information
+    let topInset = proxy.safeAreaInsets.top
+    let bottomInset = proxy.safeAreaInsets.bottom
+
+    // Position in global coordinate space
+    let globalX = proxy.globalFrame.minX
+    let globalY = proxy.globalFrame.minY
+
+    // Local bounds (origin is always 0,0)
+    let bounds = proxy.bounds  // CGRect
+}
+```
+
+### Geometry Change Callback
+
+React to size changes:
+
+```swift
+GeometryReader { proxy in
+    contentView.layout()
+}
+.onGeometryChange { proxy in
+    print("Size changed: \(proxy.size)")
+    print("Global position: \(proxy.globalFrame.origin)")
+}
+```
+
+---
+
+## ⚡ Animation Engine
+
+### Spring Animation
+
+```swift
+LayoutAnimationEngine.shared.animateSpring(
+    damping: 0.7,           // 0.0 - 1.0, lower = more bouncy
+    initialVelocity: 0.5,   // Initial velocity
+    duration: 0.6,          // Animation duration
+    animations: {
+        self.cardView.transform = CGAffineTransform(translationX: 100, y: 0)
+        self.cardView.alpha = 0.8
+    },
+    completion: {
+        print("Animation finished!")
+    }
+)
+```
+
+### Standard Animation with Timing Functions
+
+```swift
+// Ease in-out
+LayoutAnimationEngine.shared.animate(
+    duration: 0.3,
+    timingFunction: .easeInOut
+) {
+    self.view.alpha = 1.0
+}
+
+// Available timing functions:
+// .linear, .easeIn, .easeOut, .easeInOut
+// .cubicBezier(c1x, c1y, c2x, c2y)
+```
+
+### Layout Transitions
+
+```swift
+// Animate layout changes
+func toggleExpanded() {
+    isExpanded.toggle()
+
+    UIView.animate(withDuration: 0.3) {
+        self.layoutContainer.setBody { self.body }
+        self.layoutContainer.layoutIfNeeded()
+    }
+}
+
+@LayoutBuilder var body: some Layout {
+    VStack(alignment: .center, spacing: 16) {
+        headerView.layout()
+            .size(width: 300, height: 60)
+
+        if isExpanded {
+            detailView.layout()
+                .size(width: 300, height: 200)
+        }
+
+        footerView.layout()
+            .size(width: 300, height: 40)
+    }
+}
+```
+
+---
+
+## 🔧 Environment System
+
+### Color Scheme Detection
+
+```swift
+// Get current color scheme
+let colorScheme = ColorScheme.current
+
+switch colorScheme {
+case .light:
+    view.backgroundColor = .white
+case .dark:
+    view.backgroundColor = .black
+}
+
+// React to changes
+override func traitCollectionDidChange(_ previous: UITraitCollection?) {
+    super.traitCollectionDidChange(previous)
+    EnvironmentProvider.shared.updateSystemEnvironment()
+
+    // Update your UI based on new color scheme
+    updateColorsForCurrentScheme()
+}
+```
+
+### Layout Direction
+
+```swift
+// Check for RTL languages
+let direction = LayoutDirection.current
+
+if direction == .rightToLeft {
+    // Adjust layout for RTL
+    stackView.semanticContentAttribute = .forceRightToLeft
+}
+```
+
+### Environment Values
+
+```swift
+// Access shared environment
+let env = EnvironmentValues.shared
+
+// Custom environment keys
+extension EnvironmentValues {
+    var customSpacing: CGFloat {
+        get { self[CustomSpacingKey.self] }
+        set { self[CustomSpacingKey.self] = newValue }
+    }
+}
+
+struct CustomSpacingKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 16
+}
+```
+
+---
+
+## 📊 Performance Monitoring
+
+### Frame Rate Monitor
+
+```swift
+// Start monitoring
+FrameRateMonitor.shared.start()
+
+// Check current FPS (updated in real-time)
+let currentFPS = FrameRateMonitor.shared.currentFPS
+let averageFPS = FrameRateMonitor.shared.averageFPS
+
+// Display in UI
+Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+    let fps = FrameRateMonitor.shared.averageFPS
+    self.fpsLabel.text = String(format: "%.0f FPS", fps)
+    self.fpsLabel.textColor = fps >= 55 ? .systemGreen : .systemRed
+}
+
+// Stop when done
+FrameRateMonitor.shared.stop()
+```
+
+### Layout Cache
+
+```swift
+// Check cache performance
+let hitRate = LayoutCache.shared.hitRate  // 0.0 - 1.0
+print("Cache hit rate: \(Int(hitRate * 100))%")
+
+// Clear cache if needed
+LayoutCache.shared.clearCache()
+
+// Get cache statistics
+let stats = LayoutCache.shared.statistics
+print("Hits: \(stats.hits), Misses: \(stats.misses)")
+```
+
+### Performance Profiler
+
+```swift
+// Profile a layout operation
+let profiler = PerformanceProfiler.shared
+
+profiler.startProfiling(name: "ComplexLayout")
+
+// ... perform layout operations ...
+
+profiler.endProfiling(name: "ComplexLayout")
+
+// Get all profiles
+let profiles = profiler.allProfiles
+for profile in profiles {
+    print("\(profile.name): \(profile.duration)ms")
+}
+
+// Check for warnings
+let warnings = profiler.allWarnings
+for warning in warnings {
+    print("⚠️ \(warning.message)")
+}
+```
+
+---
 
 ## 🌉 UIKit ↔ SwiftUI Bridge
 
-### UIKit to SwiftUI
+### UIKit View in SwiftUI
 
 ```swift
+import SwiftUI
+import Layout
+
 struct MySwiftUIView: View {
     var body: some View {
         VStack {
-            Text("SwiftUI Content")
+            Text("SwiftUI Header")
+                .font(.title)
 
-            // Use any UIKit view in SwiftUI!
-            UILabel()
-                .swiftui  // ← Magic conversion!
-                .size(height: 50)
+            // Use any UIKit view in SwiftUI
+            createCustomChart()
+                .swiftui  // ← Converts to SwiftUI View
+                .frame(height: 200)
 
-            createCustomUIKitView()
-                .swiftui
-                .size(height: 100)
+            // UIKit labels, buttons, etc.
+            UILabel().configure {
+                $0.text = "UIKit Label"
+                $0.textAlignment = .center
+            }
+            .swiftui
+            .frame(height: 44)
         }
     }
 
-    func createCustomUIKitView() -> UIView {
-        // Your existing UIKit components work seamlessly
-        let chartView = MyCustomChartView()
-        return chartView
+    func createCustomChart() -> UIView {
+        let chart = CustomChartView()
+        chart.data = [10, 20, 30, 40, 50]
+        return chart
     }
 }
 ```
 
-### SwiftUI to UIKit
+### SwiftUI View in UIKit
 
 ```swift
-class UIKitViewController: UIViewController {
+class MyViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Embed SwiftUI views in UIKit
-        let swiftUIView = MySwiftUIView()
-        let hostingController = swiftUIView.uikit
+        // Create SwiftUI view
+        let swiftUIContent = MySwiftUIView()
 
+        // Convert to UIKit hosting controller
+        let hostingController = swiftUIContent.uikit
+
+        // Add as child view controller
         addChild(hostingController)
         view.addSubview(hostingController.view)
+        hostingController.view.frame = view.bounds
+        hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         hostingController.didMove(toParent: self)
     }
 }
 ```
 
-## 🏗️ Advanced Examples
+---
 
-### Complex Card Layout
+## 🔍 Debugging
 
-```swift
-@LayoutBuilder var cardLayout: some Layout {
-    ZStack(alignment: .topLeading) {
-        // Background card
-        cardBackgroundView.layout()
-            .size(width: 320, height: 140)
-            .cornerRadius(12)
-
-        // Content overlay
-        VStack(spacing: 12, alignment: .leading) {
-            // Header
-            HStack(spacing: 12, alignment: .center) {
-                avatarImageView.layout()
-                    .size(width: 40, height: 40)
-
-                VStack(spacing: 4, alignment: .leading) {
-                    nameLabel.layout().size(height: 20)
-                    timeLabel.layout().size(height: 16)
-                }
-
-                Spacer()
-
-                moreButton.layout().size(width: 30, height: 30)
-            }
-
-            // Content
-            messageLabel.layout()
-                .size(height: 40)
-
-            // Actions
-            HStack(spacing: 24, alignment: .center) {
-                likeButton.layout().size(width: 60, height: 30)
-                shareButton.layout().size(width: 60, height: 30)
-                Spacer()
-            }
-        }
-        .padding(16)
-    }
-}
-```
-
-### Responsive Layout
+### Enable Debugging
 
 ```swift
-@LayoutBuilder var responsiveLayout: some Layout {
-    let isCompact = view.bounds.width < 400
-    let isTablet = view.bounds.width > 768
+// Enable all debugging
+LayoutDebugger.shared.enableAll()
 
-    if isTablet {
-        // Tablet: Side-by-side layout
-        HStack(spacing: 40, alignment: .top) {
-            VStack(spacing: 20) {
-                titleLabel.layout()
-                profileSection.layout()
-            }
-
-            VStack(spacing: 20) {
-                contentView.layout()
-                actionsSection.layout()
-            }
-        }
-        .padding(40)
-    } else {
-        // Phone: Stacked layout
-        VStack(spacing: isCompact ? 12 : 24) {
-            titleLabel.layout()
-            profileSection.layout()
-            contentView.layout()
-            actionsSection.layout()
-        }
-        .padding(isCompact ? 16 : 24)
-    }
-}
-```
-
-### Animated Layout Changes
-
-```swift
-func updateLayout(animated: Bool = true) {
-    let changes = {
-        self.layoutContainer.setBody {
-            self.body  // New layout
-        }
-        self.layoutContainer.layoutSubviews()
-    }
-
-    if animated {
-        UIView.animate(
-            withDuration: 0.3,
-            delay: 0,
-            usingSpringWithDamping: 0.8,
-            initialSpringVelocity: 0
-        ) {
-            changes()
-        }
-    } else {
-        changes()
-    }
-}
-```
-
-## Debugging System
-
-### LayoutDebugger Configuration
-
-```swift
-// Disable all debugging by default
-LayoutDebugger.shared.disableAll()
-
-// Selective activation
-LayoutDebugger.shared.enableBasic()        // Basic debugging
-LayoutDebugger.shared.enableSpacerOnly()   // Spacer-related only
-LayoutDebugger.shared.enableAll()          // All debugging
-
-// Individual settings
+// Enable specific features
 LayoutDebugger.shared.isEnabled = true
 LayoutDebugger.shared.enableViewHierarchy = true
 LayoutDebugger.shared.enableSpacerCalculation = true
+LayoutDebugger.shared.enableFrameLogging = true
+
+// Disable all
+LayoutDebugger.shared.disableAll()
+```
+
+### View Hierarchy Analysis
+
+```swift
+LayoutDebugger.shared.analyzeViewHierarchy(
+    layoutContainer,
+    title: "MY LAYOUT"
+)
+```
+
+**Output:**
+
+```
+🔍 ===== MY LAYOUT =====
+🔍 LayoutContainer
+├─ Frame: (20.0, 100.0, 350.0, 600.0)
+├─ Background: systemBackground
+├─ Hidden: false
+└─ Alpha: 1.0
+  └─ VStack
+    ├─ Frame: (0.0, 20.0, 350.0, 560.0)
+    ├─ Spacing: 16.0
+    └─ Alignment: center
+      ├─ UILabel "Welcome"
+      │   ├─ Frame: (25.0, 0.0, 300.0, 34.0)
+      │   └─ Font: .boldSystemFont(28)
+      ├─ Spacer
+      │   └─ Frame: (0.0, 50.0, 350.0, 400.0)
+      └─ UIButton "Get Started"
+          ├─ Frame: (35.0, 466.0, 280.0, 50.0)
+          └─ Background: systemBlue
 ```
 
 ### Debug Categories
 
-- 🔧 **Layout**: Layout calculation process
-- 🏗️ **Hierarchy**: View hierarchy structure
-- 📐 **Frame**: Frame setting
-- 🔲 **Spacer**: Spacer calculation
-- ⚡ **Performance**: Performance monitoring
+| Category       | Description                |
+| -------------- | -------------------------- |
+| 🔧 Layout      | Layout calculation process |
+| 🏗️ Hierarchy   | View hierarchy structure   |
+| 📐 Frame       | Frame setting and changes  |
+| 🔲 Spacer      | Spacer calculation details |
+| ⚡ Performance | Performance metrics        |
 
-### Tree-style View Analysis
+---
+
+## 🏗️ Project Structure
+
+```
+Sources/Layout/
+├── Core/
+│   ├── Animation/           # Animation engine & timing functions
+│   │   ├── AnimationTimingFunction.swift
+│   │   ├── LayoutAnimation.swift
+│   │   ├── LayoutAnimationEngine.swift
+│   │   └── VectorArithmetic.swift
+│   │
+│   ├── Cache/               # Layout caching system
+│   │   ├── LayoutCache.swift
+│   │   ├── LayoutCacheKey.swift
+│   │   └── IncrementalLayoutCache.swift
+│   │
+│   ├── Environment/         # Environment values & providers
+│   │   ├── EnvironmentValues.swift
+│   │   ├── EnvironmentProvider.swift
+│   │   ├── ColorScheme.swift
+│   │   └── LayoutDirection.swift
+│   │
+│   ├── Geometry/            # Geometry system
+│   │   ├── GeometryReader.swift
+│   │   ├── GeometryProxy.swift
+│   │   ├── CoordinateSpace.swift
+│   │   └── Anchor.swift
+│   │
+│   ├── Performance/         # Performance monitoring
+│   │   ├── FrameRateMonitor.swift
+│   │   ├── PerformanceProfiler.swift
+│   │   └── PerformanceThreshold.swift
+│   │
+│   ├── Preferences/         # Preference system
+│   │   ├── PreferenceKey.swift
+│   │   └── PreferenceRegistry.swift
+│   │
+│   └── Priority/            # Layout priority
+│       ├── LayoutPriority.swift
+│       └── ContentPriority.swift
+│
+├── Components/              # Layout components
+│   ├── VStack.swift
+│   ├── HStack.swift
+│   ├── ZStack.swift
+│   ├── ScrollView.swift
+│   ├── Spacer.swift
+│   └── ForEach.swift
+│
+├── Modifiers/               # Layout modifiers
+│   ├── SizeModifier.swift
+│   ├── PaddingModifier.swift
+│   ├── OffsetModifier.swift
+│   └── BackgroundModifier.swift
+│
+├── Bridge/                  # UIKit ↔ SwiftUI bridge
+│   ├── UIViewRepresentable.swift
+│   └── HostingController.swift
+│
+└── Debug/                   # Debugging utilities
+    ├── LayoutDebugger.swift
+    └── LayoutPerformanceMonitor.swift
+```
+
+---
+
+## 🎯 Migration from Auto Layout
+
+### Before (Auto Layout)
 
 ```swift
-// Analyze view hierarchy in tree format
-LayoutDebugger.shared.analyzeViewHierarchy(
-    layoutContainer,
-    title: "LAYOUT ANALYSIS"
-)
-```
-
-**Output Example:**
-
-```
-🔍 ===== LAYOUT ANALYSIS =====
-🔍 LayoutContainer
-├─ Frame: (39.3, 170.4, 314.4, 511.2)
-├─ Background: systemYellowColor
-├─ Hidden: false
-└─ Alpha: 1.0
-  └─ Child 0: VStack
-    ├─ Frame: (40.0, 40.0, 234.4, 431.2)
-    ├─ Background: nil
-    ├─ Hidden: false
-    └─ Alpha: 1.0
-      └─ Child 0: UILabel
-        ├─ Frame: (56.0, 40.0, 82.7, 21.7)
-        ├─ Background: systemBlueColor
-        ├─ Hidden: false
-        ├─ Alpha: 1.0
-        └─ Text: "Welcome"
-```
-
-## Performance Monitoring
-
-### Using LayoutPerformanceMonitor
-
-```swift
-// Start performance measurement
-LayoutPerformanceMonitor.shared.startMeasuring("layout_calculation")
-
-// Perform layout calculation
-let result = layout.calculateLayout(in: bounds)
-
-// End performance measurement
-LayoutPerformanceMonitor.shared.endMeasuring("layout_calculation")
-
-// Print performance report
-LayoutPerformanceMonitor.shared.printPerformanceReport()
-```
-
-
-## 📚 Documentation
-
-## 🎯 Migration Guide
-
-### From Auto Layout
-
-```swift
-// Before: Auto Layout
+// Complex constraint setup
 titleLabel.translatesAutoresizingMaskIntoConstraints = false
-NSLayoutConstraint.activate([
-    titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-    titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-    titleLabel.widthAnchor.constraint(equalToConstant: 200),
-    titleLabel.heightAnchor.constraint(equalToConstant: 30)
-])
+subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+button.translatesAutoresizingMaskIntoConstraints = false
 
-// After: Layout
-titleLabel.layout()
-    .size(width: 200, height: 30)
-    .centerX()
-    .position(y: 20)
+NSLayoutConstraint.activate([
+    titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+    titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+    titleLabel.widthAnchor.constraint(equalToConstant: 280),
+
+    subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+    subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+    subtitleLabel.widthAnchor.constraint(equalToConstant: 280),
+
+    button.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 40),
+    button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+    button.widthAnchor.constraint(equalToConstant: 240),
+    button.heightAnchor.constraint(equalToConstant: 50)
+])
 ```
 
-### From PinLayout
+### After (Layout)
 
 ```swift
-// Before: PinLayout
-titleLabel.pin
-    .top(view.pin.safeArea.top + 20)
-    .hCenter()
-    .width(200)
-    .height(30)
+// Clean, declarative layout
+@LayoutBuilder var body: some Layout {
+    VStack(alignment: .center, spacing: 16) {
+        Spacer(minLength: 40)
 
-// After: Layout (declarative!)
-@LayoutBuilder var body: Layout {
-    titleLabel.layout()
-        .size(width: 200, height: 30)
-        .centerX()
-        .position(y: 20)
+        titleLabel.layout()
+            .size(width: 280, height: 30)
+
+        subtitleLabel.layout()
+            .size(width: 280, height: 20)
+
+        Spacer(minLength: 40)
+
+        button.layout()
+            .size(width: 240, height: 50)
+
+        Spacer()
+    }
 }
 ```
 
-## Inspiration
+### Benefits
+
+| Aspect        | Auto Layout          | Layout                  |
+| ------------- | -------------------- | ----------------------- |
+| Lines of code | ~15 lines            | ~10 lines               |
+| Readability   | Constraint pairs     | Visual hierarchy        |
+| Performance   | Constraint solver    | Direct frames           |
+| Debugging     | Constraint conflicts | Simple frame inspection |
+| Flexibility   | Rigid constraints    | Dynamic calculations    |
+
+---
+
+## 🙏 Inspiration
 
 Layout is inspired by:
 
-- [SwiftUI](https://developer.apple.com/xcode/swiftui/) - Declarative syntax
-- [PinLayout](https://github.com/layoutBox/PinLayout) - Performance philosophy
-- [Yoga](https://yogalayout.com/) - Flexbox concepts
-- [React Native](https://reactnative.dev/) - Cross-platform approach
+- [SwiftUI](https://developer.apple.com/xcode/swiftui/) - Declarative syntax and result builders
+- [PinLayout](https://github.com/layoutBox/PinLayout) - Performance-first philosophy
+- [Yoga](https://yogalayout.com/) - Flexbox layout concepts
+- [ComponentKit](https://componentkit.org/) - Declarative UI for iOS
 
-## License
+---
 
-**swift-layout** is under MIT license. See the [LICENSE](LICENSE) file for more info.
+## 📄 License
+
+**swift-layout** is released under the MIT license. See the [LICENSE](LICENSE) file for more info.
