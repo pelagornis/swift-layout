@@ -195,7 +195,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             }
             .padding(12)
             .layout()
-            .size(width: 360, height: 110)
+            .size(width: 360, height: 105)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
         }
@@ -209,13 +209,13 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             sectionHeader(title: "Priority System", subtitle: "Layout priority distribution")
             
             HStack(alignment: .center, spacing: 10) {
-                priorityCard(label: "High\nPriority", color: .systemRed, width: 115)
-                priorityCard(label: "Medium", color: .systemOrange, width: 100)
-                priorityCard(label: "Low", color: .systemGreen, width: 85)
+                priorityCard(label: "High\nPriority", color: .systemRed, width: 105)
+                priorityCard(label: "Medium", color: .systemOrange, width: 105)
+                priorityCard(label: "Low", color: .systemGreen, width: 105)
             }
             .padding(12)
             .layout()
-            .size(width: 360, height: 110)
+            .size(width: 360, height: 95)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
         }
@@ -297,54 +297,76 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     // MARK: - Helper: Performance Stat Card
     
     private func performanceStatCard(icon: String, label: UILabel, title: String) -> some Layout {
-        VStack(alignment: .center, spacing: 4) {
-            createLabel(text: icon, font: .systemFont(ofSize: 20), color: .label)
-                .layout().size(width: 100, height: 24)
-            
-            label.layout().size(width: 100, height: 22)
-            
-            createLabel(text: title, font: .systemFont(ofSize: 10, weight: .medium), color: .secondaryLabel)
-                .layout().size(width: 100, height: 14)
-        }
-        .layout()
-        .size(width: 100, height: 70)
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 80))
+        container.backgroundColor = .clear
+        
+        let iconLabel = UILabel(frame: CGRect(x: 0, y: 8, width: 100, height: 24))
+        iconLabel.text = icon
+        iconLabel.font = .systemFont(ofSize: 20)
+        iconLabel.textAlignment = .center
+        container.addSubview(iconLabel)
+        
+        label.frame = CGRect(x: 0, y: 36, width: 100, height: 22)
+        label.textAlignment = .center
+        container.addSubview(label)
+        
+        let titleLabel = UILabel(frame: CGRect(x: 0, y: 60, width: 100, height: 14))
+        titleLabel.text = title
+        titleLabel.font = .systemFont(ofSize: 10, weight: .medium)
+        titleLabel.textColor = .secondaryLabel
+        titleLabel.textAlignment = .center
+        container.addSubview(titleLabel)
+        
+        return container.layout().size(width: 100, height: 80)
     }
     
     private func staticStatCard(icon: String, value: String, title: String) -> some Layout {
-        VStack(alignment: .center, spacing: 4) {
-            createLabel(text: icon, font: .systemFont(ofSize: 20), color: .label)
-                .layout().size(width: 100, height: 24)
-            
-            createLabel(text: value, font: .monospacedSystemFont(ofSize: 14, weight: .bold), color: .systemIndigo)
-                .layout().size(width: 100, height: 22)
-            
-            createLabel(text: title, font: .systemFont(ofSize: 10, weight: .medium), color: .secondaryLabel)
-                .layout().size(width: 100, height: 14)
-        }
-        .layout()
-        .size(width: 100, height: 70)
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 80))
+        container.backgroundColor = .clear
+        
+        let iconLabel = UILabel(frame: CGRect(x: 0, y: 8, width: 100, height: 24))
+        iconLabel.text = icon
+        iconLabel.font = .systemFont(ofSize: 20)
+        iconLabel.textAlignment = .center
+        container.addSubview(iconLabel)
+        
+        let valueLabel = UILabel(frame: CGRect(x: 0, y: 36, width: 100, height: 22))
+        valueLabel.text = value
+        valueLabel.font = .monospacedSystemFont(ofSize: 14, weight: .bold)
+        valueLabel.textColor = .systemIndigo
+        valueLabel.textAlignment = .center
+        container.addSubview(valueLabel)
+        
+        let titleLabel = UILabel(frame: CGRect(x: 0, y: 60, width: 100, height: 14))
+        titleLabel.text = title
+        titleLabel.font = .systemFont(ofSize: 10, weight: .medium)
+        titleLabel.textColor = .secondaryLabel
+        titleLabel.textAlignment = .center
+        container.addSubview(titleLabel)
+        
+        return container.layout().size(width: 100, height: 80)
     }
     
     // MARK: - Helper: Priority Card
     
     private func priorityCard(label: String, color: UIColor, width: CGFloat) -> some Layout {
-        let container = UIView()
+        let height: CGFloat = 70
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
         container.backgroundColor = color.withAlphaComponent(0.2)
         container.layer.cornerRadius = 12
         container.layer.borderWidth = 2
         container.layer.borderColor = color.cgColor
         
-        let textLabel = UILabel()
+        let textLabel = UILabel(frame: CGRect(x: 4, y: 4, width: width - 8, height: height - 8))
         textLabel.text = label
-        textLabel.font = .systemFont(ofSize: 12, weight: .bold)
+        textLabel.font = .systemFont(ofSize: 13, weight: .bold)
         textLabel.textColor = color
         textLabel.textAlignment = .center
         textLabel.numberOfLines = 2
-        textLabel.frame = CGRect(x: 0, y: 0, width: width, height: 80)
         textLabel.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         container.addSubview(textLabel)
         
-        return container.layout().size(width: width, height: 80)
+        return container.layout().size(width: width, height: height)
     }
     
     // MARK: - Helper: Geometry Info Row
