@@ -56,5 +56,35 @@ public struct LayoutAnimation: Sendable {
             timingFunction: timingFunction
         )
     }
+    
+    // MARK: - Convenience Factory Methods
+    
+    /// Creates a spring animation with custom parameters
+    public static func spring(damping: CGFloat = 0.7, velocity: CGFloat = 0, duration: TimeInterval = 0.5) -> LayoutAnimation {
+        return LayoutAnimation(
+            duration: duration,
+            timingFunction: .spring(damping: damping, initialVelocity: velocity)
+        )
+    }
+    
+    /// Creates an ease-in animation
+    public static func easeIn(duration: TimeInterval = 0.3) -> LayoutAnimation {
+        return LayoutAnimation(duration: duration, timingFunction: .easeIn)
+    }
+    
+    /// Creates an ease-out animation
+    public static func easeOut(duration: TimeInterval = 0.3) -> LayoutAnimation {
+        return LayoutAnimation(duration: duration, timingFunction: .easeOut)
+    }
+    
+    /// Creates an ease-in-out animation
+    public static func easeInOut(duration: TimeInterval = 0.3) -> LayoutAnimation {
+        return LayoutAnimation(duration: duration, timingFunction: .easeInOut)
+    }
+    
+    /// Creates a linear animation
+    public static func linear(duration: TimeInterval = 0.3) -> LayoutAnimation {
+        return LayoutAnimation(duration: duration, timingFunction: .linear)
+    }
 }
 
