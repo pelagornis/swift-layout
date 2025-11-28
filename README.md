@@ -734,40 +734,39 @@ LayoutDebugger.shared.analyzeViewHierarchy(
 
 ```
 Sources/Layout/
-├── Core/
-│   ├── Animation/           # Animation engine & timing functions
-│   │   ├── AnimationTimingFunction.swift
-│   │   ├── LayoutAnimation.swift
-│   │   ├── LayoutAnimationEngine.swift
-│   │   └── VectorArithmetic.swift
-│   │
-│   ├── Cache/               # Layout caching system
-│   │   ├── LayoutCache.swift
-│   │   ├── LayoutCacheKey.swift
-│   │   └── IncrementalLayoutCache.swift
-│   │
-│   ├── Environment/         # Environment values & providers
-│   │   ├── EnvironmentValues.swift
-│   │   ├── EnvironmentProvider.swift
-│   │   ├── ColorScheme.swift
-│   │   └── LayoutDirection.swift
-│   │
-│   ├── Geometry/            # Geometry system
-│   │   ├── GeometryReader.swift
-│   │   ├── GeometryProxy.swift
-│   │   ├── CoordinateSpace.swift
-│   │   └── Anchor.swift
-│   │
-│   ├── Performance/         # Performance monitoring
-│   │   ├── FrameRateMonitor.swift
-│   │   ├── PerformanceProfiler.swift
-│   │   └── PerformanceThreshold.swift
-│   │
-│   ├── Preferences/         # Preference system
-│   │   ├── PreferenceKey.swift
-│   │   └── PreferenceRegistry.swift
-│   │
-│   └── Priority/            # Layout priority
+├── Animation/           # Animation engine & timing functions
+│   ├── AnimationTimingFunction.swift
+│   ├── LayoutAnimation.swift
+│   ├── LayoutAnimationEngine.swift
+│   └── VectorArithmetic.swift
+│
+├── Cache/               # Layout caching system
+│   ├── LayoutCache.swift
+│   ├── LayoutCacheKey.swift
+│   └── IncrementalLayoutCache.swift
+│
+├── Environment/         # Environment values & providers
+│   ├── EnvironmentValues.swift
+│   ├── EnvironmentProvider.swift
+│   ├── ColorScheme.swift
+│   └── LayoutDirection.swift
+│
+├── Geometry/            # Geometry system
+│   ├── GeometryReader.swift
+│   ├── GeometryProxy.swift
+│   ├── CoordinateSpace.swift
+│   └── Anchor.swift
+│
+├── Performance/         # Performance monitoring
+│   ├── FrameRateMonitor.swift
+│   ├── PerformanceProfiler.swift
+│   └── PerformanceThreshold.swift
+│
+├── Preferences/         # Preference system
+│   ├── PreferenceKey.swift
+│   └── PreferenceRegistry.swift
+│
+├── Priority/            # Layout priority
 │       ├── LayoutPriority.swift
 │       └── ContentPriority.swift
 │
