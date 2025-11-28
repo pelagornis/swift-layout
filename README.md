@@ -157,6 +157,59 @@ class MyViewController: BaseViewController, Layout {
 
 ---
 
+## 📦 LayoutContainer
+
+`LayoutContainer` is the main container that manages your layout hierarchy. It provides automatic view management, content centering, and animation protection.
+
+### Key Features
+
+- **Automatic View Management**: Views are automatically added/removed based on layout changes
+- **Content Centering**: Content is automatically centered like SwiftUI
+- **Animation Protection**: Prevents layout system from overriding animated views
+- **Layout Updates**: Smart layout invalidation and updates
+
+### Animation Protection
+
+When animating views directly, use `startAnimating` and `stopAnimating` to prevent the layout system from overriding your animations:
+
+```swift
+// Mark view as animating
+layoutContainer.startAnimating(myView)
+
+// Animate the view
+withAnimation(.easeInOut(duration: 0.3)) {
+    myView.frame.size = CGSize(width: 300, height: 200)
+}
+
+// Stop animating after completion
+withAnimation(.easeInOut(duration: 0.3), {
+    myView.frame.size = CGSize(width: 300, height: 200)
+}, completion: { _ in
+    layoutContainer.stopAnimating(myView)
+})
+
+// Check if any views are animating
+if layoutContainer.isAnimating {
+    // Layout updates are automatically paused
+}
+```
+
+### Layout Updates
+
+```swift
+// Update layout manually
+layoutContainer.setBody { self.body }
+
+// Force layout update
+layoutContainer.setNeedsLayout()
+layoutContainer.layoutIfNeeded()
+
+// Update layout for orientation changes
+layoutContainer.updateLayoutForOrientationChange()
+```
+
+---
+
 ## 🎨 Layout Components
 
 ### VStack (Vertical Stack)
@@ -419,65 +472,129 @@ GeometryReader { proxy in
 
 ## ⚡ Animation Engine
 
-### Spring Animation
+Layout provides SwiftUI-style animation support with `withAnimation` and animation modifiers.
+
+### withAnimation Function
+
+The `withAnimation` function provides SwiftUI-like animation blocks:
 
 ```swift
-LayoutAnimationEngine.shared.animateSpring(
-    damping: 0.7,           // 0.0 - 1.0, lower = more bouncy
-    initialVelocity: 0.5,   // Initial velocity
-    duration: 0.6,          // Animation duration
-    animations: {
-        self.cardView.transform = CGAffineTransform(translationX: 100, y: 0)
-        self.cardView.alpha = 0.8
-    },
-    completion: {
-        print("Animation finished!")
-    }
-)
-```
-
-### Standard Animation with Timing Functions
-
-```swift
-// Ease in-out
-LayoutAnimationEngine.shared.animate(
-    duration: 0.3,
-    timingFunction: .easeInOut
-) {
+// Basic animation
+withAnimation {
     self.view.alpha = 1.0
+    self.view.frame.size = CGSize(width: 200, height: 200)
 }
 
-// Available timing functions:
-// .linear, .easeIn, .easeOut, .easeInOut
-// .cubicBezier(c1x, c1y, c2x, c2y)
+// Custom animation
+withAnimation(.spring(damping: 0.7, velocity: 0.5)) {
+    self.cardView.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+}
+
+// With completion handler
+withAnimation(.easeInOut(duration: 0.3), {
+    self.view.frame.origin = CGPoint(x: 100, y: 100)
+}, completion: { finished in
+    print("Animation completed: \(finished)")
+})
 ```
 
-### Layout Transitions
+### Animation Presets
+
+```swift
+// Predefined animations
+withAnimation(.default)      // 0.3s easeInOut
+withAnimation(.spring)        // Spring animation with damping 0.7
+withAnimation(.quick)         // 0.15s easeOut
+
+// Custom timing functions
+withAnimation(.easeIn(duration: 0.4))
+withAnimation(.easeOut(duration: 0.3))
+withAnimation(.easeInOut(duration: 0.5))
+withAnimation(.linear(duration: 0.3))
+
+// Custom spring
+withAnimation(.spring(damping: 0.6, velocity: 0.8, duration: 0.5))
+```
+
+### Animation Modifiers
+
+Apply animations to layouts using modifiers:
 
 ```swift
 // Animate layout changes
-func toggleExpanded() {
-    isExpanded.toggle()
+myView.layout()
+    .size(width: 200, height: 100)
+    .animation(.spring)
 
-    UIView.animate(withDuration: 0.3) {
-        self.layoutContainer.setBody { self.body }
-        self.layoutContainer.layoutIfNeeded()
-    }
+// Custom animation
+cardView.layout()
+    .animation(.easeInOut(duration: 0.4))
+```
+
+### Transition Effects
+
+```swift
+// Fade transition
+myView.layout()
+    .transition(.fade)
+
+// Slide transitions
+myView.layout()
+    .transition(.slideFromTop)
+    .transition(.slideFromBottom)
+    .transition(.slideFromLeading)
+    .transition(.slideFromTrailing)
+
+// Scale transition
+myView.layout()
+    .transition(.scaleFromCenter)
+
+// Combined transitions
+myView.layout()
+    .transition(.fadeAndScale)
+```
+
+### Protecting Animations from Layout System
+
+When animating views directly, protect them from layout system interference:
+
+```swift
+// Mark view as animating
+layoutContainer.startAnimating(myView)
+
+// Animate the view
+withAnimation(.easeInOut(duration: 0.3)) {
+    myView.frame.size = CGSize(width: 300, height: 200)
 }
 
-@LayoutBuilder var body: some Layout {
-    VStack(alignment: .center, spacing: 16) {
-        headerView.layout()
-            .size(width: 300, height: 60)
+// Stop animating after completion
+withAnimation(.easeInOut(duration: 0.3), {
+    myView.frame.size = CGSize(width: 300, height: 200)
+}, completion: { _ in
+    layoutContainer.stopAnimating(myView)
+})
 
-        if isExpanded {
-            detailView.layout()
-                .size(width: 300, height: 200)
-        }
+// Check if any views are animating
+if layoutContainer.isAnimating {
+    // Layout updates are paused
+}
+```
 
-        footerView.layout()
-            .size(width: 300, height: 40)
-    }
+### LayoutAnimation Structure
+
+```swift
+// Create custom animation
+let customAnimation = LayoutAnimation(
+    duration: 0.5,
+    delay: 0.1,
+    timingFunction: .easeInOut,
+    repeatCount: 1,
+    autoreverses: false
+)
+
+// Use with withAnimation
+withAnimation(customAnimation) {
+    // Your animations
 }
 ```
 
@@ -734,43 +851,26 @@ LayoutDebugger.shared.analyzeViewHierarchy(
 
 ```
 Sources/Layout/
-├── Animation/           # Animation engine & timing functions
+├── Animation/              # Animation engine & timing functions
 │   ├── AnimationTimingFunction.swift
 │   ├── LayoutAnimation.swift
 │   ├── LayoutAnimationEngine.swift
-│   └── VectorArithmetic.swift
+│   ├── LayoutTransition.swift
+│   ├── TransitionConfig.swift
+│   ├── AnimatedLayout.swift
+│   ├── Animated.swift
+│   ├── AnimationToken.swift
+│   ├── VectorArithmetic.swift
+│   └── WithAnimation.swift
 │
-├── Cache/               # Layout caching system
+├── Cache/                  # Layout caching system
 │   ├── LayoutCache.swift
 │   ├── LayoutCacheKey.swift
-│   └── IncrementalLayoutCache.swift
+│   ├── IncrementalLayoutCache.swift
+│   ├── CacheableLayout.swift
+│   └── ViewLayoutCache.swift
 │
-├── Environment/         # Environment values & providers
-│   ├── EnvironmentValues.swift
-│   ├── EnvironmentProvider.swift
-│   ├── ColorScheme.swift
-│   └── LayoutDirection.swift
-│
-├── Geometry/            # Geometry system
-│   ├── GeometryReader.swift
-│   ├── GeometryProxy.swift
-│   ├── CoordinateSpace.swift
-│   └── Anchor.swift
-│
-├── Performance/         # Performance monitoring
-│   ├── FrameRateMonitor.swift
-│   ├── PerformanceProfiler.swift
-│   └── PerformanceThreshold.swift
-│
-├── Preferences/         # Preference system
-│   ├── PreferenceKey.swift
-│   └── PreferenceRegistry.swift
-│
-├── Priority/            # Layout priority
-│       ├── LayoutPriority.swift
-│       └── ContentPriority.swift
-│
-├── Components/              # Layout components
+├── Components/            # Layout components
 │   ├── VStack.swift
 │   ├── HStack.swift
 │   ├── ZStack.swift
@@ -778,19 +878,96 @@ Sources/Layout/
 │   ├── Spacer.swift
 │   └── ForEach.swift
 │
-├── Modifiers/               # Layout modifiers
+├── Environment/           # Environment values & providers
+│   ├── EnvironmentValues.swift
+│   ├── EnvironmentKey.swift
+│   ├── EnvironmentKeys.swift
+│   ├── EnvironmentProvider.swift
+│   ├── EnvironmentObject.swift
+│   ├── EnvironmentPropertyWrapper.swift
+│   ├── EnvironmentModifierLayout.swift
+│   ├── ColorScheme.swift
+│   └── LayoutDirection.swift
+│
+├── Geometry/              # Geometry system
+│   ├── GeometryReader.swift
+│   ├── GeometryProxy.swift
+│   ├── CoordinateSpace.swift
+│   ├── CoordinateSpaceRegistry.swift
+│   ├── Anchor.swift
+│   └── UnitPoint.swift
+│
+├── Invalidation/          # Layout invalidation system
+│   ├── LayoutInvalidating.swift
+│   ├── LayoutInvalidationContext.swift
+│   ├── InvalidationReason.swift
+│   └── DirtyRegionTracker.swift
+│
+├── Layout/                # Core layout protocol & builders
+│   ├── Layout.swift
+│   ├── LayoutBuilder.swift
+│   ├── LayoutResult.swift
+│   ├── LayoutModifier.swift
+│   ├── EmptyLayout.swift
+│   ├── TupleLayout.swift
+│   ├── ArrayLayout.swift
+│   ├── OptionalLayout.swift
+│   ├── ConditionalLayout.swift
+│   ├── BackgroundLayout.swift
+│   ├── OverlayLayout.swift
+│   └── CornerRadius.swift
+│
+├── Modifiers/             # Layout modifiers
 │   ├── SizeModifier.swift
 │   ├── PaddingModifier.swift
 │   ├── OffsetModifier.swift
-│   └── BackgroundModifier.swift
+│   ├── PositionModifier.swift
+│   ├── CenterModifier.swift
+│   ├── BackgroundModifier.swift
+│   ├── CornerRadiusModifier.swift
+│   ├── AspectRatioModifier.swift
+│   └── AnimationModifier.swift
 │
-├── Bridge/                  # UIKit ↔ SwiftUI bridge
-│   ├── UIViewRepresentable.swift
-│   └── HostingController.swift
+├── Performance/           # Performance monitoring
+│   ├── FrameRateMonitor.swift
+│   ├── PerformanceProfiler.swift
+│   ├── PerformanceProfile.swift
+│   ├── PerformanceReport.swift
+│   ├── PerformanceThreshold.swift
+│   ├── PerformanceWarning.swift
+│   └── ProfilingToken.swift
 │
-└── Debug/                   # Debugging utilities
-    ├── LayoutDebugger.swift
-    └── LayoutPerformanceMonitor.swift
+├── Preferences/           # Preference system
+│   ├── PreferenceKey.swift
+│   ├── PreferenceKeys.swift
+│   ├── PreferenceRegistry.swift
+│   ├── PreferenceValues.swift
+│   └── PreferenceModifierLayout.swift
+│
+├── Priority/              # Layout priority system
+│   ├── LayoutPriority.swift
+│   ├── ContentPriority.swift
+│   ├── PriorityLayout.swift
+│   ├── FlexibleLayout.swift
+│   ├── FixedSizeLayout.swift
+│   ├── LayoutAxis.swift
+│   ├── PrioritySizeCalculator.swift
+│   └── StackPriorityDistributor.swift
+│
+├── Snapshot/              # Snapshot testing
+│   ├── SnapshotConfig.swift
+│   ├── SnapshotEngine.swift
+│   ├── SnapshotResult.swift
+│   └── SnapshotAsserter.swift
+│
+├── Utils/                 # Utility extensions
+│   ├── UIView+Layout.swift
+│   ├── UIView+SwiftUI.swift
+│   └── ArraryExtension.swift
+│
+├── LayoutContainer.swift  # Main container class
+├── ViewLayout.swift       # View layout wrapper
+└── LayoutDebugger.swift   # Debugging utilities
 ```
 
 ---
