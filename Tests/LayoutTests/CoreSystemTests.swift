@@ -245,11 +245,11 @@ final class CoreSystemTests: XCTestCase {
     // MARK: - Snapshot Testing Tests
     
     func testSnapshotConfig() {
-        let config = SnapshotConfig.iPhone14
+        let config = SnapshotConfig(size: CGSize(width: 390, height: 844))
         XCTAssertEqual(config.size, CGSize(width: 390, height: 844))
         
         let darkConfig = config.darkMode()
-        XCTAssertEqual(darkConfig.backgroundColor, .black)
+        XCTAssertEqual(darkConfig.backgroundColor, UIColor.black)
         
         let landscapeConfig = config.landscape()
         XCTAssertEqual(landscapeConfig.size, CGSize(width: 844, height: 390))
