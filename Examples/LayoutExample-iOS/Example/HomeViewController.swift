@@ -81,6 +81,7 @@ final class HomeViewController: BaseViewController, Layout {
                 profileSection
                 statisticsCard
                 horizontalScrollSection  // HStack ScrollView 예시
+                zStackSection  // ZStack 예시
                 featureCardsSection
                 benefitsSection
                 spacerTestSection  // Spacer 테스트 섹션
@@ -173,6 +174,56 @@ final class HomeViewController: BaseViewController, Layout {
             .layout()
             .size(width: 390, height: 120)  // Full width for horizontal scroll
         }
+    }
+    
+    private var zStackSection: some Layout {
+        VStack(alignment: .center, spacing: 16) {
+            createSectionTitle(text: "ZStack Examples")
+                .layout()
+                .size(width: 350, height: 30)
+            
+            // Example 1: Card with badge overlay
+            ZStack(alignment: .topTrailing) {
+                createZStackCard(backgroundColor: .systemIndigo, title: "Card with Badge")
+                    .layout()
+                    .size(width: 300, height: 120)
+                
+                createBadgeView(text: "NEW", color: .systemRed)
+                    .layout()
+                    .size(width: 50, height: 24)
+                    .offset(x: -10, y: 10)
+            }
+            .layout()
+            .size(width: 300, height: 120)
+            
+            // Example 2: Image with text overlay (center)
+            ZStack(alignment: .center) {
+                createZStackCard(backgroundColor: .systemTeal, title: "")
+                    .layout()
+                    .size(width: 300, height: 150)
+                
+                createOverlayText(text: "Overlay Text", color: .white)
+                    .layout()
+                    .size(width: 200, height: 40)
+            }
+            .layout()
+            .size(width: 300, height: 150)
+            
+            // Example 3: Multiple layers with different alignments
+            ZStack(alignment: .bottomLeading) {
+                createZStackCard(backgroundColor: .systemOrange, title: "")
+                    .layout()
+                    .size(width: 300, height: 100)
+                
+                createOverlayText(text: "Bottom Left", color: .white)
+                    .layout()
+                    .size(width: 200, height: 40)
+                    .offset(x: 10, y: -10)
+            }
+            .layout()
+            .size(width: 300, height: 100)
+        }
+        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private var benefitsSection: some Layout {
@@ -429,6 +480,64 @@ final class HomeViewController: BaseViewController, Layout {
         label.layer.cornerRadius = 8
         label.layer.masksToBounds = true
         return label
+    }
+    
+    private func createZStackCard(backgroundColor: UIColor, title: String) -> UIView {
+        let container = UIView()
+        container.backgroundColor = backgroundColor.withAlphaComponent(0.2)
+        container.layer.cornerRadius = 16
+        container.layer.masksToBounds = true
+        container.layer.borderWidth = 2
+        container.layer.borderColor = backgroundColor.withAlphaComponent(0.4).cgColor
+        
+        if !title.isEmpty {
+            let titleLabel = UILabel()
+            titleLabel.text = title
+            titleLabel.font = .systemFont(ofSize: 18, weight: .bold)
+            titleLabel.textColor = backgroundColor
+            titleLabel.textAlignment = .center
+            
+            container.addSubview(titleLabel)
+            titleLabel.frame = CGRect(x: 0, y: 20, width: 300, height: 30)
+        }
+        
+        return container
+    }
+    
+    private func createBadgeView(text: String, color: UIColor) -> UIView {
+        let badge = UIView()
+        badge.backgroundColor = color
+        badge.layer.cornerRadius = 12
+        badge.layer.masksToBounds = true
+        
+        let label = UILabel()
+        label.text = text
+        label.font = .systemFont(ofSize: 12, weight: .bold)
+        label.textColor = .white
+        label.textAlignment = .center
+        
+        badge.addSubview(label)
+        label.frame = CGRect(x: 0, y: 0, width: 50, height: 24)
+        
+        return badge
+    }
+    
+    private func createOverlayText(text: String, color: UIColor) -> UIView {
+        let container = UIView()
+        container.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        container.layer.cornerRadius = 8
+        container.layer.masksToBounds = true
+        
+        let label = UILabel()
+        label.text = text
+        label.font = .systemFont(ofSize: 18, weight: .semibold)
+        label.textColor = color
+        label.textAlignment = .center
+        
+        container.addSubview(label)
+        label.frame = CGRect(x: 0, y: 0, width: 200, height: 40)
+        
+        return container
     }
     
     // MARK: - Actions
