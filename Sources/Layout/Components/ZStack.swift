@@ -128,6 +128,7 @@ public class ZStack: UIView, Layout {
         
         // Use safeBounds if bounds is not valid
         let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: 600)
+        let paddedBounds = safeBounds.inset(by: padding)
         
         // Call calculateLayout to get the calculated frames from ViewLayout
         let layoutResult = calculateLayout(in: bounds)
@@ -136,9 +137,24 @@ public class ZStack: UIView, Layout {
         for subview in subviews {
             
             var size: CGSize
+            var offsetX: CGFloat = 0
+            var offsetY: CGFloat = 0
+            
             // Use the frame calculated from calculateLayout
             if let frame = layoutResult.frames[subview] {
                 size = frame.size
+                
+                // Check if ViewLayout has offset modifier
+                if let storedViewLayout = getViewLayout(for: subview) {
+                    // Extract offset from ViewLayout modifiers
+                    for modifier in storedViewLayout.modifiers {
+                        if let offsetModifier = modifier as? OffsetModifier {
+                            offsetX = offsetModifier.x
+                            offsetY = offsetModifier.y
+                            break
+                        }
+                    }
+                }
             } else {
                 // Fallback for views not in layoutResult
                 size = CGSize(width: 50, height: 20)
@@ -148,10 +164,16 @@ public class ZStack: UIView, Layout {
             size = CGSize(width: max(size.width, 1), height: max(size.height, 1))
             
             // Use ZStack's full bounds for center alignment (excluding padding)
-            let (x, y) = calculatePosition(for: size, in: safeBounds, alignment: alignment)
+            let (x, y) = calculatePosition(for: size, in: paddedBounds, alignment: alignment)
             
-            let frame = CGRect(x: x, y: y, width: size.width, height: size.height)
-            subview.frame = frame
+            // Apply offset modifier if present
+            let finalFrame = CGRect(
+                x: x + offsetX,
+                y: y + offsetY,
+                width: size.width,
+                height: size.height
+            )
+            subview.frame = finalFrame
         }
     }
     
