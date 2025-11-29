@@ -36,41 +36,4 @@ public struct AnimatedLayout: Layout {
     }
 }
 
-// MARK: - Layout Extension for Animation
-
-public extension Layout {
-    /// Applies animation to layout changes
-    ///
-    /// Usage:
-    /// ```swift
-    /// myView.layout()
-    ///     .animation(.spring)
-    ///     .animation(.easeInOut(duration: 0.3))
-    /// ```
-    func animation(_ animation: LayoutAnimation = .default) -> AnimatedLayout {
-        return AnimatedLayout(base: self, animation: animation)
-    }
-    
-    /// Applies a transition when the view appears or disappears
-    func transition(_ config: TransitionConfig) -> AnimatedLayout {
-        return AnimatedLayout(base: self, transition: config)
-    }
-    
-    /// Applies a transition effect using LayoutTransition
-    ///
-    /// Usage:
-    /// ```swift
-    /// myView.layout()
-    ///     .transition(.opacity)
-    ///     .transition(.slide(edge: .bottom))
-    /// ```
-    func transition(_ transition: LayoutTransition, animation: LayoutAnimation = .default) -> AnimatedLayout {
-        let config = TransitionConfig(
-            insertion: transition,
-            removal: transition,
-            animation: animation
-        )
-        return AnimatedLayout(base: self, transition: config)
-    }
-}
 

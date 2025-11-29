@@ -516,44 +516,6 @@ withAnimation(.linear(duration: 0.3))
 withAnimation(.spring(damping: 0.6, velocity: 0.8, duration: 0.5))
 ```
 
-### Animation Modifiers
-
-Apply animations to layouts using modifiers:
-
-```swift
-// Animate layout changes
-myView.layout()
-    .size(width: 200, height: 100)
-    .animation(.spring)
-
-// Custom animation
-cardView.layout()
-    .animation(.easeInOut(duration: 0.4))
-```
-
-### Transition Effects
-
-```swift
-// Fade transition
-myView.layout()
-    .transition(.fade)
-
-// Slide transitions
-myView.layout()
-    .transition(.slideFromTop)
-    .transition(.slideFromBottom)
-    .transition(.slideFromLeading)
-    .transition(.slideFromTrailing)
-
-// Scale transition
-myView.layout()
-    .transition(.scaleFromCenter)
-
-// Combined transitions
-myView.layout()
-    .transition(.fadeAndScale)
-```
-
 ### Protecting Animations from Layout System
 
 When animating views directly, protect them from layout system interference:
