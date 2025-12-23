@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DC8622F52EFAF18C00F4EF11 /* Layout in Frameworks */ = {isa = PBXBuildFile; productRef = DC8622F42EFAF18C00F4EF11 /* Layout */; };
 		DCB814C22ED8B2480060761D /* Layout in Frameworks */ = {isa = PBXBuildFile; productRef = DCB814C12ED8B2480060761D /* Layout */; };
 /* End PBXBuildFile section */
 
@@ -40,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC8622F52EFAF18C00F4EF11 /* Layout in Frameworks */,
 				DCB814C22ED8B2480060761D /* Layout in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,6 +86,7 @@
 			name = "LayoutExample-iOS";
 			packageProductDependencies = (
 				DCB814C12ED8B2480060761D /* Layout */,
+				DC8622F42EFAF18C00F4EF11 /* Layout */,
 			);
 			productName = "LayoutExample-iOS";
 			productReference = DCB814952ED8B1B20060761D /* LayoutExample-iOS.app */;
@@ -114,7 +117,7 @@
 			mainGroup = DCB8148C2ED8B1B20060761D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				DCB814C02ED8B2480060761D /* XCLocalSwiftPackageReference "../../../swift-layout" */,
+				DC8622F32EFAF18C00F4EF11 /* XCLocalSwiftPackageReference "../../../swift-layout" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DCB814962ED8B1B20060761D /* Products */;
@@ -354,13 +357,17 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		DCB814C02ED8B2480060761D /* XCLocalSwiftPackageReference "../../../swift-layout" */ = {
+		DC8622F32EFAF18C00F4EF11 /* XCLocalSwiftPackageReference "../../../swift-layout" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../../swift-layout";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		DC8622F42EFAF18C00F4EF11 /* Layout */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Layout;
+		};
 		DCB814C12ED8B2480060761D /* Layout */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Layout;
