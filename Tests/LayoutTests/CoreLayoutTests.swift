@@ -51,7 +51,8 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
         let viewLayout = ViewLayout(testView)
         
         XCTAssertTrue(viewLayout.view === testView)
-        XCTAssertEqual(viewLayout.modifiers.count, 0)
+        // Modifiers are now stored on the view itself, not on ViewLayout
+        XCTAssertEqual(testView.layoutModifiers.count, 0)
         XCTAssertEqual(viewLayout.extractViews(), [testView])
     }
     
