@@ -50,14 +50,7 @@ open class BaseViewController: UIViewController {
     // MARK: - Setup and update methods
     private func setupLayoutContainer() {
         view.addSubview(layoutContainer)
-        layoutContainer.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            layoutContainer.topAnchor.constraint(equalTo: view.topAnchor),
-            layoutContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            layoutContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            layoutContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
+        layoutContainer.frame = view.bounds
     }
 
     /// Renders the current layout DSL.
