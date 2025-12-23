@@ -170,7 +170,7 @@ public class ScrollView: UIView, Layout {
     }
     
     private func updateVerticalLayout(_ layout: any Layout) {
-        // Auto Layout approach: directly calculate child views' actual size
+        // Manual Layout: directly calculate child views' actual size using frame calculations
         let actualContentHeight = calculateActualContentHeight()
         
         // Set contentBounds with actual content height
@@ -193,7 +193,7 @@ public class ScrollView: UIView, Layout {
     }
     
     private func updateHorizontalLayout(_ layout: any Layout) {
-        // Auto Layout approach: directly calculate child views' actual size
+        // Manual Layout: directly calculate child views' actual size using frame calculations
         let actualContentWidth = calculateActualContentWidth()
         
         // Set contentBounds with actual content width
@@ -311,7 +311,7 @@ public class ScrollView: UIView, Layout {
     
     // MARK: - Private Methods
     
-    /// Calculate actual content height using Auto Layout approach
+    /// Calculate actual content height using Manual Layout (frame calculations)
     private func calculateActualContentHeight() -> CGFloat {
         
         guard let layout = childLayout else { 
@@ -337,7 +337,7 @@ public class ScrollView: UIView, Layout {
         return layout.intrinsicContentSize.height
     }
     
-    /// Calculate actual content width using Auto Layout approach
+    /// Calculate actual content width using Manual Layout (frame calculations)
     private func calculateActualContentWidth() -> CGFloat {
         
         guard let layout = childLayout else { 

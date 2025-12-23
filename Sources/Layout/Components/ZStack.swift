@@ -144,15 +144,12 @@ public class ZStack: UIView, Layout {
             if let frame = layoutResult.frames[subview] {
                 size = frame.size
                 
-                // Check if ViewLayout has offset modifier
-                if let storedViewLayout = getViewLayout(for: subview) {
-                    // Extract offset from ViewLayout modifiers
-                    for modifier in storedViewLayout.modifiers {
-                        if let offsetModifier = modifier as? OffsetModifier {
-                            offsetX = offsetModifier.x
-                            offsetY = offsetModifier.y
-                            break
-                        }
+                // Check if view has offset modifier (stored on view itself)
+                for modifier in subview.layoutModifiers {
+                    if let offsetModifier = modifier as? OffsetModifier {
+                        offsetX = offsetModifier.x
+                        offsetY = offsetModifier.y
+                        break
                     }
                 }
             } else {

@@ -50,19 +50,31 @@ public final class LayoutDebugger {
     /// Log layout calculation messages
     public func logLayoutCalculation(_ message: String, component: String = "") {
         guard isEnabled && enableLayoutCalculation else { return }
-        print("🔧 [\(component)] \(message)")
+        if let hook = layoutCalculationHook {
+            hook(message, component)
+        } else {
+            print("🔧 [\(component)] \(message)")
+        }
     }
     
     /// Log view hierarchy messages
     public func logViewHierarchy(_ message: String, component: String = "") {
         guard isEnabled && enableViewHierarchy else { return }
-        print("🏗️ [\(component)] \(message)")
+        if let hook = viewHierarchyHook {
+            hook(message, component)
+        } else {
+            print("🏗️ [\(component)] \(message)")
+        }
     }
     
     /// Log frame setting messages
     public func logFrameSettings(_ message: String, component: String = "") {
         guard isEnabled && enableFrameSettings else { return }
-        print("📐 [\(component)] \(message)")
+        if let hook = frameSettingsHook {
+            hook(message, component)
+        } else {
+            print("📐 [\(component)] \(message)")
+        }
     }
     
     /// Log spacer calculation messages
@@ -139,6 +151,38 @@ public final class LayoutDebugger {
         enableFrameSettings = false
         enableSpacerCalculation = false
         enablePerformanceMonitoring = false
+    }
+    
+    // MARK: - Debugging Hooks
+    
+    /// Custom hook for layout calculation debugging
+    /// Set this to intercept and customize layout calculation logs
+    public var layoutCalculationHook: ((String, String) -> Void)?
+    
+    /// Custom hook for view hierarchy debugging
+    /// Set this to intercept and customize view hierarchy logs
+    public var viewHierarchyHook: ((String, String) -> Void)?
+    
+    /// Custom hook for frame settings debugging
+    /// Set this to intercept and customize frame setting logs
+    public var frameSettingsHook: ((String, String) -> Void)?
+    
+    /// Sets a custom debugging hook
+    /// - Parameters:
+    ///   - hook: The hook closure that receives (message, component)
+    ///   - category: The debug category to hook into
+    public func setDebuggingHook(_ hook: @escaping (String, String) -> Void, for category: LayoutDebugCategory) {
+        switch category {
+        case .layout:
+            layoutCalculationHook = hook
+        case .hierarchy:
+            viewHierarchyHook = hook
+        case .frame:
+            frameSettingsHook = hook
+        case .spacer, .performance:
+            // Not implemented yet
+            break
+        }
     }
     
     /// Enable only basic debugging (view hierarchy + frame settings)

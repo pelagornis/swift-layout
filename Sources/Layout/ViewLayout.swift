@@ -24,20 +24,36 @@ public struct ViewLayout: Layout {
     /// The wrapped UIView
     public let view: UIView
     
-    /// Array of modifiers to apply during layout calculation
-    public var modifiers: [LayoutModifier] = []
-    
     /// Creates a view layout wrapper.
     ///
     /// - Parameter view: The UIView to wrap
     public init(_ view: UIView) {
         self.view = view
     }
+    
+    /// Gets modifiers from the view's associated object
+    /// This prevents creating new ViewLayout instances for each modifier chain
+    private var modifiers: [LayoutModifier] {
+        return view.layoutModifiers
+    }
 
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-
+        // PHASE 1: MEASURE - Calculate the size the view wants
+        let measuredSize = measureSize(in: bounds)
+        
+        // PHASE 2: LAYOUT - Calculate the final position
+        let finalFrame = layoutFrame(size: measuredSize, in: bounds)
+        
+        return LayoutResult(frames: [view: finalFrame], totalSize: measuredSize)
+    }
+    
+    /// MEASURE PHASE: Determines the size the view wants
+    /// This is separate from placement (layout phase)
+    private func measureSize(in bounds: CGRect) -> CGSize {
         // Use default bounds if invalid (width can be 0 while height is available)
-        let safeBounds = bounds.width > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
+        // SwiftUI-style: nil width/height means unconstrained in that dimension
+        let proposedWidth: CGFloat? = bounds.width > 0 ? bounds.width : nil
+        let proposedHeight: CGFloat? = bounds.height > 0 ? bounds.height : nil
         
         let intrinsicSize = view.intrinsicContentSize
         
@@ -48,35 +64,81 @@ public struct ViewLayout: Layout {
             // When intrinsicContentSize is not set
             if let label = view as? UILabel {
                 // For UILabel, calculate based on text size
+                let maxWidth = proposedWidth ?? CGFloat.greatestFiniteMagnitude
                 let textSize = label.text?.size(withAttributes: [.font: label.font ?? UIFont.systemFont(ofSize: 17)]) ?? .zero
                 defaultSize = CGSize(
-                    width: max(textSize.width + 20, 100), // Ensure minimum width
+                    width: max(min(textSize.width + 20, maxWidth), 100), // Ensure minimum width
                     height: max(textSize.height + 10, 30) // Ensure minimum height
                 )
             } else if let button = view as? UIButton {
                 // For UIButton, calculate based on title size
+                let maxWidth = proposedWidth ?? CGFloat.greatestFiniteMagnitude
                 let titleSize = button.title(for: .normal)?.size(withAttributes: [.font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 17)]) ?? .zero
                 defaultSize = CGSize(
-                    width: max(titleSize.width + 40, 120), // Ensure minimum width
+                    width: max(min(titleSize.width + 40, maxWidth), 120), // Ensure minimum width
                     height: max(titleSize.height + 20, 44) // Ensure minimum height
                 )
             } else {
-                // For other UIViews, use default values
-                defaultSize = CGSize(width: 100, height: 30)
+                // For other UIViews, use default values or proposed size
+                defaultSize = CGSize(
+                    width: proposedWidth ?? 100,
+                    height: proposedHeight ?? 30
+                )
             }
         } else {
-            // Use intrinsicContentSize as is when set
-            defaultSize = intrinsicSize
+            // Use intrinsicContentSize, but respect proposed constraints
+            defaultSize = CGSize(
+                width: proposedWidth.map { min($0, intrinsicSize.width) } ?? intrinsicSize.width,
+                height: proposedHeight.map { min($0, intrinsicSize.height) } ?? intrinsicSize.height
+            )
+        }
+        
+        // Apply size modifiers (measure phase)
+        var measuredSize = defaultSize
+        for modifier in modifiers {
+            if let sizeModifier = modifier as? SizeModifier {
+                if let width = sizeModifier.width {
+                    measuredSize.width = width
+                }
+                if let height = sizeModifier.height {
+                    measuredSize.height = height
+                }
+            } else if let aspectRatioModifier = modifier as? AspectRatioModifier {
+                // Apply aspect ratio during measure
+                if measuredSize.width > 0 && measuredSize.height > 0 {
+                    let currentRatio = measuredSize.width / measuredSize.height
+                    if abs(currentRatio - aspectRatioModifier.ratio) > 0.001 {
+                        if measuredSize.width > measuredSize.height {
+                            measuredSize.height = measuredSize.width / aspectRatioModifier.ratio
+                        } else {
+                            measuredSize.width = measuredSize.height * aspectRatioModifier.ratio
+                        }
+                    }
+                }
+            }
         }
         
         // Prevent negative values
-        defaultSize = CGSize(width: max(defaultSize.width, 1), height: max(defaultSize.height, 1))
+        measuredSize = CGSize(width: max(measuredSize.width, 1), height: max(measuredSize.height, 1))
         
-        // Start with relative coordinates based on bounds.origin
-        var frame = CGRect(origin: .zero, size: defaultSize)
+        return measuredSize
+    }
+    
+    /// LAYOUT PHASE: Determines the final position of the view
+    /// This happens after measure phase
+    private func layoutFrame(size: CGSize, in bounds: CGRect) -> CGRect {
+        let safeBounds = bounds.width > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
         
-        // Apply modifiers in sequence (based on safeBounds)
+        // Start with relative coordinates
+        var frame = CGRect(origin: .zero, size: size)
+        
+        // Apply modifiers in sequence (layout phase - positioning)
         for modifier in modifiers {
+            // Skip size modifiers (already applied in measure phase)
+            if modifier is SizeModifier || modifier is AspectRatioModifier {
+                continue
+            }
+            
             frame = modifier.apply(to: frame, in: safeBounds)
 
             // Handle BackgroundModifier
@@ -93,7 +155,7 @@ public struct ViewLayout: Layout {
             height: max(frame.height, 1)
         )
         
-        return LayoutResult(frames: [view: finalFrame], totalSize: frame.size)
+        return finalFrame
     }
     
     public func extractViews() -> [UIView] {
@@ -113,10 +175,10 @@ public struct ViewLayout: Layout {
     ///   - width: Optional width to set
     ///   - height: Optional height to set
     /// - Returns: A new ``ViewLayout`` with the size modifier applied
+    /// Note: Modifier is stored on the view itself, not creating a new node
     public func size(width: CGFloat? = nil, height: CGFloat? = nil) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(SizeModifier(width: width, height: height))
-        return copy
+        view.addLayoutModifier(SizeModifier(width: width, height: height))
+        return self
     }
     
     /// Sets the size of the view using a CGSize.
@@ -134,9 +196,8 @@ public struct ViewLayout: Layout {
     ///   - height: Optional height to set
     /// - Returns: A new ``ViewLayout`` with the frame modifier applied
     public func frame(width: CGFloat? = nil, height: CGFloat? = nil) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(SizeModifier(width: width, height: height))
-        return copy
+        view.addLayoutModifier(SizeModifier(width: width, height: height))
+        return self
     }
     
     // MARK: - Position Modifiers
@@ -145,27 +206,24 @@ public struct ViewLayout: Layout {
     ///
     /// - Returns: A new ``ViewLayout`` with the center modifier applied
     public func centerX() -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(CenterModifier(horizontal: true, vertical: false))
-        return copy
+        view.addLayoutModifier(CenterModifier(horizontal: true, vertical: false))
+        return self
     }
     
     /// Centers the view vertically within its bounds.
     ///
     /// - Returns: A new ``ViewLayout`` with the center modifier applied
     public func centerY() -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(CenterModifier(horizontal: false, vertical: true))
-        return copy
+        view.addLayoutModifier(CenterModifier(horizontal: false, vertical: true))
+        return self
     }
     
     /// Centers the view both horizontally and vertically within its bounds.
     ///
     /// - Returns: A new ``ViewLayout`` with the center modifier applied
     public func center() -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(CenterModifier(horizontal: true, vertical: true))
-        return copy
+        view.addLayoutModifier(CenterModifier(horizontal: true, vertical: true))
+        return self
     }
     
     /// Sets the position of the view.
@@ -175,9 +233,8 @@ public struct ViewLayout: Layout {
     ///   - y: Y coordinate
     /// - Returns: A new ``ViewLayout`` with the position modifier applied
     public func position(x: CGFloat, y: CGFloat) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(PositionModifier(x: x, y: y))
-        return copy
+        view.addLayoutModifier(PositionModifier(x: x, y: y))
+        return self
     }
     
     /// Offsets the view by the specified amount.
@@ -187,9 +244,8 @@ public struct ViewLayout: Layout {
     ///   - y: Y offset
     /// - Returns: A new ``ViewLayout`` with the offset modifier applied
     public func offset(x: CGFloat = 0, y: CGFloat = 0) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(OffsetModifier(x: x, y: y))
-        return copy
+        view.addLayoutModifier(OffsetModifier(x: x, y: y))
+        return self
     }
     
     // MARK: - Aspect Ratio Modifier
@@ -199,9 +255,8 @@ public struct ViewLayout: Layout {
     /// - Parameter ratio: The aspect ratio (width / height)
     /// - Returns: A new ``ViewLayout`` with the aspect ratio modifier applied
     public func aspectRatio(_ ratio: CGFloat) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(AspectRatioModifier(ratio: ratio, contentMode: .fit))
-        return copy
+        view.addLayoutModifier(AspectRatioModifier(ratio: ratio, contentMode: .fit))
+        return self
     }
     
     // MARK: - Corner Radius Modifier
@@ -211,14 +266,13 @@ public struct ViewLayout: Layout {
     /// - Parameter radius: The corner radius
     /// - Returns: A new ``ViewLayout`` with the corner radius modifier applied
     public func cornerRadius(_ radius: CGFloat) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(CornerRadiusModifier(radius: radius))
+        view.addLayoutModifier(CornerRadiusModifier(radius: radius))
         
         // Apply corner radius to layer immediately
         view.layer.cornerRadius = radius
         view.layer.masksToBounds = true
         
-        return copy
+        return self
     }
     
     // MARK: - Background Modifier
@@ -228,9 +282,8 @@ public struct ViewLayout: Layout {
     /// - Parameter color: The background color
     /// - Returns: A new ``ViewLayout`` with the background modifier applied
     public func background(_ color: UIColor) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(BackgroundModifier(color: color))
-        return copy
+        view.addLayoutModifier(BackgroundModifier(color: color))
+        return self
     }
     
     // MARK: - Padding Modifier
@@ -240,9 +293,8 @@ public struct ViewLayout: Layout {
     /// - Parameter insets: The padding insets
     /// - Returns: A new ``ViewLayout`` with the padding modifier applied
     public func padding(_ insets: UIEdgeInsets) -> ViewLayout {
-        var copy = self
-        copy.modifiers.append(PaddingModifier(insets: insets))
-        return copy
+        view.addLayoutModifier(PaddingModifier(insets: insets))
+        return self
     }
     
     /// Adds padding around the view.

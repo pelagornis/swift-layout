@@ -80,7 +80,12 @@ public class LayoutContainer: UIView {
     public func setBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
         _body = content
         needsHierarchyUpdate = true
-        setNeedsLayout()
+        
+        // Use invalidation rules to determine if layout is needed
+        let rules = LayoutInvalidationRules.default
+        if rules.shouldInvalidate(for: .hierarchyChanged) {
+            setNeedsLayout()
+        }
     }
     
     /// Updates layout for orientation changes
