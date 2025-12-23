@@ -31,7 +31,13 @@ A high-performance, SwiftUI-style declarative layout system built on **frame-bas
 🔧 **Environment System** - Color scheme, layout direction support  
 📊 **Performance Profiler** - Real-time FPS and layout metrics  
 💾 **Layout Caching** - Intelligent caching for repeated layouts  
-🎨 **Preferences System** - Pass values up the view hierarchy
+🎨 **Preferences System** - Pass values up the view hierarchy  
+⚙️ **Two-Phase Layout** - Separate measure and layout phases for optimal performance  
+🎯 **Efficient Modifiers** - Modifiers stored as properties, not new nodes  
+📏 **SwiftUI-Style Size Proposals** - Accurate size negotiation with unconstrained dimensions  
+🔄 **Layout Invalidation Rules** - Clear rules for when and how layouts update  
+🐛 **Debugging Hooks** - Custom hooks for debugging and monitoring  
+🔗 **UIKit Lifecycle Integration** - Seamless integration with view controller lifecycle
 
 ---
 
@@ -96,13 +102,17 @@ class MyViewController: UIViewController, Layout {
         actionButton.setTitleColor(.white, for: .normal)
         actionButton.layer.cornerRadius = 12
 
-        // 4. Add container to view
-        view.addSubview(layoutContainer)
-        layoutContainer.frame = view.bounds
-        layoutContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        // 4. Setup container using pure Manual Layout (no Auto Layout)
+        setupLayoutContainer(layoutContainer)
 
         // 5. Set the layout body
         layoutContainer.setBody { self.body }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Update container frame when bounds change
+        updateLayoutContainer(layoutContainer)
     }
 
     // 6. Define your layout declaratively
@@ -128,22 +138,33 @@ class MyViewController: UIViewController, Layout {
 }
 ```
 
-### Using BaseViewController (Recommended)
+### Using UIViewController Extension (Recommended)
 
-For cleaner code, extend `BaseViewController`:
+For cleaner code, use the `UIViewController` extension:
 
 ```swift
-class MyViewController: BaseViewController, Layout {
+class MyViewController: UIViewController, Layout {
+    let layoutContainer = LayoutContainer()
     let titleLabel = UILabel()
     let actionButton = UIButton()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupViews()
+
+        // Setup views
+        titleLabel.text = "Welcome"
+        actionButton.setTitle("Get Started", for: .normal)
+
+        // Setup container (pure Manual Layout, no Auto Layout)
+        setupLayoutContainer(layoutContainer)
+
+        // Set layout
+        layoutContainer.setBody { self.body }
     }
 
-    override func setLayout() {
-        layoutContainer.setBody { self.body }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateLayoutContainer(layoutContainer)
     }
 
     @LayoutBuilder var body: some Layout {
@@ -166,7 +187,9 @@ class MyViewController: BaseViewController, Layout {
 - **Automatic View Management**: Views are automatically added/removed based on layout changes
 - **Content Centering**: Content is automatically centered like SwiftUI
 - **Animation Protection**: Prevents layout system from overriding animated views
-- **Layout Updates**: Smart layout invalidation and updates
+- **Layout Updates**: Smart layout invalidation with clear rules
+- **Two-Phase Layout**: Separate measure and layout phases for optimal performance
+- **Pure Manual Layout**: Zero Auto Layout constraints, only frame-based calculations
 
 ### Animation Protection
 
@@ -206,6 +229,23 @@ layoutContainer.layoutIfNeeded()
 
 // Update layout for orientation changes
 layoutContainer.updateLayoutForOrientationChange()
+```
+
+### Layout Invalidation Rules
+
+Layout uses clear invalidation rules to determine when layouts need to be recalculated:
+
+```swift
+// Invalidation rules are automatically applied
+let rules = LayoutInvalidationRules.default
+
+// Check if a reason should trigger invalidation
+if rules.shouldInvalidate(for: .hierarchyChanged) {
+    // Layout will be invalidated
+}
+
+// Check invalidation priority
+let priority = rules.priority(for: .sizeChanged) // Returns 3
 ```
 
 ---
@@ -388,6 +428,8 @@ cardView.layout()
     .cornerRadius(20)
     .offset(y: 10)
 ```
+
+**Performance Note**: Modifiers are stored as properties on the view itself (using Associated Objects), not as new nodes. This means modifier chains don't create new `ViewLayout` instances, providing optimal performance.
 
 ---
 
@@ -759,10 +801,28 @@ LayoutDebugger.shared.enableAll()
 LayoutDebugger.shared.isEnabled = true
 LayoutDebugger.shared.enableViewHierarchy = true
 LayoutDebugger.shared.enableSpacerCalculation = true
-LayoutDebugger.shared.enableFrameLogging = true
+LayoutDebugger.shared.enableFrameSettings = true
 
 // Disable all
 LayoutDebugger.shared.disableAll()
+```
+
+### Custom Debugging Hooks
+
+Set custom hooks to intercept and customize debug output:
+
+```swift
+// Set a custom hook for layout calculations
+LayoutDebugger.shared.setDebuggingHook({ message, component in
+    // Custom logging logic
+    MyCustomLogger.log("\(component): \(message)")
+}, for: .layout)
+
+// Set a hook for view hierarchy
+LayoutDebugger.shared.setDebuggingHook({ message, component in
+    // Send to analytics
+    Analytics.track("LayoutHierarchy", parameters: ["message": message])
+}, for: .hierarchy)
 ```
 
 ### View Hierarchy Analysis
@@ -924,12 +984,21 @@ Sources/Layout/
 │
 ├── Utils/                 # Utility extensions
 │   ├── UIView+Layout.swift
+│   ├── UIView+Modifiers.swift  # Modifier storage (Associated Objects)
 │   ├── UIView+SwiftUI.swift
+│   ├── UIViewController+Layout.swift  # UIKit lifecycle integration
 │   └── ArraryExtension.swift
 │
+├── Invalidation/          # Layout invalidation system
+│   ├── LayoutInvalidating.swift
+│   ├── LayoutInvalidationContext.swift
+│   ├── LayoutInvalidationRules.swift  # Invalidation rules
+│   ├── InvalidationReason.swift
+│   └── DirtyRegionTracker.swift
+│
 ├── LayoutContainer.swift  # Main container class
-├── ViewLayout.swift       # View layout wrapper
-└── LayoutDebugger.swift   # Debugging utilities
+├── ViewLayout.swift       # View layout wrapper (two-phase layout)
+└── LayoutDebugger.swift   # Debugging utilities with hooks
 ```
 
 ---
@@ -960,39 +1029,58 @@ NSLayoutConstraint.activate([
 ])
 ```
 
-### After (Layout)
+### After (Layout - Pure Manual Layout)
 
 ```swift
-// Clean, declarative layout
-@LayoutBuilder var body: some Layout {
-    VStack(alignment: .center, spacing: 16) {
-        Spacer(minLength: 40)
+class MyViewController: UIViewController, Layout {
+    let layoutContainer = LayoutContainer()
 
-        titleLabel.layout()
-            .size(width: 280, height: 30)
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Pure Manual Layout - no Auto Layout constraints
+        setupLayoutContainer(layoutContainer)
+        layoutContainer.setBody { self.body }
+    }
 
-        subtitleLabel.layout()
-            .size(width: 280, height: 20)
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateLayoutContainer(layoutContainer)
+    }
 
-        Spacer(minLength: 40)
+    // Clean, declarative layout
+    @LayoutBuilder var body: some Layout {
+        VStack(alignment: .center, spacing: 16) {
+            Spacer(minLength: 40)
 
-        button.layout()
-            .size(width: 240, height: 50)
+            titleLabel.layout()
+                .size(width: 280, height: 30)
 
-        Spacer()
+            subtitleLabel.layout()
+                .size(width: 280, height: 20)
+
+            Spacer(minLength: 40)
+
+            button.layout()
+                .size(width: 240, height: 50)
+
+            Spacer()
+        }
     }
 }
 ```
 
 ### Benefits
 
-| Aspect        | Auto Layout          | Layout                  |
-| ------------- | -------------------- | ----------------------- |
-| Lines of code | ~15 lines            | ~10 lines               |
-| Readability   | Constraint pairs     | Visual hierarchy        |
-| Performance   | Constraint solver    | Direct frames           |
-| Debugging     | Constraint conflicts | Simple frame inspection |
-| Flexibility   | Rigid constraints    | Dynamic calculations    |
+| Aspect        | Auto Layout          | Layout                              |
+| ------------- | -------------------- | ----------------------------------- |
+| Lines of code | ~15 lines            | ~10 lines                           |
+| Readability   | Constraint pairs     | Visual hierarchy                    |
+| Performance   | Constraint solver    | Direct frame calculations           |
+| Debugging     | Constraint conflicts | Simple frame inspection + hooks     |
+| Flexibility   | Rigid constraints    | Dynamic calculations                |
+| Layout System | Auto Layout engine   | Pure Manual Layout (no constraints) |
+| Modifiers     | N/A                  | Stored as properties (no new nodes) |
+| Layout Phases | Single phase         | Two-phase (measure + layout)        |
 
 ---
 
