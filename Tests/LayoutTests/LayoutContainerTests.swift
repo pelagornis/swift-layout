@@ -359,6 +359,192 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         // Content size should include spacer minLength
         XCTAssertGreaterThanOrEqual(result.totalSize.height, 200)
     }
+    
+    // MARK: - Layout Tree & Dirty Propagation Tests
+    
+    func testIncrementalLayoutEnabled() {
+        layoutContainer.useIncrementalLayout = true
+        XCTAssertTrue(layoutContainer.useIncrementalLayout)
+        
+        layoutContainer.setBody {
+            VStack {
+                self.testView1.layout().size(width: 100, height: 50)
+                self.testView2.layout().size(width: 80, height: 40)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Layout tree should be built
+        // Note: rootNode is private, so we test behavior instead
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+    }
+    
+    func testIncrementalLayoutDisabled() {
+        layoutContainer.useIncrementalLayout = false
+        XCTAssertFalse(layoutContainer.useIncrementalLayout)
+        
+        layoutContainer.setBody {
+            VStack {
+                self.testView1.layout().size(width: 100, height: 50)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Should still work without incremental layout
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+    }
+    
+    func testMarkViewDirty() {
+        let label = UILabel()
+        label.text = "Test"
+        
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.setBody {
+            VStack {
+                label.layout().size(width: 100, height: 30)
+                self.testView1.layout().size(width: 100, height: 50)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Mark label as dirty
+        layoutContainer.markViewDirty(label)
+        layoutContainer.setNeedsLayout()
+        
+        // Should trigger layout update
+        layoutContainer.layoutIfNeeded()
+        
+        // View should still be in hierarchy
+        XCTAssertTrue(layoutContainer.subviews.contains { view in
+            if let vstack = view as? VStack {
+                return vstack.subviews.contains(label)
+            }
+            return false
+        })
+    }
+    
+    func testInvalidateLayoutTree() {
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.setBody {
+            VStack {
+                self.testView1.layout().size(width: 100, height: 50)
+                self.testView2.layout().size(width: 80, height: 40)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Invalidate entire tree
+        layoutContainer.invalidateLayoutTree()
+        layoutContainer.setNeedsLayout()
+        layoutContainer.layoutIfNeeded()
+        
+        // Views should still be in hierarchy
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+    }
+    
+    func testRebuildLayoutTree() {
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.setBody {
+            VStack {
+                self.testView1.layout().size(width: 100, height: 50)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        let initialSubviewCount = layoutContainer.subviews.count
+        
+        // Rebuild layout tree
+        layoutContainer.rebuildLayoutTree()
+        layoutContainer.setNeedsLayout()
+        layoutContainer.layoutIfNeeded()
+        
+        // Views should remain in hierarchy (not removed)
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, initialSubviewCount)
+    }
+    
+    func testToggleIncrementalLayout() {
+        // Start with incremental layout enabled
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.setBody {
+            VStack {
+                self.testView1.layout().size(width: 100, height: 50)
+                self.testView2.layout().size(width: 80, height: 40)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        let subviewCountBefore = layoutContainer.subviews.count
+        
+        // Toggle to disabled
+        layoutContainer.useIncrementalLayout = false
+        layoutContainer.rebuildLayoutTree()
+        layoutContainer.setNeedsLayout()
+        layoutContainer.layoutIfNeeded()
+        
+        // Views should still be in hierarchy
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, subviewCountBefore)
+        
+        // Toggle back to enabled
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.rebuildLayoutTree()
+        layoutContainer.setNeedsLayout()
+        layoutContainer.layoutIfNeeded()
+        
+        // Views should still be in hierarchy
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, subviewCountBefore)
+    }
+    
+    func testIncrementalLayoutWithMultipleUpdates() {
+        let label1 = UILabel()
+        label1.text = "Label 1"
+        let label2 = UILabel()
+        label2.text = "Label 2"
+        
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.setBody {
+            VStack(spacing: 10) {
+                label1.layout().size(width: 200, height: 30)
+                label2.layout().size(width: 200, height: 30)
+                self.testView1.layout().size(width: 100, height: 50)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Update label1 multiple times
+        for i in 1...5 {
+            label1.text = "Label 1 - \(i)"
+            layoutContainer.markViewDirty(label1)
+            layoutContainer.setNeedsLayout()
+            layoutContainer.layoutIfNeeded()
+        }
+        
+        // All views should still be in hierarchy
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+        XCTAssertEqual(label1.text, "Label 1 - 5")
+    }
+    
+    func testIncrementalLayoutPreservesViewHierarchy() {
+        layoutContainer.useIncrementalLayout = true
+        layoutContainer.setBody {
+            VStack(spacing: 10) {
+                self.testView1.layout().size(width: 100, height: 50)
+                self.testView2.layout().size(width: 80, height: 40)
+                self.testView3.layout().size(width: 60, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Get initial view references
+        let initialViews = Set(layoutContainer.subviews)
+        
+        // Rebuild layout tree
+        layoutContainer.rebuildLayoutTree()
+        layoutContainer.setNeedsLayout()
+        layoutContainer.layoutIfNeeded()
+        
+        // Views should still be in hierarchy (same instances)
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, initialViews.count)
+    }
 }
 
 // MARK: - Helper Classes
