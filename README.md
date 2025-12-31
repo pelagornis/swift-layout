@@ -37,7 +37,8 @@ A high-performance, SwiftUI-style declarative layout system built on **frame-bas
 📏 **SwiftUI-Style Size Proposals** - Accurate size negotiation with unconstrained dimensions  
 🔄 **Layout Invalidation Rules** - Clear rules for when and how layouts update  
 🐛 **Debugging Hooks** - Custom hooks for debugging and monitoring  
-🔗 **UIKit Lifecycle Integration** - Seamless integration with view controller lifecycle
+🔗 **UIKit Lifecycle Integration** - Seamless integration with view controller lifecycle  
+🌳 **Layout Tree & Dirty Propagation** - Incremental layout updates with partial recalculation
 
 ---
 
@@ -789,6 +790,145 @@ class MyViewController: UIViewController {
 
 ---
 
+## 🌳 Layout Tree & Dirty Propagation
+
+Layout provides an incremental layout system that only recalculates parts of the layout that have changed, significantly improving performance for complex UIs.
+
+### Key Concepts
+
+- **Layout Tree**: A hierarchical representation of layout components, allowing efficient traversal and targeted updates
+- **Dirty Propagation**: When a child layout changes, it marks its parent and ancestors as "dirty," indicating they need recalculation
+- **Incremental Layout**: Only dirty nodes are recalculated, avoiding full layout passes
+
+### Enabling Incremental Layout
+
+By default, incremental layout is enabled. You can toggle it:
+
+```swift
+// Enable incremental layout (default)
+layoutContainer.useIncrementalLayout = true
+
+// Disable for full recalculation every time
+layoutContainer.useIncrementalLayout = false
+```
+
+### Marking Views as Dirty
+
+When a view's content changes, mark it as dirty to trigger incremental recalculation:
+
+```swift
+// Mark a specific view as dirty
+layoutContainer.markViewDirty(myLabel)
+
+// The layout system will:
+// 1. Find the LayoutNode containing this view
+// 2. Mark that node and its ancestors as dirty
+// 3. Recalculate only the dirty parts in the next layout pass
+```
+
+### Example: Dynamic Content Updates
+
+```swift
+class MyViewController: BaseViewController, Layout {
+    let layoutContainer = LayoutContainer()
+    let cardLabels: [UILabel] = (0..<6).map { _ in UILabel() }
+    var cardCounts = Array(repeating: 0, count: 6)
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        layoutContainer.useIncrementalLayout = true
+        setupLayoutContainer(layoutContainer)
+        layoutContainer.setBody { self.body }
+    }
+    
+    @LayoutBuilder var body: some Layout {
+        VStack(alignment: .center, spacing: 16) {
+            // Multiple cards in a grid
+            VStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
+                    createCard(index: 0).layout()
+                    createCard(index: 1).layout()
+                }
+                HStack(alignment: .center, spacing: 12) {
+                    createCard(index: 2).layout()
+                    createCard(index: 3).layout()
+                }
+            }
+            
+            // Update buttons
+            createUpdateButton(title: "Update Card 1") {
+                self.updateCard(at: 0)
+            }
+        }
+    }
+    
+    private func updateCard(at index: Int) {
+        // Update the card's content
+        cardCounts[index] += 1
+        cardLabels[index].text = "Count: \(cardCounts[index])"
+        
+        // Mark only this view as dirty - only this card will be recalculated!
+        layoutContainer.markViewDirty(cardLabels[index])
+    }
+}
+```
+
+### Invalidating the Entire Tree
+
+For major changes, invalidate the entire layout tree:
+
+```swift
+// Invalidate entire tree (forces full recalculation)
+layoutContainer.invalidateLayoutTree()
+
+// Rebuild the layout tree (useful when toggling incremental layout)
+layoutContainer.rebuildLayoutTree()
+```
+
+### Performance Benefits
+
+With incremental layout enabled:
+
+- **Partial Recalculation**: Only changed nodes are recalculated
+- **Cached Results**: Clean nodes use cached layout results
+- **Dirty Propagation**: Changes automatically propagate up the tree
+- **View Preservation**: Views remain in the hierarchy during updates
+
+### When to Use
+
+✅ **Use incremental layout when:**
+- You have complex layouts with many views
+- Only small parts of the UI change frequently
+- You want optimal performance for dynamic content
+
+❌ **Disable incremental layout when:**
+- Layout structure changes frequently
+- You need full recalculation for debugging
+- Performance is not a concern
+
+### Layout Tree Structure
+
+The layout tree mirrors your layout hierarchy:
+
+```
+LayoutContainer (rootNode)
+└── VStack
+    ├── HStack
+    │   ├── Card 1 (LayoutNode)
+    │   └── Card 2 (LayoutNode)
+    └── HStack
+        ├── Card 3 (LayoutNode)
+        └── Card 4 (LayoutNode)
+```
+
+Each `LayoutNode` tracks:
+- Its dirty state
+- Cached layout result
+- Parent-child relationships
+- Child nodes for nested layouts
+
+---
+
 ## 🔍 Debugging
 
 ### Enable Debugging
@@ -930,6 +1070,7 @@ Sources/Layout/
 │   ├── LayoutBuilder.swift
 │   ├── LayoutResult.swift
 │   ├── LayoutModifier.swift
+│   ├── LayoutNode.swift   # Layout tree node for incremental updates
 │   ├── EmptyLayout.swift
 │   ├── TupleLayout.swift
 │   ├── ArrayLayout.swift
