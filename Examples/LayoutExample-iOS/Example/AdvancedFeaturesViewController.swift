@@ -9,6 +9,96 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     private var isAnimating = false
     private var animatedOffset: CGFloat = 0
     
+    // Layout Tree Test Properties
+    private enum LayoutTreeConstants {
+        static let cardCount = 6
+        static let cardWidth: CGFloat = 165
+        static let cardHeight: CGFloat = 140
+        static let cardPadding: CGFloat = 12
+        static let cardSpacing: CGFloat = 12
+        static let cardLabelYOffset: CGFloat = 20
+        
+        static let colors: [UIColor] = [
+            .systemRed, .systemBlue, .systemGreen,
+            .systemOrange, .systemPurple, .systemTeal
+        ]
+    }
+    
+    private var cardCounts = Array(repeating: 0, count: LayoutTreeConstants.cardCount)
+    private var recalculationCount = 0
+    
+    // Layout Tree Test UI Components
+    private let statsLabel: UILabel = {
+        let label = UILabel()
+        label.text = "재계산 통계: 0개 노드"
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.textColor = .systemBlue
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    private let statusLabel: UILabel = {
+        let label = UILabel()
+        label.text = "상태: 대기 중"
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    private let statsContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = .tertiarySystemFill
+        view.layer.cornerRadius = 8
+        return view
+    }()
+    
+    private let cards: [UIView] = {
+        return LayoutTreeConstants.colors.map { color in
+            let view = UIView()
+            view.backgroundColor = color.withAlphaComponent(0.15)
+            view.layer.cornerRadius = 12
+            view.layer.borderWidth = 2
+            view.layer.borderColor = color.cgColor
+            return view
+        }
+    }()
+    
+    private let cardLabels: [UILabel] = {
+        return LayoutTreeConstants.colors.enumerated().map { index, color in
+            let label = UILabel()
+            label.text = "Card \(index + 1)"
+            label.font = .systemFont(ofSize: 18, weight: .semibold)
+            label.textColor = color
+            label.textAlignment = .center
+            return label
+        }
+    }()
+    
+    private let cardCounterLabels: [UILabel] = {
+        return LayoutTreeConstants.colors.map { color in
+            let label = UILabel()
+            label.text = "Count: 0"
+            label.font = .systemFont(ofSize: 14, weight: .regular)
+            label.textColor = color
+            label.textAlignment = .center
+            return label
+        }
+    }()
+    
+    private let cardTimeLabels: [UILabel] = {
+        return (0..<LayoutTreeConstants.cardCount).map { _ in
+            let label = UILabel()
+            label.text = "Time: -"
+            label.font = .systemFont(ofSize: 10, weight: .regular)
+            label.textColor = .secondaryLabel
+            label.textAlignment = .center
+            return label
+        }
+    }()    
+    
     // MARK: - UI Components (필요한 참조만)
     
     private let animationDemoView: UIView = {
@@ -62,9 +152,36 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         title = "Advanced"
         view.backgroundColor = .systemBackground
         
+        layoutContainer.useIncrementalLayout = true
         setupActions()
+        setupLayoutTreeTest()
         startMonitoring()
         updateEnvironmentLabel()
+    }
+    
+    private func setupLayoutTreeTest() {
+        for (index, card) in cards.enumerated() {
+            card.addSubview(cardLabels[index])
+            card.addSubview(cardCounterLabels[index])
+            card.addSubview(cardTimeLabels[index])
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        layoutCardLabels()
+    }
+    
+    private func layoutCardLabels() {
+        let padding = LayoutTreeConstants.cardPadding
+        let yOffset = LayoutTreeConstants.cardLabelYOffset
+        
+        for index in 0..<LayoutTreeConstants.cardCount {
+            let width = LayoutTreeConstants.cardWidth - padding * 2
+            cardLabels[index].frame = CGRect(x: padding, y: yOffset, width: width, height: 24)
+            cardCounterLabels[index].frame = CGRect(x: padding, y: yOffset + 30, width: width, height: 20)
+            cardTimeLabels[index].frame = CGRect(x: padding, y: yOffset + 55, width: width, height: 16)
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -93,6 +210,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 performanceSection
                 prioritySection
                 geometryInfoSection
+                layoutTreeSection
                 
                 Spacer(minLength: 40)
             }
@@ -239,6 +357,128 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             .size(width: 360, height: 160)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
+        }
+        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
+    }
+    
+    // MARK: - Layout Tree Test Section
+    
+    private var layoutTreeSection: some Layout {
+        VStack(alignment: .center, spacing: 12) {
+            sectionHeader(title: "Layout Tree & Dirty Propagation", subtitle: "Incremental layout updates")
+            
+            // 통계 및 상태 표시
+            ZStack(alignment: .center) {
+                statsContainer.layout()
+                    .size(width: 360, height: 86)
+                
+                VStack(alignment: .center, spacing: 8) {
+                    statsLabel.layout()
+                        .size(width: 340, height: 30)
+                    
+                    statusLabel.layout()
+                        .size(width: 340, height: 40)
+                }
+            }
+            
+            // 카드 그리드 (2열 3행)
+            VStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+                // 첫 번째 행: Card 1, Card 4
+                HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+                    cards[0].layout()
+                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                    
+                    cards[3].layout()
+                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                }
+                
+                // 두 번째 행: Card 2, Card 5
+                HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+                    cards[1].layout()
+                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                    
+                    cards[4].layout()
+                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                }
+                
+                // 세 번째 행: Card 3, Card 6
+                HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+                    cards[2].layout()
+                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                    
+                    cards[5].layout()
+                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                }
+            }
+            
+            // 버튼 섹션
+            VStack(alignment: .center, spacing: 10) {
+                // 개별 카드 버튼들
+                HStack(alignment: .center, spacing: 10) {
+                    createLayoutTreeButton(title: "Card 1", color: .systemRed, fontSize: 14) { [weak self] in
+                        self?.updateLayoutTreeCard(at: 0)
+                    }
+                    .layout()
+                    .size(width: 100, height: 36)
+                    
+                    createLayoutTreeButton(title: "Card 2", color: .systemBlue, fontSize: 14) { [weak self] in
+                        self?.updateLayoutTreeCard(at: 1)
+                    }
+                    .layout()
+                    .size(width: 100, height: 36)
+                    
+                    createLayoutTreeButton(title: "Card 3", color: .systemGreen, fontSize: 14) { [weak self] in
+                        self?.updateLayoutTreeCard(at: 2)
+                    }
+                    .layout()
+                    .size(width: 100, height: 36)
+                }
+                
+                HStack(alignment: .center, spacing: 10) {
+                    createLayoutTreeButton(title: "Card 4", color: .systemOrange, fontSize: 14) { [weak self] in
+                        self?.updateLayoutTreeCard(at: 3)
+                    }
+                    .layout()
+                    .size(width: 100, height: 36)
+                    
+                    createLayoutTreeButton(title: "Card 5", color: .systemPurple, fontSize: 14) { [weak self] in
+                        self?.updateLayoutTreeCard(at: 4)
+                    }
+                    .layout()
+                    .size(width: 100, height: 36)
+                    
+                    createLayoutTreeButton(title: "Card 6", color: .systemTeal, fontSize: 14) { [weak self] in
+                        self?.updateLayoutTreeCard(at: 5)
+                    }
+                    .layout()
+                    .size(width: 100, height: 36)
+                }
+                
+                // 그룹 업데이트 버튼들
+                createLayoutTreeButton(title: "Update Cards 1-3", color: .systemIndigo) { [weak self] in
+                    self?.updateLayoutTreeCards(range: 0..<3)
+                }
+                .layout()
+                .size(width: 340, height: 44)
+                
+                createLayoutTreeButton(title: "Update Cards 4-6", color: .systemPink) { [weak self] in
+                    self?.updateLayoutTreeCards(range: 3..<6)
+                }
+                .layout()
+                .size(width: 340, height: 44)
+                
+                createLayoutTreeButton(title: "Update All Cards", color: .systemPurple) { [weak self] in
+                    self?.updateAllLayoutTreeCards()
+                }
+                .layout()
+                .size(width: 340, height: 44)
+                
+                createLayoutTreeButton(title: "Toggle Incremental Layout", color: .systemOrange) { [weak self] in
+                    self?.toggleIncrementalLayout()
+                }
+                .layout()
+                .size(width: 340, height: 44)
+            }
         }
         .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
@@ -435,5 +675,157 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         super.traitCollectionDidChange(previousTraitCollection)
         updateEnvironmentLabel()
         EnvironmentProvider.shared.updateSystemEnvironment()
+    }
+    
+    // MARK: - Layout Tree Test Helpers
+    
+    private func createLayoutTreeButton(title: String, color: UIColor, fontSize: CGFloat = 16, action: @escaping () -> Void) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: fontSize, weight: .semibold)
+        button.backgroundColor = color
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 8
+        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
+        return button
+    }
+    
+    private func highlightLayoutTreeCard(_ index: Int, duration: TimeInterval = 0.3) {
+        guard index >= 0 && index < LayoutTreeConstants.cardCount else { return }
+        
+        let card = cards[index]
+        let originalColor = card.backgroundColor
+        
+        UIView.animate(withDuration: duration / 2, animations: {
+            card.backgroundColor = card.layer.borderColor?.uiColor.withAlphaComponent(0.4)
+            card.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+        }) { _ in
+            UIView.animate(withDuration: duration / 2) {
+                card.backgroundColor = originalColor
+                card.transform = .identity
+            }
+        }
+    }
+    
+    // MARK: - Layout Tree Test Actions
+    
+    private func updateLayoutTreeCard(at index: Int) {
+        guard index >= 0 && index < LayoutTreeConstants.cardCount else { return }
+        
+        cardCounts[index] += 1
+        cardCounterLabels[index].text = "Count: \(cardCounts[index])"
+        
+        let startTime = CFAbsoluteTimeGetCurrent()
+        layoutContainer.markViewDirty(cardCounterLabels[index])
+        let endTime = CFAbsoluteTimeGetCurrent()
+        
+        let elapsedTime = (endTime - startTime) * 1000
+        cardTimeLabels[index].text = String(format: "Time: %.2fms", elapsedTime)
+        
+        recalculationCount = 1
+        updateLayoutTreeStats()
+        updateLayoutTreeStatus("Card \(index + 1) 업데이트 (부분 재계산)\n소요 시간: \(String(format: "%.2f", elapsedTime))ms")
+        highlightLayoutTreeCard(index)
+        layoutContainer.markViewDirty(cardTimeLabels[index])
+    }
+    
+    private func updateLayoutTreeCards(range: Range<Int>) {
+        let indices = Array(range)
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        for index in indices {
+            cardCounts[index] += 1
+            cardCounterLabels[index].text = "Count: \(cardCounts[index])"
+            layoutContainer.markViewDirty(cardCounterLabels[index])
+            highlightLayoutTreeCard(index, duration: 0.2)
+        }
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let elapsedTime = (endTime - startTime) * 1000
+        
+        for index in indices {
+            cardTimeLabels[index].text = String(format: "Time: %.2fms", elapsedTime / Double(indices.count))
+        }
+        
+        recalculationCount = indices.count
+        updateLayoutTreeStats()
+        updateLayoutTreeStatus("Cards \(indices.first! + 1)-\(indices.last! + 1) 업데이트\n\(indices.count)개 노드 재계산, 소요 시간: \(String(format: "%.2f", elapsedTime))ms")
+    }
+    
+    private func updateAllLayoutTreeCards() {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        for index in 0..<LayoutTreeConstants.cardCount {
+            cardCounts[index] += 1
+            cardCounterLabels[index].text = "Count: \(cardCounts[index])"
+        }
+        
+        layoutContainer.invalidateLayoutTree()
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let elapsedTime = (endTime - startTime) * 1000
+        
+        for index in 0..<LayoutTreeConstants.cardCount {
+            cardTimeLabels[index].text = String(format: "Time: %.2fms", elapsedTime / Double(LayoutTreeConstants.cardCount))
+            highlightLayoutTreeCard(index, duration: 0.15)
+        }
+        
+        recalculationCount = LayoutTreeConstants.cardCount
+        updateLayoutTreeStats()
+        updateLayoutTreeStatus("모든 카드 업데이트 (전체 재계산)\n\(LayoutTreeConstants.cardCount)개 노드 재계산, 소요 시간: \(String(format: "%.2f", elapsedTime))ms")
+    }
+    
+    private func toggleIncrementalLayout() {
+        let wasEnabled = layoutContainer.useIncrementalLayout
+        layoutContainer.useIncrementalLayout = !layoutContainer.useIncrementalLayout
+        let isNowEnabled = layoutContainer.useIncrementalLayout
+        
+        let status = isNowEnabled ? "활성화" : "비활성화"
+        let color = isNowEnabled ? "🟢" : "🔴"
+        
+        // Rebuild layout tree without touching view hierarchy
+        layoutContainer.rebuildLayoutTree()
+        
+        // Schedule layout update for next run loop
+        layoutContainer.setNeedsLayout()
+        
+        if wasEnabled != isNowEnabled {
+            let testStartTime = CFAbsoluteTimeGetCurrent()
+            cardCounts[0] += 1
+            cardCounterLabels[0].text = "Count: \(cardCounts[0])"
+            
+            if isNowEnabled {
+                layoutContainer.markViewDirty(cardCounterLabels[0])
+            } else {
+                layoutContainer.setNeedsLayout()
+            }
+            
+            let testEndTime = CFAbsoluteTimeGetCurrent()
+            let testTime = (testEndTime - testStartTime) * 1000
+            
+            updateLayoutTreeStatus("\(color) Incremental Layout: \(status)\n테스트 업데이트: \(String(format: "%.2f", testTime))ms")
+        } else {
+            updateLayoutTreeStatus("\(color) Incremental Layout: \(status)\n레이아웃 트리 재구축됨")
+        }
+        
+        updateLayoutTreeStats()
+    }
+    
+    private func updateLayoutTreeStats() {
+        statsLabel.text = "재계산 통계: \(recalculationCount)개 노드 재계산됨"
+        layoutContainer.markViewDirty(statsLabel)
+    }
+    
+    private func updateLayoutTreeStatus(_ text: String) {
+        statusLabel.text = text
+        layoutContainer.markViewDirty(statusLabel)
+    }
+}
+
+// MARK: - Helper Extension
+
+extension CGColor {
+    var uiColor: UIColor {
+        return UIColor(cgColor: self)
     }
 }
