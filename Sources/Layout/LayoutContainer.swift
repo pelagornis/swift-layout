@@ -71,6 +71,12 @@ public class LayoutContainer: UIView {
     private var animatingViews: Set<UIView> = []
     private var animatingViewIdentifiers: Set<ObjectIdentifier> = []
     
+    /// Root node of the layout tree
+    private var rootNode: LayoutNode?
+    
+    /// Whether to use incremental layout updates (Layout Tree optimization)
+    public var useIncrementalLayout: Bool = true
+    
     public var body: (any Layout)? {
         get { _body?() }
         set { _body = { newValue! } }
@@ -80,6 +86,12 @@ public class LayoutContainer: UIView {
     public func setBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
         _body = content
         needsHierarchyUpdate = true
+        
+        // Invalidate layout tree when body changes
+        if useIncrementalLayout {
+            rootNode?.invalidate()
+            rootNode = nil // Will be rebuilt on next layout pass
+        }
         
         // Use invalidation rules to determine if layout is needed
         let rules = LayoutInvalidationRules.default
@@ -165,6 +177,7 @@ public class LayoutContainer: UIView {
         cachedLayout = nil
         
         guard let body = body else {
+            rootNode = nil
             return
         }
         
@@ -180,6 +193,12 @@ public class LayoutContainer: UIView {
         
         cachedLayout = layout
         
+        // Build layout tree if incremental layout is enabled
+        if useIncrementalLayout {
+            rootNode = LayoutNode(layout: layout)
+            rootNode?.buildTree()
+        }
+        
         // Add views to hierarchy (without setting frames yet)
         let topLevelViews = layout.extractViews()
         for view in topLevelViews {
@@ -191,7 +210,16 @@ public class LayoutContainer: UIView {
     private func applyLayout() {
         guard let layout = cachedLayout else { return }
         
-        let result = layout.calculateLayout(in: bounds)
+        // Use incremental layout if enabled and tree is available
+        let result: LayoutResult
+        if useIncrementalLayout, let node = rootNode {
+            // Use LayoutNode for incremental calculation
+            result = node.calculateLayout(in: bounds)
+        } else {
+            // Fallback to full calculation
+            result = layout.calculateLayout(in: bounds)
+        }
+        
         let topLevelViews = layout.extractViews()
         
         // Check if the body is a ScrollView or contains ScrollView
@@ -202,6 +230,17 @@ public class LayoutContainer: UIView {
         for (view, frame) in result.frames {
             // Skip views that are currently animating (check both Set and ObjectIdentifier for reliability)
             if animatingViews.contains(view) || animatingViewIdentifiers.contains(ObjectIdentifier(view)) {
+                continue
+            }
+            
+            // Only apply frames to views that are actually in the view hierarchy
+            // Check if view is a direct subview or nested within subviews
+            let isInHierarchy = view.superview == self || 
+                                subviews.contains(view) ||
+                                subviews.contains(where: { $0.subviews.contains(view) || $0 === view })
+            
+            guard isInHierarchy else {
+                // View is not in hierarchy, skip it
                 continue
             }
             
@@ -375,17 +414,72 @@ public class LayoutContainer: UIView {
             updateViewHierarchy()
         }
         
+        // Rebuild layout tree if needed (e.g., after toggling incremental layout)
+        // This happens without touching the view hierarchy
+        if useIncrementalLayout && rootNode == nil, let layout = cachedLayout {
+            rootNode = LayoutNode(layout: layout)
+            rootNode?.buildTree()
+        }
+        
         // Skip layout updates if any views are currently animating
         // This prevents layout from overriding animations
         if !animatingViews.isEmpty {
             return
         }
         
-        // Only update frames if bounds changed
-        if lastBounds != bounds {
+        // Only update frames if bounds changed or layout is dirty
+        let boundsChanged = lastBounds != bounds
+        let layoutDirty: Bool
+        if useIncrementalLayout {
+            // If incremental layout is enabled, check if rootNode is dirty
+            // If rootNode is nil, we need to rebuild it, so consider it dirty
+            layoutDirty = rootNode?.isDirty ?? true
+        } else {
+            // If incremental layout is disabled, always recalculate
+            layoutDirty = true
+        }
+        
+        if boundsChanged || layoutDirty {
             lastBounds = bounds
             applyLayout()
         }
+    }
+    
+    /// Marks a specific view's layout as dirty, triggering incremental recalculation
+    public func markViewDirty(_ view: UIView) {
+        guard useIncrementalLayout, let node = rootNode else {
+            // Fallback: invalidate entire layout
+            setNeedsLayout()
+            return
+        }
+        
+        // Find the node containing this view
+        if let targetNode = node.findNode(containing: view) {
+            targetNode.markDirty()
+            setNeedsLayout()
+        } else {
+            // If not found, invalidate root
+            node.invalidate()
+            setNeedsLayout()
+        }
+    }
+    
+    /// Invalidates the entire layout tree
+    public func invalidateLayoutTree() {
+        rootNode?.invalidate()
+        setNeedsLayout()
+    }
+    
+    /// Rebuilds the layout tree (useful when toggling incremental layout)
+    /// This only rebuilds the tree structure, not the view hierarchy
+    /// Note: This will be automatically called in the next layoutSubviews() pass
+    public func rebuildLayoutTree() {
+        // Simply invalidate the root node - it will be rebuilt in layoutSubviews()
+        // This is safer than trying to rebuild it immediately
+        rootNode?.invalidate()
+        rootNode = nil
+        // Don't set needsHierarchyUpdate - we don't want to remove/add views
+        // The tree will be rebuilt in layoutSubviews() when needed
     }
 }
 
