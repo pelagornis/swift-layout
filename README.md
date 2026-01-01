@@ -38,7 +38,8 @@ A high-performance, SwiftUI-style declarative layout system built on **frame-bas
 🔄 **Layout Invalidation Rules** - Clear rules for when and how layouts update  
 🐛 **Debugging Hooks** - Custom hooks for debugging and monitoring  
 🔗 **UIKit Lifecycle Integration** - Seamless integration with view controller lifecycle  
-🌳 **Layout Tree & Dirty Propagation** - Incremental layout updates with partial recalculation
+🌳 **Layout Tree & Dirty Propagation** - Incremental layout updates with partial recalculation  
+🆔 **Identity & Diff** - Efficient view updates based on identity tracking
 
 ---
 
@@ -833,14 +834,14 @@ class MyViewController: BaseViewController, Layout {
     let layoutContainer = LayoutContainer()
     let cardLabels: [UILabel] = (0..<6).map { _ in UILabel() }
     var cardCounts = Array(repeating: 0, count: 6)
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         layoutContainer.useIncrementalLayout = true
         setupLayoutContainer(layoutContainer)
         layoutContainer.setBody { self.body }
     }
-    
+
     @LayoutBuilder var body: some Layout {
         VStack(alignment: .center, spacing: 16) {
             // Multiple cards in a grid
@@ -854,19 +855,19 @@ class MyViewController: BaseViewController, Layout {
                     createCard(index: 3).layout()
                 }
             }
-            
+
             // Update buttons
             createUpdateButton(title: "Update Card 1") {
                 self.updateCard(at: 0)
             }
         }
     }
-    
+
     private func updateCard(at index: Int) {
         // Update the card's content
         cardCounts[index] += 1
         cardLabels[index].text = "Count: \(cardCounts[index])"
-        
+
         // Mark only this view as dirty - only this card will be recalculated!
         layoutContainer.markViewDirty(cardLabels[index])
     }
@@ -897,11 +898,13 @@ With incremental layout enabled:
 ### When to Use
 
 ✅ **Use incremental layout when:**
+
 - You have complex layouts with many views
 - Only small parts of the UI change frequently
 - You want optimal performance for dynamic content
 
 ❌ **Disable incremental layout when:**
+
 - Layout structure changes frequently
 - You need full recalculation for debugging
 - Performance is not a concern
@@ -922,10 +925,101 @@ LayoutContainer (rootNode)
 ```
 
 Each `LayoutNode` tracks:
+
 - Its dirty state
 - Cached layout result
 - Parent-child relationships
 - Child nodes for nested layouts
+
+---
+
+## 🆔 Identity & Diff
+
+Layout provides identity-based diffing to efficiently update views when layout changes. By assigning identities to views, the system can track and reuse views across updates, minimizing unnecessary view creation and removal.
+
+### Setting View Identity
+
+Use the `.id()` modifier to assign an identity to a view:
+
+```swift
+@LayoutBuilder var body: some Layout {
+    VStack(spacing: 10) {
+        // Use item ID as identity
+        ForEach(items) { item in
+            ItemView(item: item)
+                .layout()
+                .id(item.id)  // Identity based on item ID
+        }
+
+        // Use string identity
+        headerView.layout()
+            .id("header")
+
+        // Use any Hashable type
+        footerView.layout()
+            .id(123)  // Integer identity
+    }
+}
+```
+
+### How Identity Diffing Works
+
+1. **View Tracking**: Views with identities are tracked in a map
+2. **Diff Calculation**: When layout updates, the system compares old and new identity maps
+3. **Efficient Updates**:
+   - **Same Identity**: Reuses existing view instance (no removal/addition)
+   - **New Identity**: Adds new view
+   - **Removed Identity**: Removes view that no longer exists
+   - **Changed Identity**: Replaces view when identity changes
+
+### Benefits
+
+✅ **View Reuse**: Views with matching identities are reused, preserving state  
+✅ **Efficient Updates**: Only changed views are added/removed  
+✅ **State Preservation**: View state (scroll position, selection, etc.) is maintained  
+✅ **Performance**: Reduces view creation/destruction overhead
+
+### Example: Dynamic List
+
+```swift
+class ItemListViewController: BaseViewController, Layout {
+    var items: [Item] = []
+
+    @LayoutBuilder var body: some Layout {
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(items) { item in
+                    ItemCard(item: item)
+                        .layout()
+                        .id(item.id)  // Identity ensures efficient updates
+                        .size(width: 350, height: 80)
+                }
+            }
+        }
+    }
+
+    func updateItems(_ newItems: [Item]) {
+        items = newItems
+        layoutContainer.setBody { self.body }
+        // Only changed items are updated, others are reused!
+    }
+}
+```
+
+### Identity Best Practices
+
+- **Use Stable Identifiers**: Use IDs that don't change for the same logical view
+- **Unique Identities**: Each view should have a unique identity within its parent
+- **Optional Identity**: Views without identity still work, but won't benefit from diffing
+- **Hashable Types**: Any `Hashable` type can be used as identity (String, Int, UUID, etc.)
+
+### Integration with Layout Tree
+
+Identity diffing works seamlessly with the Layout Tree system:
+
+- Identity-based updates trigger dirty propagation
+- Only views with changed identities cause recalculation
+- Clean views with matching identities use cached results
 
 ---
 
