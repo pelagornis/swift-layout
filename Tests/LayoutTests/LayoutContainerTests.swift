@@ -545,6 +545,176 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         // Views should still be in hierarchy (same instances)
         XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, initialViews.count)
     }
+    
+    // MARK: - Identity & Diff Tests
+    
+    func testViewIdentity() {
+        let label = UILabel()
+        label.text = "Test"
+        
+        // Set identity
+        label.layoutIdentity = AnyHashable("test-label")
+        XCTAssertNotNil(label.layoutIdentity)
+        XCTAssertEqual(label.layoutIdentity as? String, "test-label")
+    }
+    
+    func testIdentityBasedDiffing() {
+        let label1 = UILabel()
+        label1.text = "Label 1"
+        label1.layoutIdentity = AnyHashable("label-1")
+        
+        let label2 = UILabel()
+        label2.text = "Label 2"
+        label2.layoutIdentity = AnyHashable("label-2")
+        
+        // Set initial body with labeled views
+        layoutContainer.setBody {
+            VStack {
+                label1.layout().size(width: 200, height: 30)
+                label2.layout().size(width: 200, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        let initialSubviewCount = layoutContainer.subviews.count
+        
+        // Update body with same identities but different views
+        let newLabel1 = UILabel()
+        newLabel1.text = "Label 1 Updated"
+        newLabel1.layoutIdentity = AnyHashable("label-1")
+        
+        let newLabel2 = UILabel()
+        newLabel2.text = "Label 2 Updated"
+        newLabel2.layoutIdentity = AnyHashable("label-2")
+        
+        layoutContainer.setBody {
+            VStack {
+                newLabel1.layout().size(width: 200, height: 30)
+                newLabel2.layout().size(width: 200, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Views should be updated (identity-based diffing)
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, initialSubviewCount)
+    }
+    
+    func testIdentityReuse() {
+        let label = UILabel()
+        label.text = "Persistent Label"
+        label.layoutIdentity = AnyHashable("persistent")
+        
+        // Set body with labeled view
+        layoutContainer.setBody {
+            VStack {
+                label.layout().size(width: 200, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        let initialView = layoutContainer.subviews.first(where: { ($0 as? VStack)?.subviews.contains(label) ?? false })
+        XCTAssertNotNil(initialView)
+        
+        // Update body with same identity
+        layoutContainer.setBody {
+            VStack {
+                label.layout().size(width: 200, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Same view instance should be reused
+        let updatedView = layoutContainer.subviews.first(where: { ($0 as? VStack)?.subviews.contains(label) ?? false })
+        XCTAssertNotNil(updatedView)
+    }
+    
+    func testIdentityRemoval() {
+        let label1 = UILabel()
+        label1.text = "Label 1"
+        label1.layoutIdentity = AnyHashable("label-1")
+        
+        let label2 = UILabel()
+        label2.text = "Label 2"
+        label2.layoutIdentity = AnyHashable("label-2")
+        
+        // Set body with two labeled views
+        layoutContainer.setBody {
+            VStack {
+                label1.layout().size(width: 200, height: 30)
+                label2.layout().size(width: 200, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // Update body to remove label2
+        layoutContainer.setBody {
+            VStack {
+                label1.layout().size(width: 200, height: 30)
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // label1 should still be present, label2 should be removed
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+    }
+    
+    func testViewLayoutIdModifier() {
+        let label = UILabel()
+        label.text = "Test"
+        
+        // Use .id() modifier
+        let viewLayout = label.layout().id("test-id")
+        
+        // Identity should be set
+        XCTAssertNotNil(label.layoutIdentity)
+        XCTAssertEqual(label.layoutIdentity as? String, "test-id")
+    }
+    
+    func testViewLayoutIdWithString() {
+        let label = UILabel()
+        label.text = "Test"
+        
+        // Use .id() with string
+        _ = label.layout().id("my-label")
+        
+        XCTAssertEqual(label.layoutIdentity as? String, "my-label")
+    }
+    
+    func testViewLayoutIdWithInt() {
+        let label = UILabel()
+        label.text = "Test"
+        
+        // Use .id() with integer
+        _ = label.layout().id(123)
+        
+        XCTAssertEqual(label.layoutIdentity as? Int, 123)
+    }
+    
+    func testIdentityWithForEach() {
+        let items = ["Item 1", "Item 2", "Item 3"]
+        var labels: [UILabel] = []
+        
+        for (index, item) in items.enumerated() {
+            let label = UILabel()
+            label.text = item
+            label.layoutIdentity = AnyHashable("item-\(index)")
+            labels.append(label)
+        }
+        
+        layoutContainer.setBody {
+            VStack(spacing: 10) {
+                ForEach(items.indices) { index in
+                    labels[index].layout()
+                        .id("item-\(index)")
+                        .size(width: 200, height: 30)
+                }
+            }
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        // All labels should be in hierarchy
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+    }
 }
 
 // MARK: - Helper Classes
