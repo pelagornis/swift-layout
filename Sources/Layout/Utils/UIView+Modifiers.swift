@@ -5,6 +5,7 @@ import ObjectiveC
 /// This prevents creating new ViewLayout instances for each modifier chain
 private struct AssociatedKeys {
     @MainActor static var layoutModifiers = "layoutmodifiers"
+    @MainActor static var layoutIdentity = "layoutidentity"
 }
 
 @MainActor
@@ -34,5 +35,16 @@ extension UIView {
     /// Clears all layout modifiers
     func clearLayoutModifiers() {
         layoutModifiers = []
+    }
+    
+    /// Gets or sets layout identity for this view
+    /// Identity is used for efficient diffing and view reuse
+    var layoutIdentity: AnyHashable? {
+        get {
+            return objc_getAssociatedObject(self, &AssociatedKeys.layoutIdentity) as? AnyHashable
+        }
+        set {
+            objc_setAssociatedObject(self, &AssociatedKeys.layoutIdentity, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
     }
 }

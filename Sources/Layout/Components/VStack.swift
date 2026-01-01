@@ -143,12 +143,19 @@ public class VStack: UIView, Layout {
                 }
             }
         } else {
+            // For other layouts (including ForEach), extract all views
+            // ForEach.extractViews() will return all item views, which is correct for VStack
             let allChildViews = layout.extractViews()
             for (_, childView) in allChildViews.enumerated() {
                 addSubview(childView)
                 
+                // Store ViewLayout if available (for single ViewLayout, not ForEach items)
                 if let viewLayout = layout as? ViewLayout {
                     storeViewLayout(viewLayout, for: childView)
+                } else if !childView.layoutModifiers.isEmpty {
+                    // If view has layout modifiers (from ForEach items), create ViewLayout for it
+                    // This allows calculateLayout to properly size views with modifiers
+                    storeViewLayout(ViewLayout(childView), for: childView)
                 }
             }
         }

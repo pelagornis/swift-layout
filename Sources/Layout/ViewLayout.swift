@@ -304,4 +304,39 @@ public struct ViewLayout: Layout {
     public func padding(_ value: CGFloat) -> ViewLayout {
         return padding(UIEdgeInsets(top: value, left: value, bottom: value, right: value))
     }
+    
+    // MARK: - Identity Modifier
+    
+    /// Sets the identity of the view for efficient diffing and view reuse.
+    ///
+    /// Identity allows the layout system to:
+    /// - Track views across layout updates
+    /// - Reuse existing views when identity matches
+    /// - Efficiently update only changed views
+    ///
+    /// - Parameter identity: A hashable value that uniquely identifies this view
+    /// - Returns: A new ``ViewLayout`` with the identity set
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// ForEach(items) { item in
+    ///     ItemView(item: item)
+    ///         .layout()
+    ///         .id(item.id)  // Use item's ID as identity
+    /// }
+    /// ```
+    public func id<ID: Hashable>(_ identity: ID) -> ViewLayout {
+        view.layoutIdentity = AnyHashable(identity)
+        return self
+    }
+    
+    /// Sets the identity of the view using a string identifier.
+    ///
+    /// - Parameter identity: A string that uniquely identifies this view
+    /// - Returns: A new ``ViewLayout`` with the identity set
+    public func id(_ identity: String) -> ViewLayout {
+        view.layoutIdentity = AnyHashable(identity)
+        return self
+    }
 }
