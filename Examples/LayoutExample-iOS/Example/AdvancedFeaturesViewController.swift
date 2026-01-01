@@ -155,6 +155,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         layoutContainer.useIncrementalLayout = true
         setupActions()
         setupLayoutTreeTest()
+        setupIdentityDiffTest()
         startMonitoring()
         updateEnvironmentLabel()
     }
@@ -165,6 +166,10 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             card.addSubview(cardCounterLabels[index])
             card.addSubview(cardTimeLabels[index])
         }
+    }
+    
+    private func setupIdentityDiffTest() {
+        // 뷰는 필요할 때 자동으로 생성됨 (초기화 불필요)
     }
     
     override func viewDidLayoutSubviews() {
@@ -211,6 +216,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 prioritySection
                 geometryInfoSection
                 layoutTreeSection
+                identityDiffSection
                 
                 Spacer(minLength: 40)
             }
@@ -819,6 +825,199 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     private func updateLayoutTreeStatus(_ text: String) {
         statusLabel.text = text
         layoutContainer.markViewDirty(statusLabel)
+    }
+    
+    // MARK: - Identity & Diff Test Properties
+    
+    private struct IdentityItem: Hashable {
+        let id: String
+        let title: String
+        let colorName: String  // UIColor 대신 String으로 저장
+        var count: Int = 0
+        
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+        
+        static func == (lhs: IdentityItem, rhs: IdentityItem) -> Bool {
+            lhs.id == rhs.id
+        }
+        
+        var color: UIColor {
+            switch colorName {
+            case "red": return .systemRed
+            case "blue": return .systemBlue
+            case "green": return .systemGreen
+            case "orange": return .systemOrange
+            case "purple": return .systemPurple
+            case "teal": return .systemTeal
+            case "pink": return .systemPink
+            case "indigo": return .systemIndigo
+            default: return .systemGray
+            }
+        }
+    }
+    
+    private var identityItems: [IdentityItem] = [
+        IdentityItem(id: "item-1", title: "Item 1", colorName: "red"),
+        IdentityItem(id: "item-2", title: "Item 2", colorName: "blue"),
+        IdentityItem(id: "item-3", title: "Item 3", colorName: "green"),
+        IdentityItem(id: "item-4", title: "Item 4", colorName: "orange"),
+        IdentityItem(id: "item-5", title: "Item 5", colorName: "purple")
+    ]
+    
+    private var identityItemViews: [String: UIView] = [:]
+    private var identityItemLabels: [String: UILabel] = [:]
+    
+    // MARK: - Identity & Diff Test Section
+    
+    private var identityDiffSection: some Layout {
+        VStack(alignment: .center, spacing: 12) {
+            sectionHeader(title: "Identity & Diff", subtitle: "Efficient view updates with identity tracking")
+            
+            // 설명 라벨
+            let descriptionLabel = createLabel(
+                text: "Identity를 사용하여 뷰를 추적합니다.\n같은 Identity는 재사용되고, 새로운 Identity는 추가됩니다.",
+                font: .systemFont(ofSize: 12, weight: .regular),
+                color: .secondaryLabel
+            )
+            descriptionLabel.layout()
+                .size(width: 340, height: 50)
+            
+            // 아이템 리스트
+            VStack(alignment: .center, spacing: 8) {
+                ForEach(identityItems) { item in
+                    self.createIdentityItemLayout(for: item)
+                }
+            }
+            
+            // 컨트롤 버튼들
+            VStack(alignment: .center, spacing: 10) {
+                createLayoutTreeButton(title: "Add Item", color: .systemGreen) { [weak self] in
+                    self?.addIdentityItem()
+                }
+                .layout()
+                .size(width: 340, height: 44)
+                
+                createLayoutTreeButton(title: "Remove Last", color: .systemRed) { [weak self] in
+                    self?.removeLastIdentityItem()
+                }
+                .layout()
+                .size(width: 340, height: 44)
+                
+                createLayoutTreeButton(title: "Shuffle Items", color: .systemBlue) { [weak self] in
+                    self?.shuffleIdentityItems()
+                }
+                .layout()
+                .size(width: 340, height: 44)
+                
+                createLayoutTreeButton(title: "Update All Counts", color: .systemPurple) { [weak self] in
+                    self?.updateAllIdentityItemCounts()
+                }
+                .layout()
+                .size(width: 340, height: 44)
+            }
+        }
+        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
+    }
+    
+    // MARK: - Identity & Diff Helpers
+    
+    private func createIdentityItemLayout(for item: IdentityItem) -> some Layout {
+        // 뷰를 가져오거나 생성
+        let itemView = getOrCreateItemView(for: item)
+        
+        // 라벨 업데이트
+        if let itemLabel = identityItemLabels[item.id] {
+            itemLabel.text = "\(item.title) - Count: \(item.count)"
+        }
+        
+        return itemView.layout()
+            .id(item.id)  // Identity 설정 - 같은 ID면 뷰 재사용
+            .size(width: 340, height: 50)
+    }
+    
+    private func getOrCreateItemView(for item: IdentityItem) -> UIView {
+        // 기존 뷰 재사용 (Identity가 같으면 같은 뷰 인스턴스 재사용)
+        if let existingView = identityItemViews[item.id] {
+            // 라벨 업데이트만 수행 (뷰는 그대로 재사용)
+            // UIView의 addSubview는 자동으로 이전 부모에서 제거하므로 안전함
+            if let itemLabel = identityItemLabels[item.id] {
+                itemLabel.text = "\(item.title) - Count: \(item.count)"
+            }
+            return existingView
+        }
+        
+        // 새 뷰 생성 (새로운 Identity)
+        let itemView = UIView()
+        itemView.backgroundColor = item.color.withAlphaComponent(0.15)
+        itemView.layer.cornerRadius = 8
+        itemView.layer.borderWidth = 1
+        itemView.layer.borderColor = item.color.cgColor
+        
+        let itemLabel = UILabel()
+        itemLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        itemLabel.textColor = item.color
+        itemLabel.textAlignment = .center
+        itemLabel.text = "\(item.title) - Count: \(item.count)"
+        itemLabel.frame = CGRect(x: 10, y: 5, width: 320, height: 40)
+        itemView.addSubview(itemLabel)
+        
+        // 저장
+        identityItemViews[item.id] = itemView
+        identityItemLabels[item.id] = itemLabel
+        
+        return itemView
+    }
+    
+    // MARK: - Identity & Diff Actions
+    
+    private func addIdentityItem() {
+        // 최대 10개까지만 추가
+        guard identityItems.count < 10 else { return }
+        
+        let newId = "item-\(identityItems.count + 1)"
+        let colorNames = ["red", "blue", "green", "orange", "purple", "teal", "pink", "indigo"]
+        let colorName = colorNames[identityItems.count % colorNames.count]
+        
+        let newItem = IdentityItem(id: newId, title: "Item \(identityItems.count + 1)", colorName: colorName)
+        identityItems.append(newItem)
+        
+        // 새 뷰는 createIdentityItemView에서 자동으로 생성됨
+        // 레이아웃 업데이트 (Identity 기반 diffing으로 새 뷰만 추가됨)
+        layoutContainer.setBody { self.body }
+    }
+    
+    private func removeLastIdentityItem() {
+        guard !identityItems.isEmpty else { return }
+        let removedItem = identityItems.removeLast()
+        
+        // 뷰를 계층에서 제거하고 맵에서도 제거
+        if let removedView = identityItemViews[removedItem.id] {
+            removedView.removeFromSuperview()
+            identityItemViews.removeValue(forKey: removedItem.id)
+        }
+        identityItemLabels.removeValue(forKey: removedItem.id)
+        
+        // 레이아웃 업데이트
+        layoutContainer.setBody { self.body }
+    }
+    
+    private func shuffleIdentityItems() {
+        identityItems.shuffle()
+        
+        // 레이아웃 업데이트 (Identity가 같으므로 뷰는 재사용됨)
+        layoutContainer.setBody { self.body }
+    }
+    
+    private func updateAllIdentityItemCounts() {
+        // 모든 아이템의 카운트 증가
+        for index in identityItems.indices {
+            identityItems[index].count += 1
+        }
+        
+        // 레이아웃 업데이트 (Identity가 같으므로 뷰는 재사용되고 내용만 업데이트)
+        layoutContainer.setBody { self.body }
     }
 }
 
