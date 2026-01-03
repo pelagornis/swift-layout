@@ -443,8 +443,16 @@ public class VStack: UIView, Layout {
         
         // Detect and limit infinite height
         let isInfiniteHeight = bounds.height > 10000 // Consider infinite if over 10000pt
-        let maxWidth = min(safeBounds.width, bounds.width)
+        let maxWidth = safeBounds.width // Use safeBounds.width directly (padding already excluded)
         let maxHeight = isInfiniteHeight ? 1000 : min(safeBounds.height, bounds.height) // Limit to 1000pt if infinite
+        
+        // Initialize totalSize.width for center/trailing alignment
+        if alignment != .leading {
+            totalSize.width = safeBounds.width
+        }
+        
+        // Track current Y position for vertical stacking
+        var currentY: CGFloat = safeBounds.minY
         
         for subview in subviews {
             // Handle Spacer with minLength inside ScrollView
@@ -461,13 +469,29 @@ public class VStack: UIView, Layout {
             }
             // Check if stored ViewLayout information exists (PRIORITY: check ViewLayout first!)
             if let storedViewLayout = getViewLayout(for: subview) {
-                // Call calculateLayout using stored ViewLayout information
-                let viewResult = storedViewLayout.calculateLayout(in: CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight))
+                // For center/trailing alignment, use full safeBounds.width for ViewLayout bounds
+                // This ensures views expand to fill available space
+                let viewLayoutWidth = alignment != .leading ? safeBounds.width : maxWidth
+                let viewResult = storedViewLayout.calculateLayout(in: CGRect(x: 0, y: 0, width: viewLayoutWidth, height: maxHeight))
                 
                 if let frame = viewResult.frames[subview] {
-                    frames[subview] = frame
-                    totalSize.width = max(totalSize.width, frame.width)
+                    // Apply alignment to x coordinate
+                    let x: CGFloat
+                    switch alignment {
+                    case .leading: x = safeBounds.minX + frame.origin.x
+                    case .center: x = safeBounds.minX + (safeBounds.width - frame.width) / 2
+                    case .trailing: x = safeBounds.maxX - frame.width
+                    }
+                    let alignedFrame = CGRect(x: x, y: currentY, width: frame.width, height: frame.height)
+                    frames[subview] = alignedFrame
+                    // For center/trailing alignment, use full width. For leading, use max width
+                    if alignment == .leading {
+                        totalSize.width = max(totalSize.width, frame.width)
+                    } else {
+                        totalSize.width = max(totalSize.width, safeBounds.width)
+                    }
                     totalSize.height += frame.height
+                    currentY += frame.height + spacing
 
                 } else {
                     // Fallback: use existing logic
@@ -482,21 +506,55 @@ public class VStack: UIView, Layout {
                         let intrinsicSize = subview.intrinsicContentSize
                         size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
                     }
-                    frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-                    totalSize.width = max(totalSize.width, size.width)
+                    // Apply alignment to x coordinate
+                    let x: CGFloat
+                    switch alignment {
+                    case .leading: x = safeBounds.minX
+                    case .center: x = safeBounds.minX + (safeBounds.width - size.width) / 2
+                    case .trailing: x = safeBounds.maxX - size.width
+                    }
+                    frames[subview] = CGRect(x: x, y: currentY, width: size.width, height: size.height)
+                    // For center/trailing alignment, use full width. For leading, use max width
+                    // Note: We don't update totalSize.width here for center/trailing alignment,
+                    // as it will be set to safeBounds.width at the end
+                    if alignment == .leading {
+                        totalSize.width = max(totalSize.width, size.width)
+                    }
+                    // For center/trailing, we'll use safeBounds.width at the end, so don't update here
                     totalSize.height += size.height
+                    currentY += size.height + spacing
                 }
             } else if let layoutView = subview as? (any Layout) {
                 // Pass limited size to child layout (prevent infinite)
                 let childBounds = CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight)
                 let childResult = layoutView.calculateLayout(in: childBounds)
-                frames.merge(childResult.frames) { _, new in new }
+                
+                // Apply alignment to child layout frames
+                var childMaxHeight: CGFloat = 0
+                for (view, frame) in childResult.frames {
+                    let x: CGFloat
+                    switch alignment {
+                    case .leading: x = safeBounds.minX + frame.origin.x
+                    case .center: x = safeBounds.minX + (safeBounds.width - frame.width) / 2
+                    case .trailing: x = safeBounds.maxX - frame.width
+                    }
+                    let alignedFrame = CGRect(x: x, y: currentY + frame.origin.y, width: frame.width, height: frame.height)
+                    frames[view] = alignedFrame
+                    childMaxHeight = max(childMaxHeight, frame.origin.y + frame.height)
+                }
                 
                 // Apply size limits
                 let limitedWidth = min(childResult.totalSize.width, maxWidth)
                 let limitedHeight = min(childResult.totalSize.height, maxHeight)
-                totalSize.width = max(totalSize.width, limitedWidth)
+                // For center/trailing alignment, use full width. For leading, use max width
+                // Note: We don't update totalSize.width here for center/trailing alignment,
+                // as it will be set to safeBounds.width at the end
+                if alignment == .leading {
+                    totalSize.width = max(totalSize.width, limitedWidth)
+                }
+                // For center/trailing, we'll use safeBounds.width at the end, so don't update here
                 totalSize.height += limitedHeight
+                currentY += limitedHeight + spacing
             } else {
                 // Use existing logic if no stored ViewLayout information
                 var size: CGSize
@@ -510,27 +568,35 @@ public class VStack: UIView, Layout {
                     let intrinsicSize = subview.intrinsicContentSize
                     size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
                 }
-                frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-                totalSize.width = max(totalSize.width, size.width)
+                // Apply alignment to x coordinate
+                let x: CGFloat
+                switch alignment {
+                case .leading: x = safeBounds.minX
+                case .center: x = safeBounds.minX + (safeBounds.width - size.width) / 2
+                case .trailing: x = safeBounds.maxX - size.width
+                }
+                frames[subview] = CGRect(x: x, y: currentY, width: size.width, height: size.height)
+                // For center/trailing alignment, use full width. For leading, use max width
+                // Note: We don't update totalSize.width here for center/trailing alignment,
+                // as it will be set to safeBounds.width at the end
+                if alignment == .leading {
+                    totalSize.width = max(totalSize.width, size.width)
+                }
+                // For center/trailing, we'll use safeBounds.width at the end, so don't update here
                 totalSize.height += size.height
+                currentY += size.height + spacing
             }
         }
         
-        // Add spacing - consider Spacers with minLength inside ScrollView
-        let effectiveSubviews: [UIView]
-        if isInsideScrollView {
-            // Include Spacers with minLength
-            effectiveSubviews = subviews.filter { subview in
-                if let spacer = subview as? Spacer {
-                    return (spacer.minLength ?? 0) > 0
-                }
-                return true
-            }
-        } else {
-            effectiveSubviews = subviews
+        // Calculate total spacing (between all subviews, excluding Spacers)
+        let nonSpacerSubviews = subviews.filter { !($0 is Spacer) }
+        if nonSpacerSubviews.count > 1 {
+            totalSize.height += spacing * CGFloat(nonSpacerSubviews.count - 1)
         }
-        if effectiveSubviews.count > 1 {
-            totalSize.height += spacing * CGFloat(effectiveSubviews.count - 1)
+        
+        // Use full width if alignment is center or trailing (before adding padding)
+        if alignment != .leading {
+            totalSize.width = safeBounds.width
         }
         
         // Add padding
@@ -543,13 +609,8 @@ public class VStack: UIView, Layout {
             totalSize.height = maxReasonableHeight
         }
         
-        // Use full width if alignment is set
-        if alignment != .leading {
-            totalSize.width = bounds.width
-        } else {
-            // Apply final size limits
-            totalSize.width = min(totalSize.width, bounds.width)
-        }
+        // Apply final size limits
+        totalSize.width = min(totalSize.width, bounds.width)
         totalSize.height = min(totalSize.height, bounds.height)
         
         frames[self] = CGRect(x: 0, y: 0, width: totalSize.width, height: totalSize.height)

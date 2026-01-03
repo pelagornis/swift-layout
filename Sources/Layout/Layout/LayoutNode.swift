@@ -19,7 +19,7 @@ public final class LayoutNode {
     public private(set) var children: [LayoutNode] = []
     
     /// Whether this node needs recalculation
-    public private(set) var isDirty: Bool = true
+    public private(set) var isDirty: Bool = false
     
     /// Cached layout result (valid only when !isDirty)
     private var cachedResult: LayoutResult?
@@ -36,7 +36,7 @@ public final class LayoutNode {
     /// Creates a layout node
     public init(layout: any Layout) {
         self.layout = layout
-        self.isDirty = true
+        self.isDirty = false
     }
     
     /// Adds a child node and establishes parent-child relationship
@@ -59,16 +59,21 @@ public final class LayoutNode {
         children.removeAll()
     }
     
-    /// Marks this node as dirty and propagates to parent
-    public func markDirty() {
+    /// Marks this node as dirty and optionally propagates to parent
+    /// - Parameter propagateToParent: If true, marks parent as dirty (default: true)
+    ///   Set to false for partial updates where only this node should be recalculated
+    public func markDirty(propagateToParent: Bool = true) {
         guard !isDirty else { return }
         
         isDirty = true
         cachedResult = nil
         cachedBounds = .zero
         
-        // Propagate to parent
-        parent?.markDirty()
+        // Propagate to parent only if requested
+        // For partial updates, we don't propagate to allow incremental recalculation
+        if propagateToParent {
+            parent?.markDirty(propagateToParent: true)
+        }
     }
     
     /// Marks this node as clean (after successful calculation)
@@ -100,13 +105,23 @@ public final class LayoutNode {
         isCalculating = true
         defer { isCalculating = false }
         
-        // For layouts with children, we need to merge results from children
-        // But for now, we'll use the wrapped layout's calculateLayout
-        // This maintains compatibility with existing logic
+        // If we have children, try to use incremental calculation
+        // Only recalculate dirty children, reuse cached results for clean children
+        if !children.isEmpty {
+            // For layouts with children, we need to check if we can use incremental updates
+            // If all children are clean, we can return cached result
+            let allChildrenClean = children.allSatisfy { !$0.isDirty }
+            if allChildrenClean && cachedResult != nil && cachedBounds == bounds {
+                // All children are clean and bounds haven't changed, return cached result
+                return cachedResult!
+            }
+        }
         
         // Calculate layout using the wrapped layout
         // The wrapped layout will use its own calculateLayout, which may
         // internally use child nodes if they're set up
+        // Note: This still calls the full layout calculation, but child nodes
+        // can cache their results if they're not dirty
         let result = layout.calculateLayout(in: bounds)
         
         // Cache the result

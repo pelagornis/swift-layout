@@ -90,11 +90,8 @@ public class LayoutContainer: UIView {
         _body = content
         needsHierarchyUpdate = true
         
-        // Invalidate layout tree when body changes
-        if useIncrementalLayout {
-            rootNode?.invalidate()
-            rootNode = nil // Will be rebuilt on next layout pass
-        }
+        // Don't invalidate node tree here - let updateViewHierarchy check if structure changed
+        // This allows incremental updates when layout structure hasn't changed
         
         // Use invalidation rules to determine if layout is needed
         let rules = LayoutInvalidationRules.default
@@ -194,149 +191,242 @@ public class LayoutContainer: UIView {
             layout = createAutoVStack(from: body)
         }
         
-        // Before setting new layout, remove old top-level views that are no longer in the new layout
-        // This prevents duplicate views when VStack is recreated
-        if let oldLayout = cachedLayout {
-            let oldTopLevelViews = oldLayout.extractViews()
-            let newTopLevelViews = layout.extractViews()
-            let oldTopLevelSet = Set(oldTopLevelViews.map { ObjectIdentifier($0) })
-            let newTopLevelSet = Set(newTopLevelViews.map { ObjectIdentifier($0) })
-            
-            // Remove old top-level views that are not in new layout
-            for oldView in oldTopLevelViews {
-                if !newTopLevelSet.contains(ObjectIdentifier(oldView)) && oldView.superview == self {
-                    oldView.removeFromSuperview()
-                }
-            }
-        }
-        
-        // Extract top-level views from new layout first
+        // Extract top-level views from new layout
         let newTopLevelViews = layout.extractViews()
         
-        // Add new top-level views that aren't already in hierarchy
-        for view in newTopLevelViews {
-            if view.superview == nil {
-                addSubview(view)
-            }
-        }
+        // Store old layout for diffing
+        let oldLayout = cachedLayout
         
-        // Remove old top-level views that are no longer in the new layout
-        // This prevents duplicate views when VStack is recreated
-        if let oldLayout = cachedLayout {
+        // Check if layout structure has changed by comparing top-level view identities
+        // This determines if we need to rebuild the node tree or can reuse it
+        let layoutStructureChanged: Bool
+        if let oldLayout = oldLayout {
             let oldTopLevelViews = oldLayout.extractViews()
-            let oldTopLevelSet = Set(oldTopLevelViews.map { ObjectIdentifier($0) })
-            let newTopLevelSet = Set(newTopLevelViews.map { ObjectIdentifier($0) })
-            
-            // Remove old top-level views that are not in new layout
-            for oldView in oldTopLevelViews {
-                if !newTopLevelSet.contains(ObjectIdentifier(oldView)) && oldView.superview == self {
-                    oldView.removeFromSuperview()
-                }
-            }
+            let oldIdentities = Set(oldTopLevelViews.compactMap { $0.layoutIdentity })
+            let newIdentities = Set(newTopLevelViews.compactMap { $0.layoutIdentity })
+            // Structure changed if identities don't match or count changed
+            layoutStructureChanged = oldIdentities != newIdentities || oldTopLevelViews.count != newTopLevelViews.count
+        } else {
+            layoutStructureChanged = true
         }
         
+        // Always update cachedLayout to use the new layout instance
+        // This ensures applyLayout uses the correct layout instance that matches the current view hierarchy
+        // Even if structure hasn't changed, we need to use the new layout instance
+        // because performLayoutDiff may have updated the view hierarchy
         cachedLayout = layout
         
-        // Build layout tree if incremental layout is enabled
+        // Build or reuse layout tree if incremental layout is enabled
         if useIncrementalLayout {
-            rootNode = LayoutNode(layout: layout)
-            rootNode?.buildTree()
-        }
-        
-        // Extract all views from the new layout (including nested views in VStack, HStack, etc.)
-        let allNewViews = extractAllViews(from: layout)
-        
-        // Build identity map for all views (not just top-level)
-        var newIdentityMap: [AnyHashable: UIView] = [:]
-        for view in allNewViews {
-            if let identity = view.layoutIdentity {
-                newIdentityMap[identity] = view
+            if rootNode == nil {
+                // No existing node: create new one (first time setup)
+                rootNode = LayoutNode(layout: layout)
+                rootNode?.buildTree()
+                rootNode?.markDirty()
+            } else if layoutStructureChanged {
+                // Layout structure changed (items added/removed): rebuild node tree to match new structure
+                // performLayoutDiff already handled view hierarchy updates (add/remove/reuse views)
+                // But we need to rebuild the node tree to match the new layout structure
+                // This rebuilds the tree, but applyLayout uses cachedLayout.calculateLayout() anyway
+                // So the node tree is mainly for dirty tracking
+                rootNode = LayoutNode(layout: layout)
+                rootNode?.buildTree()
+                // Only mark root as dirty - child nodes will be calculated fresh
+                rootNode?.markDirty()
+            } else {
+                // Layout structure unchanged: reuse existing node tree
+                // IMPORTANT: Don't rebuild node tree - this allows incremental updates
+                // The existing node tree structure matches the new layout structure
+                // Individual nodes will be marked dirty via markViewDirty for specific changes
+                // Don't mark root as dirty here - only specific nodes should be dirty
             }
         }
         
-        // Get current views in hierarchy (including nested views)
-        let allCurrentViews = getAllViewsInHierarchy()
+        // Perform identity-based diffing for top-level views AFTER updating layout
+        // This handles view reuse, removal, and addition based on identity
+        // Do this after updating cachedLayout so both old and new layouts are available
+        performLayoutDiff(oldLayout: oldLayout, newLayout: layout)
+    }
+    
+    /// Performs identity-based diffing for Layout hierarchy
+    /// This method matches views by identity and manages view reuse at the Layout level
+    /// It handles view removal, reuse, and addition based on identity matching
+    private func performLayoutDiff(oldLayout: (any Layout)?, newLayout: any Layout) {
+        let oldTopLevelViews = oldLayout?.extractViews() ?? []
+        let newTopLevelViews = newLayout.extractViews()
         
-        // Build old identity map from current hierarchy
+        // Debug logging for extracted views
+        print("🔍 [LayoutContainer] performLayoutDiff:")
+        print("  - oldTopLevelViews count: \(oldTopLevelViews.count)")
+        for (index, view) in oldTopLevelViews.enumerated() {
+            print("    [\(index)] \(type(of: view)) (identity: \(view.layoutIdentity?.description ?? "nil"), superview: \(view.superview != nil ? "exists" : "nil"))")
+        }
+        print("  - newTopLevelViews count: \(newTopLevelViews.count)")
+        for (index, view) in newTopLevelViews.enumerated() {
+            print("    [\(index)] \(type(of: view)) (identity: \(view.layoutIdentity?.description ?? "nil"), superview: \(view.superview != nil ? "exists" : "nil"))")
+        }
+        
+        // Build identity maps for top-level views
         var oldIdentityMap: [AnyHashable: UIView] = [:]
-        for view in allCurrentViews {
+        for view in oldTopLevelViews {
             if let identity = view.layoutIdentity {
                 oldIdentityMap[identity] = view
             }
         }
         
-        // Perform identity-based diffing for all views
-        performIdentityDiff(oldMap: oldIdentityMap, newMap: newIdentityMap, newViews: allNewViews)
-        
-        // Update identity map
-        identityToViewMap = newIdentityMap
-    }
-    
-    /// Performs identity-based diffing to efficiently update view hierarchy
-    private func performIdentityDiff(oldMap: [AnyHashable: UIView], newMap: [AnyHashable: UIView], newViews: [UIView]) {
-        // Find views to remove (in old but not in new)
-        let oldIdentities = Set(oldMap.keys)
-        let newIdentities = Set(newMap.keys)
-        let identitiesToRemove = oldIdentities.subtracting(newIdentities)
-        
-        // Remove views that no longer exist (remove from any superview, not just LayoutContainer)
-        for identity in identitiesToRemove {
-            if let view = oldMap[identity], view.superview != nil {
-                view.removeFromSuperview()
+        var newIdentityMap: [AnyHashable: UIView] = [:]
+        for view in newTopLevelViews {
+            if let identity = view.layoutIdentity {
+                newIdentityMap[identity] = view
             }
         }
         
-        // Find views to add (in new but not in old)
-        let identitiesToAdd = newIdentities.subtracting(oldIdentities)
+        // Update identity map for tracking
+        identityToViewMap = newIdentityMap
         
-        // Note: New views are already added by VStack/HStack init
-        // We don't need to add them here, but we need to ensure they're not removed
-        // The views will be in the hierarchy already from the layout extraction
+        // Build instance sets for views without identity
+        let oldInstanceSet = Set(oldTopLevelViews.map { ObjectIdentifier($0) })
+        let newInstanceSet = Set(newTopLevelViews.map { ObjectIdentifier($0) })
         
-        // For views with matching identities, reuse existing views
-        let matchingIdentities = oldIdentities.intersection(newIdentities)
+        // Step 0: Special handling for ScrollView without identity (BEFORE Step 1)
+        // Match old and new ScrollView instances by type (for ScrollView without identity)
+        // This ensures ScrollView instances are reused when the layout structure hasn't changed
+        var oldScrollView: ScrollView?
+        var newScrollView: ScrollView?
+        
+        // IMPORTANT: Find old ScrollView from actual hierarchy (subviews), not from oldLayout.extractViews()
+        // oldLayout.extractViews() returns views from the old layout instance, which may not match
+        // the actual views currently in the hierarchy. We need to find the ScrollView that's
+        // actually in the view hierarchy (subviews) to ensure we can reuse it.
+        for subview in subviews {
+            if let scrollView = subview as? ScrollView,
+               scrollView.layoutIdentity == nil {
+                oldScrollView = scrollView
+                break
+            }
+        }
+        
+        for newView in newTopLevelViews {
+            if let scrollView = newView as? ScrollView,
+               scrollView.layoutIdentity == nil {
+                newScrollView = scrollView
+                break
+            }
+        }
+        
+        // Debug logging for ScrollView reuse detection
+        print("🔍 [LayoutContainer] performLayoutDiff - ScrollView detection:")
+        print("  - oldScrollView: \(oldScrollView != nil ? "found (instance: \(ObjectIdentifier(oldScrollView!)))" : "nil")")
+        print("  - newScrollView: \(newScrollView != nil ? "found (instance: \(ObjectIdentifier(newScrollView!)))" : "nil")")
+        if let oldSV = oldScrollView, let newSV = newScrollView {
+            print("  - Same instance: \(oldSV === newSV)")
+        }
+        
+        // Track if we should skip adding new ScrollView (because we're reusing old one)
+        var skipAddingNewScrollView = false
+        if let oldSV = oldScrollView, let newSV = newScrollView, oldSV !== newSV {
+            // Both old and new ScrollView exist (different instances)
+            // Reuse the old ScrollView instance to preserve scroll offset and cache
+            // Prevent the old ScrollView from being removed in Step 1
+            // Prevent the new ScrollView from being added in Step 3
+            
+            skipAddingNewScrollView = true
+            print("🔄 [LayoutContainer] Reusing ScrollView instance to preserve state (old instance will be kept, new instance will be skipped)")
+            
+            // Update old ScrollView's child layout with new ScrollView's child layout
+            // This ensures the content is updated while preserving scroll offset and cache
+            if let newChildLayout = newSV.getChildLayout() {
+                print("  - Updating old ScrollView's child layout with new layout")
+                oldSV.updateChildLayout(newChildLayout)
+            } else {
+                print("  - ⚠️ New ScrollView has no childLayout - skipping update")
+            }
+        }
+        
+        // Step 1: Remove views that are no longer in the new layout
+        // IMPORTANT: Don't remove old ScrollView if we're reusing it
+        for oldView in oldTopLevelViews {
+            // Skip removing old ScrollView if we're reusing it
+            if skipAddingNewScrollView,
+               let oldSV = oldView as? ScrollView,
+               oldSV.layoutIdentity == nil,
+               oldView === oldScrollView {
+                continue
+            }
+            
+            let shouldRemove: Bool
+            if let identity = oldView.layoutIdentity {
+                // View has identity: remove if identity not in new layout
+                shouldRemove = !newIdentityMap.keys.contains(identity)
+            } else {
+                // View has no identity: remove if instance not in new layout
+                shouldRemove = !newInstanceSet.contains(ObjectIdentifier(oldView))
+            }
+            
+            if shouldRemove && oldView.superview == self {
+                oldView.removeFromSuperview()
+            }
+        }
+        
+        // Step 2: Handle views with matching identities (view reuse)
+        let matchingIdentities = Set(oldIdentityMap.keys).intersection(Set(newIdentityMap.keys))
         for identity in matchingIdentities {
-            if let oldView = oldMap[identity], let newView = newMap[identity] {
-                // If views are different instances but same identity, replace
+            if let oldView = oldIdentityMap[identity], let newView = newIdentityMap[identity] {
                 if oldView !== newView {
-                    // Remove old view from its superview
-                    if oldView.superview != nil {
+                    // Different instances with same identity: replace the view
+                    if oldView.superview == self {
                         oldView.removeFromSuperview()
                     }
-                    // New view will be added by its parent container (VStack/HStack)
+                    // Add new view if not already in hierarchy
+                    if newView.superview == nil {
+                        addSubview(newView)
+                    }
                 }
-                // If same instance, keep it (no action needed)
+                // Same instance: already in hierarchy, no action needed
             }
         }
         
-        // Handle views without identity
-        // First, find all current views without identity that should be removed
-        let allCurrentViews = getAllViewsInHierarchy()
-        let currentViewsWithoutIdentity = allCurrentViews.filter { $0.layoutIdentity == nil }
-        let newViewsWithoutIdentity = newViews.filter { $0.layoutIdentity == nil }
-        
-        // Remove old views without identity that are not in new views
-        for oldView in currentViewsWithoutIdentity {
-            if !newViewsWithoutIdentity.contains(where: { $0 === oldView }) {
-                // This view is no longer needed, remove it
-                if oldView.superview != nil {
-                    oldView.removeFromSuperview()
+        // Step 3: Add new views (with identity but not matched, or without identity)
+        for newView in newTopLevelViews {
+            if newView.superview == nil {
+                // Skip adding new ScrollView if we're reusing the old one
+                if skipAddingNewScrollView,
+                   let newSV = newView as? ScrollView,
+                   newSV.layoutIdentity == nil {
+                    // Skip adding this new ScrollView - we're reusing the old one
+                    continue
+                }
+                
+                // Check if this view should be added
+                let shouldAdd: Bool
+                if let identity = newView.layoutIdentity {
+                    // View has identity: add if identity not in old layout (new view)
+                    shouldAdd = !oldIdentityMap.keys.contains(identity)
+                } else {
+                    // View has no identity: add if instance not in old layout (new view)
+                    shouldAdd = !oldInstanceSet.contains(ObjectIdentifier(newView))
+                }
+                
+                if shouldAdd {
+                    addSubview(newView)
                 }
             }
         }
-        
-        // New views without identity will be added by their parent containers (VStack/HStack init)
     }
     
     /// Apply layout to views (only updates frames, doesn't modify hierarchy)
     private func applyLayout() {
         guard let layout = cachedLayout else { return }
         
-        // Use incremental layout if enabled and tree is available
+        // Always use cachedLayout for calculation to ensure consistency
+        // LayoutNode is used for dirty tracking, but we calculate using cachedLayout
+        // to avoid mismatches when layout instances change but structure doesn't
         let result: LayoutResult
         if useIncrementalLayout, let node = rootNode {
-            // Use LayoutNode for incremental calculation
-            result = node.calculateLayout(in: bounds)
+            // Use cachedLayout for calculation (not node.layout)
+            // This ensures we're calculating with the current layout instance
+            // Node tree is used for dirty tracking and incremental optimization
+            result = layout.calculateLayout(in: bounds)
         } else {
             // Fallback to full calculation
             result = layout.calculateLayout(in: bounds)
@@ -355,6 +445,30 @@ public class LayoutContainer: UIView {
                 continue
             }
             
+            // IMPORTANT: Skip all views that are inside ScrollView (except ScrollView itself)
+            // ScrollView manages its own internal views through layoutSubviews and updateContentLayout
+            // Applying frames here would conflict with ScrollView's internal layout
+            // ScrollView structure: ScrollView (UIScrollView) -> contentView -> actual content views
+            // We should only apply frames to ScrollView itself, not any of its content views
+            if !(view is ScrollView) {
+                // Check if view is inside any ScrollView by traversing up the hierarchy
+                var currentParent: UIView? = view.superview
+                var foundScrollView = false
+                while let parent = currentParent {
+                    if parent is ScrollView {
+                        // View is inside ScrollView's hierarchy, skip it completely
+                        // ScrollView will handle its own internal layout through layoutSubviews
+                        foundScrollView = true
+                        break
+                    }
+                    currentParent = parent.superview
+                }
+                
+                if foundScrollView {
+                    continue
+                }
+            }
+            
             // Only apply frames to views that are actually in the view hierarchy
             // Check if view is a direct subview or nested within subviews
             let isInHierarchy = view.superview == self || 
@@ -366,9 +480,12 @@ public class LayoutContainer: UIView {
                 continue
             }
             
-            if isScrollView {
-                // For ScrollView, use the frame directly without centering
+            if isScrollView && view is ScrollView {
+                // For ScrollView itself, use the frame directly without centering
+                // ScrollView's internal views are managed by ScrollView itself
                 view.frame = frame
+                // Trigger ScrollView's layoutSubviews to update its internal content
+                view.setNeedsLayout()
             } else {
                 // Calculate center offset for other layouts
                 let centerX = max(0, (bounds.width - result.totalSize.width) / 2)
@@ -384,6 +501,7 @@ public class LayoutContainer: UIView {
                 view.frame = adjustedFrame
             }
         }
+        
     }
     
     /// Apply layout to views with animation (only updates frames, doesn't modify hierarchy)
@@ -537,10 +655,15 @@ public class LayoutContainer: UIView {
         return allViews
     }
     
-    /// Check if the layout is a Stack type (VStack, HStack, ZStack)
+    /// Check if the layout is a Stack type (VStack, HStack, ZStack) or ScrollView
+    /// ScrollView is treated as a Stack-like container that shouldn't be wrapped in VStack
     private func isStackLayout(_ layout: any Layout) -> Bool {
+        // Direct type check for ScrollView
+        if layout is ScrollView {
+            return true
+        }
         let views = layout.extractViews()
-        return views.contains { $0 is VStack || $0 is HStack || $0 is ZStack }
+        return views.contains { $0 is VStack || $0 is HStack || $0 is ZStack || $0 is ScrollView }
     }
     
     /// Create an automatic VStack from non-stack layout
@@ -577,6 +700,11 @@ public class LayoutContainer: UIView {
         if needsHierarchyUpdate {
             needsHierarchyUpdate = false
             updateViewHierarchy()
+            // After updating hierarchy, apply layout to ensure views are positioned correctly
+            applyLayout()
+            // Update lastBounds to prevent unnecessary layout updates
+            lastBounds = bounds
+            return
         }
         
         // Rebuild layout tree if needed (e.g., after toggling incremental layout)
@@ -584,6 +712,8 @@ public class LayoutContainer: UIView {
         if useIncrementalLayout && rootNode == nil, let layout = cachedLayout {
             rootNode = LayoutNode(layout: layout)
             rootNode?.buildTree()
+            // Mark as dirty since layout state has changed
+            rootNode?.markDirty()
         }
         
         // Skip layout updates if any views are currently animating
@@ -611,6 +741,8 @@ public class LayoutContainer: UIView {
     }
     
     /// Marks a specific view's layout as dirty, triggering incremental recalculation
+    /// This marks only the target node as dirty without propagating to parent,
+    /// allowing for partial updates where only the changed view is recalculated
     public func markViewDirty(_ view: UIView) {
         guard useIncrementalLayout, let node = rootNode else {
             // Fallback: invalidate entire layout
@@ -620,7 +752,11 @@ public class LayoutContainer: UIView {
         
         // Find the node containing this view
         if let targetNode = node.findNode(containing: view) {
-            targetNode.markDirty()
+            // Mark dirty and propagate to parent
+            // Note: Parent propagation is necessary because if a child changes,
+            // the parent layout (e.g., VStack) also needs to recalculate its layout
+            // to account for the child's new size/position
+            targetNode.markDirty(propagateToParent: true)
             setNeedsLayout()
         } else {
             // If not found, invalidate root
