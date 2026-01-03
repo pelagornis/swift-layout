@@ -255,17 +255,6 @@ public class LayoutContainer: UIView {
         let oldTopLevelViews = oldLayout?.extractViews() ?? []
         let newTopLevelViews = newLayout.extractViews()
         
-        // Debug logging for extracted views
-        print("🔍 [LayoutContainer] performLayoutDiff:")
-        print("  - oldTopLevelViews count: \(oldTopLevelViews.count)")
-        for (index, view) in oldTopLevelViews.enumerated() {
-            print("    [\(index)] \(type(of: view)) (identity: \(view.layoutIdentity?.description ?? "nil"), superview: \(view.superview != nil ? "exists" : "nil"))")
-        }
-        print("  - newTopLevelViews count: \(newTopLevelViews.count)")
-        for (index, view) in newTopLevelViews.enumerated() {
-            print("    [\(index)] \(type(of: view)) (identity: \(view.layoutIdentity?.description ?? "nil"), superview: \(view.superview != nil ? "exists" : "nil"))")
-        }
-        
         // Build identity maps for top-level views
         var oldIdentityMap: [AnyHashable: UIView] = [:]
         for view in oldTopLevelViews {
@@ -314,14 +303,6 @@ public class LayoutContainer: UIView {
             }
         }
         
-        // Debug logging for ScrollView reuse detection
-        print("🔍 [LayoutContainer] performLayoutDiff - ScrollView detection:")
-        print("  - oldScrollView: \(oldScrollView != nil ? "found (instance: \(ObjectIdentifier(oldScrollView!)))" : "nil")")
-        print("  - newScrollView: \(newScrollView != nil ? "found (instance: \(ObjectIdentifier(newScrollView!)))" : "nil")")
-        if let oldSV = oldScrollView, let newSV = newScrollView {
-            print("  - Same instance: \(oldSV === newSV)")
-        }
-        
         // Track if we should skip adding new ScrollView (because we're reusing old one)
         var skipAddingNewScrollView = false
         if let oldSV = oldScrollView, let newSV = newScrollView, oldSV !== newSV {
@@ -331,15 +312,11 @@ public class LayoutContainer: UIView {
             // Prevent the new ScrollView from being added in Step 3
             
             skipAddingNewScrollView = true
-            print("🔄 [LayoutContainer] Reusing ScrollView instance to preserve state (old instance will be kept, new instance will be skipped)")
             
             // Update old ScrollView's child layout with new ScrollView's child layout
             // This ensures the content is updated while preserving scroll offset and cache
             if let newChildLayout = newSV.getChildLayout() {
-                print("  - Updating old ScrollView's child layout with new layout")
                 oldSV.updateChildLayout(newChildLayout)
-            } else {
-                print("  - ⚠️ New ScrollView has no childLayout - skipping update")
             }
         }
         
@@ -437,6 +414,10 @@ public class LayoutContainer: UIView {
         // Check if the body is a ScrollView or contains ScrollView
         let isScrollView = layout is ScrollView || topLevelViews.contains { $0 is ScrollView }
         
+        // Calculate center offset once (reused for all non-ScrollView views)
+        let centerX = max(0, (bounds.width - result.totalSize.width) / 2)
+        let centerY = max(0, (bounds.height - result.totalSize.height) / 2)
+        
         // Apply frames to all views in result.frames (not just topLevelViews)
         // This ensures nested views are also handled
         for (view, frame) in result.frames {
@@ -448,57 +429,40 @@ public class LayoutContainer: UIView {
             // IMPORTANT: Skip all views that are inside ScrollView (except ScrollView itself)
             // ScrollView manages its own internal views through layoutSubviews and updateContentLayout
             // Applying frames here would conflict with ScrollView's internal layout
-            // ScrollView structure: ScrollView (UIScrollView) -> contentView -> actual content views
-            // We should only apply frames to ScrollView itself, not any of its content views
             if !(view is ScrollView) {
                 // Check if view is inside any ScrollView by traversing up the hierarchy
-                var currentParent: UIView? = view.superview
-                var foundScrollView = false
+                var currentParent = view.superview
+                var isInsideScrollView = false
                 while let parent = currentParent {
                     if parent is ScrollView {
                         // View is inside ScrollView's hierarchy, skip it completely
-                        // ScrollView will handle its own internal layout through layoutSubviews
-                        foundScrollView = true
+                        isInsideScrollView = true
                         break
                     }
                     currentParent = parent.superview
                 }
-                
-                if foundScrollView {
+                if isInsideScrollView {
                     continue
                 }
             }
             
             // Only apply frames to views that are actually in the view hierarchy
-            // Check if view is a direct subview or nested within subviews
-            let isInHierarchy = view.superview == self || 
-                                subviews.contains(view) ||
-                                subviews.contains(where: { $0.subviews.contains(view) || $0 === view })
-            
-            guard isInHierarchy else {
-                // View is not in hierarchy, skip it
+            guard view.superview != nil else {
                 continue
             }
             
             if isScrollView && view is ScrollView {
                 // For ScrollView itself, use the frame directly without centering
-                // ScrollView's internal views are managed by ScrollView itself
                 view.frame = frame
-                // Trigger ScrollView's layoutSubviews to update its internal content
                 view.setNeedsLayout()
             } else {
-                // Calculate center offset for other layouts
-                let centerX = max(0, (bounds.width - result.totalSize.width) / 2)
-                let centerY = max(0, (bounds.height - result.totalSize.height) / 2)
-                
                 // Apply center offset to all views
-                let adjustedFrame = CGRect(
+                view.frame = CGRect(
                     x: frame.origin.x + centerX,
                     y: frame.origin.y + centerY,
                     width: frame.width,
                     height: frame.height
                 )
-                view.frame = adjustedFrame
             }
         }
         
