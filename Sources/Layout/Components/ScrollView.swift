@@ -81,26 +81,16 @@ public class ScrollView: UIScrollView, Layout {
         
         // Only update views if they actually changed
         if viewsChanged {
-            // Remove all old views from contentView FIRST
-            // This must be done synchronously to ensure old views are completely removed
-            // before new views are added, preventing visual artifacts/ghosting
-            let viewsToRemove = contentView.subviews
-            for view in viewsToRemove {
-                view.removeFromSuperview()
-            }
+            // Remove all old views from contentView
+            // This must be done before adding new views to prevent visual artifacts/ghosting
+            contentView.subviews.forEach { $0.removeFromSuperview() }
             
-            // Ensure views are removed from the hierarchy immediately
-            // Force layout to update before adding new views
-            contentView.setNeedsLayout()
-            contentView.layoutIfNeeded()
-            
-            // Extract views from new layout and add to contentView
+            // Add new views to contentView
             for view in newViews {
                 contentView.addSubview(view)
             }
             
             // Trigger layout update - updateContentLayout will handle scroll offset preservation
-            // It will use the current contentOffset as the base for preservation
             updateContentLayout()
         }
         // If views haven't changed, no need to update anything
@@ -171,11 +161,6 @@ public class ScrollView: UIScrollView, Layout {
         // In this case, we should NOT reset cache or views - just update the layout reference
         // This preserves scroll offset and existing views during layout updates
         if childLayout != nil {
-            print("⚠️ [ScrollView] setContent called when childLayout already exists - preserving scroll offset and views")
-            // Preserve scroll offset before updating
-            let savedOffset = contentOffset
-            print("  - Preserving scroll offset: \(savedOffset)")
-            
             // Check if the layout content actually changed by comparing extracted views
             let oldViews = childLayout?.extractViews() ?? []
             let newViews = layout.extractViews()
@@ -185,7 +170,6 @@ public class ScrollView: UIScrollView, Layout {
                               !oldViews.elementsEqual(newViews, by: { $0 === $1 })
             
             if viewsChanged {
-                print("  - Views changed, updating content")
                 // Update the layout reference
                 childLayout = layout
                 
@@ -197,19 +181,7 @@ public class ScrollView: UIScrollView, Layout {
                 
                 // Update layout - this will recalculate and apply frames
                 updateContentLayout()
-                
-                // Restore scroll offset after layout update
-                if abs(savedOffset.y) > 0.1 {
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self else { return }
-                        if abs(self.contentOffset.y - savedOffset.y) > 10 {
-                            print("  - 🔄 Restoring scroll offset from \(self.contentOffset.y) to \(savedOffset.y)")
-                            self.contentOffset.y = savedOffset.y
-                        }
-                    }
-                }
             } else {
-                print("  - Views unchanged, skipping layout update")
                 // Views haven't changed, just update the layout reference
                 // Don't call updateContentLayout to avoid unnecessary recalculation
                 // This preserves the existing layout and scroll offset
@@ -247,7 +219,11 @@ public class ScrollView: UIScrollView, Layout {
             return
         }
         
-        // Calculate expected content size first to check if layout is needed
+        // Normalize bounds for comparison (bounds origin should always be (0,0))
+        // UIScrollView's bounds.origin is the negative of contentOffset, so we normalize it
+        let normalizedBounds = CGRect(origin: .zero, size: bounds.size)
+        
+        // Calculate expected content size
         let expectedContentSize: CGSize
         switch axis {
         case .vertical:
@@ -258,45 +234,14 @@ public class ScrollView: UIScrollView, Layout {
             expectedContentSize = CGSize(width: width, height: bounds.height)
         }
         
-        // Normalize bounds for comparison (bounds origin should always be (0,0))
-        // UIScrollView's bounds.origin is the negative of contentOffset, so we normalize it
-        let normalizedBounds = CGRect(origin: .zero, size: bounds.size)
-        
         // Store current scroll offset before any changes (need this even if we skip layout)
         let currentOffset = contentOffset
-        
-        // Only log when layout will actually update (not during scrolling when nothing changed)
-        let boundsChanged = cachedBounds.size != normalizedBounds.size
-        let contentSizeChanged = cachedContentSize != expectedContentSize
-        if boundsChanged || contentSizeChanged {
-            print("📜 [ScrollView] updateContentLayout:")
-            print("  - cachedBounds: \(cachedBounds)")
-            print("  - bounds: \(bounds)")
-            print("  - normalizedBounds: \(normalizedBounds)")
-            print("  - cachedContentSize: \(cachedContentSize)")
-            print("  - expectedContentSize: \(expectedContentSize)")
-            print("  - bounds.size changed: \(boundsChanged)")
-            print("  - contentSize changed: \(contentSizeChanged)")
-            print("  - currentScrollOffset before layout: \(currentOffset)")
-            print("  - oldOffset.y: \(currentOffset.y)")
-        }
         
         // Skip layout if bounds size and content size haven't changed
         if cachedBounds.size == normalizedBounds.size && cachedContentSize == expectedContentSize {
             // Only update contentSize if it doesn't match (shouldn't happen, but safety check)
             if contentSize != expectedContentSize {
                 contentSize = expectedContentSize
-            }
-            // Even when skipping layout, preserve scroll offset to prevent UIScrollView from resetting it
-            // Use async to ensure it's applied after any automatic adjustments
-            if abs(currentOffset.y) > 0.1 {
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    if abs(self.contentOffset.y - currentOffset.y) > 0.1 {
-                        print("  - 🔄 Restoring scroll offset: \(currentOffset.y) (current: \(self.contentOffset.y))")
-                        self.contentOffset.y = currentOffset.y
-                    }
-                }
             }
             return
         }
@@ -312,9 +257,6 @@ public class ScrollView: UIScrollView, Layout {
         // Cache the values (normalize bounds to ensure origin is always (0,0))
         cachedContentSize = expectedContentSize
         cachedBounds = normalizedBounds
-        
-        print("  - scrollView.contentOffset after layout: \(contentOffset)")
-        print("  - ✅ Layout update complete")
     }
     
     private func updateVerticalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint) {
@@ -361,16 +303,6 @@ public class ScrollView: UIScrollView, Layout {
         if let offset = desiredOffset {
             contentOffset.y = offset
         }
-        
-        // Debug logging for scroll offset preservation
-        print("📜 [ScrollView] updateVerticalLayout:")
-        print("  - oldContentHeight: \(oldContentHeight)")
-        print("  - currentOffset.y (before): \(currentOffset.y)")
-        print("  - oldOffset.y: \(currentOffset.y) (same as currentOffset before layout)")
-        print("  - actualContentHeight: \(actualContentHeight)")
-        print("  - bounds.height: \(bounds.height)")
-        print("  - desiredOffset: \(desiredOffset?.description ?? "nil")")
-        print("  - contentOffset.y (after): \(contentOffset.y)")
     }
     
     private func updateHorizontalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint) {
