@@ -21,7 +21,7 @@ final class MainViewController: UITabBarController {
         animationNav.tabBarItem = UITabBarItem(title: "Animation", image: UIImage(systemName: "wand.and.stars"), tag: 1)
         advancedNav.tabBarItem = UITabBarItem(title: "Advanced", image: UIImage(systemName: "sparkles"), tag: 2)
         geometryNav.tabBarItem = UITabBarItem(title: "Geometry", image: UIImage(systemName: "square.resize"), tag: 3)
-        settingNav.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gear"), tag: 4)
+        settingNav.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gearshape"), tag: 4)
 
         setViewControllers([homeNav, animationNav, advancedNav, geometryNav, settingNav], animated: true)
     }

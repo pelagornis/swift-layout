@@ -11,4 +11,3 @@ public enum ColorScheme: Sendable {
         return .light
     }
 }
-

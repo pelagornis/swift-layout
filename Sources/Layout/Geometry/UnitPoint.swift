@@ -21,4 +21,3 @@ public struct UnitPoint: Hashable, Sendable {
     public static let bottomLeading = UnitPoint(x: 0, y: 1)
     public static let bottomTrailing = UnitPoint(x: 1, y: 1)
 }
-

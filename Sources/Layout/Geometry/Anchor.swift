@@ -37,4 +37,3 @@ extension Anchor where Value == CGPoint {
         return Anchor(value: point, source: proxy)
     }
 }
-

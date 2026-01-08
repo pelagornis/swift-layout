@@ -45,4 +45,3 @@ public struct GeometryProxy {
         }
     }
 }
-

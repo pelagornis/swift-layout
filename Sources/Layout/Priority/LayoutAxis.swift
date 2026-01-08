@@ -6,4 +6,3 @@ public enum LayoutAxis: Sendable {
     case vertical
     case both
 }
-

@@ -75,4 +75,3 @@ public final class PrioritySizeCalculator {
         return sizes
     }
 }
-

@@ -134,7 +134,12 @@ public class VStack: UIView, Layout {
                 
                 // Process views from each child layout
                 for (_, childView) in childViews.enumerated() {
-                    addSubview(childView)
+                    // Only add subview if it's not already a subview (prevent duplicate additions)
+                    // UIKit's addSubview automatically removes from previous parent, but we should
+                    // check to avoid unnecessary operations and potential layout conflicts
+                    if childView.superview != self {
+                        addSubview(childView)
+                    }
                     
                     // Store ViewLayout information for all views (including Stack components)
                     if let viewLayout = childLayout as? ViewLayout {
@@ -147,7 +152,12 @@ public class VStack: UIView, Layout {
             // ForEach.extractViews() will return all item views, which is correct for VStack
             let allChildViews = layout.extractViews()
             for (_, childView) in allChildViews.enumerated() {
-                addSubview(childView)
+                // Only add subview if it's not already a subview (prevent duplicate additions)
+                // UIKit's addSubview automatically removes from previous parent, but we should
+                // check to avoid unnecessary operations and potential layout conflicts
+                if childView.superview != self {
+                    addSubview(childView)
+                }
                 
                 // Store ViewLayout if available (for single ViewLayout, not ForEach items)
                 if let viewLayout = layout as? ViewLayout {

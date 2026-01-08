@@ -6,4 +6,3 @@ public enum CoordinateSpace: Hashable, Sendable {
     case global
     case named(String)
 }
-

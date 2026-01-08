@@ -75,21 +75,39 @@ public struct ForEach<Data: RandomAccessCollection, Content: Layout>: Layout whe
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
+        var currentY: CGFloat = bounds.minY
         
-        // Calculate layout for each item
+        // Calculate layout for each item, stacking them vertically
         for element in data {
             let itemLayout = content(element)
-            let itemResult = itemLayout.calculateLayout(in: bounds)
             
-            // Merge frames
-            frames.merge(itemResult.frames) { _, new in new }
+            // Calculate available bounds for this item
+            let availableHeight = max(0, bounds.height - (currentY - bounds.minY))
+            let itemBounds = CGRect(
+                x: bounds.minX,
+                y: bounds.minY,
+                width: bounds.width,
+                height: availableHeight
+            )
+            
+            let itemResult = itemLayout.calculateLayout(in: itemBounds)
+            
+            // Adjust frames to current Y position (stack items vertically)
+            for (view, frame) in itemResult.frames {
+                var adjustedFrame = frame
+                adjustedFrame.origin.y = frame.origin.y + (currentY - bounds.minY)
+                frames[view] = adjustedFrame
+            }
             
             // Update total size
             totalSize.width = max(totalSize.width, itemResult.totalSize.width)
-            totalSize.height += itemResult.totalSize.height
+            totalSize.height = currentY - bounds.minY + itemResult.totalSize.height
+            
+            // Move to next position
+            currentY += itemResult.totalSize.height
         }
         
-        return LayoutResult(frames: frames, totalSize: totalSize)
+        return LayoutResult(frames: frames, totalSize: CGSize(width: totalSize.width, height: totalSize.height))
     }
     
     public func extractViews() -> [UIView] {

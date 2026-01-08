@@ -17,6 +17,10 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
         super.viewDidLoad()
         title = "GeometryReader"
         view.backgroundColor = .systemBackground
+        
+        // Enable layout debugging
+        enableLayoutDebugging = true
+        
         setupLiveLabels()
     }
     

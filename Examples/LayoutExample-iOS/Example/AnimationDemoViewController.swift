@@ -58,6 +58,9 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Enable layout debugging
+        enableLayoutDebugging = true
         title = "Animation"
         view.backgroundColor = .systemBackground
         setupActions()

@@ -38,13 +38,34 @@ extension UIView {
     }
     
     /// Gets or sets layout identity for this view
-    /// Identity is used for efficient diffing and view reuse
+    /// 
+    /// Identity is used for efficient diffing and view reuse in SwiftUI-style.
+    /// Uses UIKit's built-in `accessibilityIdentifier` property for storage.
+    /// 
+    /// Important:
+    /// - Identity should be stable across layout updates for the same logical view
+    /// - Setting identity to nil clears it (view will be tracked by instance instead)
+    /// - Identity is part of the layout definition, not the view's permanent state
     var layoutIdentity: AnyHashable? {
         get {
-            return objc_getAssociatedObject(self, &AssociatedKeys.layoutIdentity) as? AnyHashable
+            // Use UIKit's built-in accessibilityIdentifier property
+            if let identifier = accessibilityIdentifier {
+                return AnyHashable(identifier)
+            }
+            return nil
         }
         set {
-            objc_setAssociatedObject(self, &AssociatedKeys.layoutIdentity, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            if let newValue = newValue {
+                accessibilityIdentifier = String(describing: newValue)
+            } else {
+                accessibilityIdentifier = nil
+            }
         }
+    }
+    
+    /// Clears the layout identity for this view
+    /// After clearing, the view will be tracked by instance instead of identity
+    func clearLayoutIdentity() {
+        layoutIdentity = nil
     }
 }

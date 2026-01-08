@@ -49,4 +49,3 @@ public struct SafeAreaInsetsKey: EnvironmentKey {
 public struct AnimationEnabledKey: EnvironmentKey {
     public static let defaultValue: Bool = true
 }
-

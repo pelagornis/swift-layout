@@ -8,4 +8,3 @@ public enum LayoutDirection: Sendable {
         return UIApplication.shared.userInterfaceLayoutDirection == .rightToLeft ? .rightToLeft : .leftToRight
     }
 }
-

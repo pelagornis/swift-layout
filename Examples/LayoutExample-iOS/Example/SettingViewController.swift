@@ -59,6 +59,9 @@ final class SettingViewController: BaseViewController {
         title = "Settings"
         view.backgroundColor = .systemGroupedBackground
         
+        // Enable layout debugging
+        enableLayoutDebugging = true
+        
         setupData()
         setupTableView()
     }

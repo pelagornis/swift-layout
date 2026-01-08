@@ -27,4 +27,3 @@ public struct LayoutPriority: Comparable, Hashable, Sendable {
         return LayoutPriority(value)
     }
 }
-

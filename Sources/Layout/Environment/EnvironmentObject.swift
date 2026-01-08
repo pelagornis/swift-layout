@@ -14,4 +14,3 @@ extension EnvironmentObject {
     public func didInsertIntoEnvironment() {}
     public func willRemoveFromEnvironment() {}
 }
-

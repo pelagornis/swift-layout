@@ -152,6 +152,9 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         title = "Advanced"
         view.backgroundColor = .systemBackground
         
+        // Enable layout debugging
+        enableLayoutDebugging = true
+        
         layoutContainer.useIncrementalLayout = true
         setupActions()
         setupLayoutTreeTest()
@@ -217,10 +220,13 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 geometryInfoSection
                 layoutTreeSection
                 identityDiffSection
+
                 
                 Spacer(minLength: 40)
             }
         }
+//        .layout()
+//        .id("Hellow World")
     }
     
     // MARK: - Header
@@ -927,10 +933,8 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         // 뷰를 가져오거나 생성
         let itemView = getOrCreateItemView(for: item)
         
-        // 라벨 업데이트
-        if let itemLabel = identityItemLabels[item.id] {
-            itemLabel.text = "\(item.title) - Count: \(item.count)"
-        }
+        // 항상 라벨 업데이트 수행 (데이터가 변경되었을 수 있음)
+        updateItemViewLabel(for: item)
         
         return itemView.layout()
             .id(item.id)  // Identity 설정 - 같은 ID면 뷰 재사용
@@ -940,11 +944,8 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     private func getOrCreateItemView(for item: IdentityItem) -> UIView {
         // 기존 뷰 재사용 (Identity가 같으면 같은 뷰 인스턴스 재사용)
         if let existingView = identityItemViews[item.id] {
-            // 라벨 업데이트만 수행 (뷰는 그대로 재사용)
-            // UIView의 addSubview는 자동으로 이전 부모에서 제거하므로 안전함
-            if let itemLabel = identityItemLabels[item.id] {
-                itemLabel.text = "\(item.title) - Count: \(item.count)"
-            }
+            // 뷰가 이미 존재하므로 재사용
+            // performLayoutDiff가 뷰 계층 구조를 올바르게 관리함
             return existingView
         }
         
@@ -968,6 +969,13 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         identityItemLabels[item.id] = itemLabel
         
         return itemView
+    }
+    
+    private func updateItemViewLabel(for item: IdentityItem) {
+        // 라벨이 존재하면 항상 업데이트 (데이터 변경 반영)
+        if let itemLabel = identityItemLabels[item.id] {
+            itemLabel.text = "\(item.title) - Count: \(item.count)"
+        }
     }
     
     // MARK: - Identity & Diff Actions
@@ -1005,18 +1013,16 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     
     private func shuffleIdentityItems() {
         identityItems.shuffle()
-        
-        // 레이아웃 업데이트 (Identity가 같으므로 뷰는 재사용됨)
+
         layoutContainer.setBody { self.body }
+        layoutContainer.layoutIfNeeded()
     }
     
     private func updateAllIdentityItemCounts() {
-        // 모든 아이템의 카운트 증가
         for index in identityItems.indices {
             identityItems[index].count += 1
         }
-        
-        // 레이아웃 업데이트 (Identity가 같으므로 뷰는 재사용되고 내용만 업데이트)
+
         layoutContainer.setBody { self.body }
     }
 }

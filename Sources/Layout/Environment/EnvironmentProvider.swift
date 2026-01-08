@@ -87,4 +87,3 @@ public final class EnvironmentProvider {
         rootEnvironment.contentSizeCategory = UIApplication.shared.preferredContentSizeCategory
     }
 }
-

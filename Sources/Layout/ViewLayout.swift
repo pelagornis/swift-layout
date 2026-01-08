@@ -330,13 +330,4 @@ public struct ViewLayout: Layout {
         view.layoutIdentity = AnyHashable(identity)
         return self
     }
-    
-    /// Sets the identity of the view using a string identifier.
-    ///
-    /// - Parameter identity: A string that uniquely identifies this view
-    /// - Returns: A new ``ViewLayout`` with the identity set
-    public func id(_ identity: String) -> ViewLayout {
-        view.layoutIdentity = AnyHashable(identity)
-        return self
-    }
 }

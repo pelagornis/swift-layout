@@ -171,12 +171,13 @@ public final class LayoutNode {
         cachedResult = nil
         cachedBounds = .zero
         
-        // Invalidate all children
-        for child in children {
+        // Invalidate all children (copy to avoid mutation during iteration)
+        let childrenCopy = children
+        for child in childrenCopy {
             child.invalidate()
         }
         
-        // Propagate to parent
+        // Propagate to parent (weak reference, safe)
         parent?.markDirty()
     }
     
@@ -248,7 +249,7 @@ public final class LayoutNode {
         }
         // Add more layout types as needed
     }
-    
+
     private func buildTreeForVStack(_ vstack: VStack) {
         for subview in vstack.subviews {
             // Check if subview has stored ViewLayout
@@ -262,7 +263,7 @@ public final class LayoutNode {
             }
         }
     }
-    
+
     private func buildTreeForHStack(_ hstack: HStack) {
         for subview in hstack.subviews {
             if let viewLayout = hstack.getViewLayout(for: subview) {
@@ -275,7 +276,7 @@ public final class LayoutNode {
             }
         }
     }
-    
+
     private func buildTreeForZStack(_ zstack: ZStack) {
         for subview in zstack.subviews {
             // Check if subview has stored ViewLayout
@@ -289,7 +290,7 @@ public final class LayoutNode {
             }
         }
     }
-    
+
     private func buildTreeForTupleLayout(_ tupleLayout: TupleLayout) {
         for childLayout in tupleLayout.layouts {
             let childNode = LayoutNode(layout: childLayout)
@@ -298,4 +299,3 @@ public final class LayoutNode {
         }
     }
 }
-

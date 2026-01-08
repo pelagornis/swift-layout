@@ -1,52 +1,6 @@
 import UIKit
 
-/// A scrollable container view that allows content to be scrolled when it exceeds the available space.
-///
-/// ``ScrollView`` provides scrolling functionality similar to SwiftUI's ScrollView,
-/// automatically enabling scrolling when content is larger than the available bounds.
-///
-/// ## Overview
-///
-/// `ScrollView` is a container that enables scrolling when its content exceeds
-/// the available space. It extends `UIScrollView` and provides a declarative
-/// interface for creating scrollable layouts.
-///
-/// ## Key Features
-///
-/// - **Automatic Scrolling**: Enables scrolling when content is larger than bounds
-/// - **Axis Support**: Supports both vertical and horizontal scrolling
-/// - **Scroll Indicators**: Configurable scroll indicator visibility
-/// - **Content Insets**: Support for content insets and padding
-/// - **Layout Integration**: Seamlessly works with other layout components
-///
-/// ## Example Usage
-///
-/// ```swift
-/// ScrollView {
-///     VStack(spacing: 20) {
-///         ForEach(0..<20) { index in
-///             Text("Item \(index)")
-///                 .frame(height: 60)
-///         }
-///     }
-/// }
-/// ```
-///
-/// ## Topics
-///
-/// ### Initialization
-/// - ``init(_:content:)``
-///
-/// ### Configuration
-/// - ``showsVerticalScrollIndicator``
-/// - ``showsHorizontalScrollIndicator``
-/// - ``contentInset``
-/// - ``axis``
-///
-/// ### Layout Behavior
-/// - ``calculateLayout(in:)``
-/// - ``extractViews()``
-/// - ``intrinsicContentSize``
+/// A scrollable container view that enables scrolling when content exceeds available space.
 public class ScrollView: UIScrollView, Layout {
     public typealias Body = Never
     
@@ -54,69 +8,48 @@ public class ScrollView: UIScrollView, Layout {
         fatalError("ScrollView body should not be called")
     }
     
-    /// The content view that holds the scrollable content
+    /// Container view that holds all scrollable content
     private let contentView = UIView()
     
-    /// The child layout
+    /// The child layout to be displayed inside the scroll view
     private var childLayout: (any Layout)?
     
-    /// Gets the current child layout (for LayoutContainer to update during reuse)
-    internal func getChildLayout() -> (any Layout)? {
-        return childLayout
-    }
-    
-    /// Updates the child layout without resetting scroll offset or cache
-    /// This should be called when the ScrollView instance is reused during layout updates
-    internal func updateChildLayout(_ layout: any Layout) {
-        // Get old views before updating
-        let oldViews = childLayout?.extractViews() ?? []
-        let newViews = layout.extractViews()
-        
-        // Check if views actually changed
-        let viewsChanged = oldViews.count != newViews.count || 
-                          !oldViews.elementsEqual(newViews, by: { $0 === $1 })
-        
-        // Update childLayout reference
-        childLayout = layout
-        
-        // Only update views if they actually changed
-        if viewsChanged {
-            // Remove all old views from contentView
-            // This must be done before adding new views to prevent visual artifacts/ghosting
-            contentView.subviews.forEach { $0.removeFromSuperview() }
-            
-            // Add new views to contentView
-            for view in newViews {
-                contentView.addSubview(view)
-            }
-            
-            // Trigger layout update - updateContentLayout will handle scroll offset preservation
-            updateContentLayout()
-        }
-        // If views haven't changed, no need to update anything
-    }
-    
-    /// Cached content size to detect changes
+    /// Cached content size to avoid unnecessary layout recalculations
     private var cachedContentSize: CGSize = .zero
     
-    /// Cached bounds to detect changes
+    /// Cached bounds to detect when layout needs to be recalculated
     private var cachedBounds: CGRect = .zero
-    
-    /// Flag to prevent recursive calls to updateContentLayout
-    private var isUpdatingContentLayout: Bool = false
-    
-    /// Scroll axis
+
+    /// Scroll direction (vertical or horizontal)
     public var axis: Axis = .vertical
-    
-    /// Scroll axis options
     public enum Axis {
         case vertical, horizontal
     }
     
-    /// Creates a ScrollView with the specified content
-    /// - Parameters:
-    ///   - axis: The scroll axis (vertical or horizontal)
-    ///   - content: A closure that returns the scrollable content
+    /// Returns the current child layout (used by LayoutContainer for identity-based updates)
+    internal func getChildLayout() -> (any Layout)? {
+        return childLayout
+    }
+    
+    /// Updates the child layout when ScrollView is reused during layout updates
+    /// Preserves scroll offset and only updates views if they actually changed
+    internal func updateChildLayout(_ layout: any Layout) {
+        let oldViews = childLayout?.extractViews() ?? []
+        let newViews = layout.extractViews()
+        let viewsChanged = oldViews.count != newViews.count || 
+                          !oldViews.elementsEqual(newViews, by: { $0 === $1 })
+        
+        childLayout = layout
+        
+        if viewsChanged {
+            contentView.subviews.forEach { $0.removeFromSuperview() }
+            for view in newViews {
+                contentView.addSubview(view)
+            }
+            updateContentLayout()
+        }
+    }
+    
     public init(_ axis: Axis = .vertical, @LayoutBuilder content: () -> any Layout) {
         self.axis = axis
         super.init(frame: .zero)
@@ -130,8 +63,8 @@ public class ScrollView: UIScrollView, Layout {
         setupScrollView()
     }
     
+    /// Configures scroll view properties based on axis
     private func setupScrollView() {
-        // Configure scroll view based on axis
         switch axis {
         case .vertical:
             showsVerticalScrollIndicator = true
@@ -145,108 +78,75 @@ public class ScrollView: UIScrollView, Layout {
             alwaysBounceHorizontal = true
         }
 
-        // Configure content view
         contentView.backgroundColor = .clear
-        
-        // Add content view to scroll view (self)
         addSubview(contentView)
-        
-        // Set initial contentView frame
         contentView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 0)
     }
     
+    /// Sets the content layout (called during init or when content changes)
     private func setContent(_ layout: any Layout) {
-        // setContent should only be called during init, not during layout updates
-        // If childLayout already exists, this means ScrollView is being reused
-        // In this case, we should NOT reset cache or views - just update the layout reference
-        // This preserves scroll offset and existing views during layout updates
+        // If childLayout already exists, this is a reuse scenario (e.g., during layout updates)
+        // Only update views if they actually changed to preserve scroll offset
         if childLayout != nil {
-            // Check if the layout content actually changed by comparing extracted views
             let oldViews = childLayout?.extractViews() ?? []
             let newViews = layout.extractViews()
-            
-            // Only update views if they actually changed
             let viewsChanged = oldViews.count != newViews.count || 
                               !oldViews.elementsEqual(newViews, by: { $0 === $1 })
             
             if viewsChanged {
-                // Update the layout reference
                 childLayout = layout
-                
-                // Update views - remove old ones and add new ones
                 contentView.subviews.forEach { $0.removeFromSuperview() }
                 for view in newViews {
                     contentView.addSubview(view)
                 }
-                
-                // Update layout - this will recalculate and apply frames
                 updateContentLayout()
             } else {
-                // Views haven't changed, just update the layout reference
-                // Don't call updateContentLayout to avoid unnecessary recalculation
-                // This preserves the existing layout and scroll offset
                 childLayout = layout
             }
             return
         }
         
+        // Initial setup: reset cache and add all views
         childLayout = layout
-        
-        // Reset cache when content changes (only during initial setup)
         cachedContentSize = .zero
         cachedBounds = .zero
-        
-        // Remove existing content
         contentView.subviews.forEach { $0.removeFromSuperview() }
         
-        // Extract views from layout
         let views = layout.extractViews()
-        
-        // Add views to content view
         for view in views {
             contentView.addSubview(view)
         }
         
-        // Update layout (this will preserve scroll offset if needed)
         updateContentLayout()
     }
     
+    /// Updates the content layout and applies frames to child views
+    /// Uses caching to avoid unnecessary recalculations when bounds/content size haven't changed
     private func updateContentLayout() {
         guard let layout = childLayout else { return }
-                
-        // Handle zero bounds case
-        if bounds.width == 0 || bounds.height == 0 {
-            return
-        }
+        if bounds.width == 0 || bounds.height == 0 { return }
         
-        // Normalize bounds for comparison (bounds origin should always be (0,0))
-        // UIScrollView's bounds.origin is the negative of contentOffset, so we normalize it
+        // Normalize bounds (UIScrollView's bounds.origin is negative of contentOffset)
         let normalizedBounds = CGRect(origin: .zero, size: bounds.size)
-        
-        // Calculate expected content size
         let expectedContentSize: CGSize
         switch axis {
         case .vertical:
-            let height = calculateActualContentHeight()
-            expectedContentSize = CGSize(width: bounds.width, height: height)
+            expectedContentSize = CGSize(width: bounds.width, height: calculateActualContentHeight())
         case .horizontal:
-            let width = calculateActualContentWidth()
-            expectedContentSize = CGSize(width: width, height: bounds.height)
+            expectedContentSize = CGSize(width: calculateActualContentWidth(), height: bounds.height)
         }
         
-        // Store current scroll offset before any changes (need this even if we skip layout)
         let currentOffset = contentOffset
         
-        // Skip layout if bounds size and content size haven't changed
+        // Skip layout if nothing changed (optimization)
         if cachedBounds.size == normalizedBounds.size && cachedContentSize == expectedContentSize {
-            // Only update contentSize if it doesn't match (shouldn't happen, but safety check)
             if contentSize != expectedContentSize {
                 contentSize = expectedContentSize
             }
             return
         }
         
-        // Calculate layout differently based on axis
+        // Update layout based on scroll axis
         switch axis {
         case .vertical:
             updateVerticalLayout(layout, expectedSize: expectedContentSize, currentOffset: currentOffset)
@@ -254,71 +154,54 @@ public class ScrollView: UIScrollView, Layout {
             updateHorizontalLayout(layout, expectedSize: expectedContentSize, currentOffset: currentOffset)
         }
         
-        // Cache the values (normalize bounds to ensure origin is always (0,0))
         cachedContentSize = expectedContentSize
         cachedBounds = normalizedBounds
     }
     
+    /// Updates vertical scroll layout and preserves scroll position
     private func updateVerticalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint) {
         let actualContentHeight = expectedSize.height
-        
-        // Set contentBounds with actual content height
         let contentBounds = CGRect(x: 0, y: 0, width: bounds.width, height: actualContentHeight)
         let result = layout.calculateLayout(in: contentBounds)
         
-        // Get old content height for scroll position preservation
+        // Preserve scroll offset when content size changes
         let oldContentHeight = cachedContentSize.height
-        
-        // Calculate the scroll offset we want to preserve BEFORE changing contentSize
-        // UIScrollView automatically adjusts offset when contentSize changes, so we need to
-        // calculate and apply the desired offset after setting contentSize
         let hasExistingScrollOffset = abs(currentOffset.y) > 0.1
         let desiredOffset: CGFloat?
         if oldContentHeight > 0 || hasExistingScrollOffset {
             let maxOffset = actualContentHeight - bounds.height
-            if currentOffset.y < 0 {
-                desiredOffset = currentOffset.y
-            } else {
-                desiredOffset = min(currentOffset.y, maxOffset)
-            }
+            desiredOffset = currentOffset.y < 0 ? currentOffset.y : min(currentOffset.y, maxOffset)
         } else {
             desiredOffset = nil
         }
         
-        // Set contentView frame
         contentView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: actualContentHeight)
         
-        // Apply child views' frames
+        // Apply frames to child views
         let contentViews = layout.extractViews()
         for (view, frame) in result.frames {
             if contentViews.contains(view) {
                 view.frame = frame
             }
         }
-        
-        // Set contentSize - this may cause UIScrollView to adjust offset automatically
+
         contentSize = expectedSize
-        
-        // Immediately restore the desired scroll offset if we calculated one
+        // Restore scroll offset after contentSize is set
         if let offset = desiredOffset {
             contentOffset.y = offset
         }
     }
     
+    /// Updates horizontal scroll layout and preserves scroll position
     private func updateHorizontalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint) {
         let actualContentWidth = expectedSize.width
-
-        // Set contentBounds with actual content width
         let contentBounds = CGRect(x: 0, y: 0, width: actualContentWidth, height: bounds.height)
         let result = layout.calculateLayout(in: contentBounds)
-
-        // Get old content width for scroll position preservation
         let oldContentWidth = cachedContentSize.width
 
-        // Set contentView frame
         contentView.frame = CGRect(x: 0, y: 0, width: actualContentWidth, height: bounds.height)
 
-        // Apply child views' frames
+        // Apply frames to child views
         let contentViews = layout.extractViews()
         for (view, frame) in result.frames {
             if contentViews.contains(view) {
@@ -326,52 +209,32 @@ public class ScrollView: UIScrollView, Layout {
             }
         }
 
-        // Set contentSize first
         contentSize = expectedSize
         
-        // Only adjust scroll position if content size actually changed (not first layout)
-        // UIScrollView automatically maintains offset when contentSize changes, but we
-        // need to ensure it's within valid bounds if content size decreased
+        // Adjust scroll position if content size changed (clamp to valid bounds)
         if oldContentWidth > 0 && actualContentWidth != oldContentWidth {
             let maxOffset = max(0, actualContentWidth - bounds.width)
             let newOffset = min(currentOffset.x, maxOffset)
-            
-            // Only update offset if it's different and would be out of bounds
             if newOffset < currentOffset.x || abs(contentOffset.x - newOffset) > 0.1 {
                 contentOffset.x = newOffset
             }
         }
-        // First layout: don't touch offset, let UIScrollView handle it (defaults to 0)
     }
     
     public override func layoutSubviews() {
         super.layoutSubviews()
-        
-        // Handle zero bounds case
-        if bounds.width == 0 || bounds.height == 0 {
-            return
-        }
-        
-        // Update content layout
+        if bounds.width == 0 || bounds.height == 0 { return }
         updateContentLayout()
     }
     
     // MARK: - Layout Protocol
     
+    /// Returns only ScrollView itself in the layout result
+    /// Internal content views are managed separately by updateContentLayout()
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
-        // IMPORTANT: ScrollView only returns itself in the frames dictionary
-        // Internal content views are managed by ScrollView's updateContentLayout method
-        // This prevents LayoutContainer from applying frames to internal views,
-        // which would conflict with ScrollView's own layout management
-        
-        // Handle zero bounds case
         if bounds.width == 0 || bounds.height == 0 {
             return LayoutResult(frames: [self: bounds], totalSize: bounds.size)
         }
-        
-        // ScrollView itself takes the full bounds
-        // We do NOT include internal content views here - they are managed separately
-        // by updateContentLayout() and updateVerticalLayout()/updateHorizontalLayout()
         return LayoutResult(frames: [self: bounds], totalSize: bounds.size)
     }
     
@@ -379,96 +242,68 @@ public class ScrollView: UIScrollView, Layout {
         return [self]
     }
     
-    // MARK: - Intrinsic Content Size
-    
     public override var intrinsicContentSize: CGSize {
         guard childLayout != nil else {
             return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
         }
         
-        // Calculate size differently based on axis
         switch axis {
         case .vertical:
-            let actualHeight = calculateActualContentHeight()
-            return CGSize(width: bounds.width, height: actualHeight)
+            return CGSize(width: bounds.width, height: calculateActualContentHeight())
         case .horizontal:
-            let actualWidth = calculateActualContentWidth()
-            return CGSize(width: actualWidth, height: bounds.height)
+            return CGSize(width: calculateActualContentWidth(), height: bounds.height)
         }
     }
     
-    // MARK: - Public Properties
-    // All UIScrollView properties (showsVerticalScrollIndicator, showsHorizontalScrollIndicator, contentInset, etc.) are directly available
-    
     // MARK: - Private Methods
     
-    /// Calculate actual content height using Manual Layout (frame calculations)
+    /// Calculates the actual content height by finding and measuring VStack
     private func calculateActualContentHeight() -> CGFloat {
+        guard let layout = childLayout else { return 0 }
         
-        guard let layout = childLayout else {
-            return 0
-        }
-        
-        // Extract actual UIView from ViewLayout
         let views = layout.extractViews()
-        
-        // Find VStack directly
         for view in views {
             if let vStack = view as? VStack {
                 return calculateVStackContentHeight(vStack)
             }
         }
         
-        // If VStack not found, find it directly from contentView
+        // Fallback: check contentView directly
         if let vStack = contentView.subviews.first as? VStack {
             return calculateVStackContentHeight(vStack)
         }
         
-        // Default fallback
         return layout.intrinsicContentSize.height
     }
     
-    /// Calculate actual content width using Manual Layout (frame calculations)
+    /// Calculates the actual content width by finding and measuring HStack
     private func calculateActualContentWidth() -> CGFloat {
+        guard let layout = childLayout else { return 0 }
         
-        guard let layout = childLayout else {
-            return 0
-        }
-        
-        // Extract actual UIView from ViewLayout
         let views = layout.extractViews()
-        
-        // Find HStack directly
         for view in views {
             if let hStack = view as? HStack {
                 return calculateHStackContentWidth(hStack)
             }
         }
         
-        // If HStack not found, find it directly from contentView
+        // Fallback: check contentView directly
         if let hStack = contentView.subviews.first as? HStack {
             return calculateHStackContentWidth(hStack)
         }
         
-        // Default fallback
         return layout.intrinsicContentSize.width
     }
     
-    /// Calculate actual content height of VStack
+    /// Calculates VStack's content height using layout system
     private func calculateVStackContentHeight(_ vStack: VStack) -> CGFloat {
-        // Call VStack's calculateLayout for accurate layout calculation
         let availableBounds = CGRect(x: 0, y: 0, width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
-        let layoutResult = vStack.calculateLayout(in: availableBounds)
-        
-        return layoutResult.totalSize.height
+        return vStack.calculateLayout(in: availableBounds).totalSize.height
     }
     
-    /// Calculate actual content width of HStack
+    /// Calculates HStack's content width using layout system
     private func calculateHStackContentWidth(_ hStack: HStack) -> CGFloat {
-        // Call HStack's calculateLayout for accurate layout calculation
         let availableBounds = CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: bounds.height)
-        let layoutResult = hStack.calculateLayout(in: availableBounds)
-        
-        return layoutResult.totalSize.width
+        return hStack.calculateLayout(in: availableBounds).totalSize.width
     }
 }

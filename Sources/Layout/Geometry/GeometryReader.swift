@@ -117,4 +117,3 @@ public class GeometryReader: UIView, Layout {
         return currentContent?.intrinsicContentSize ?? CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
     }
 }
-
