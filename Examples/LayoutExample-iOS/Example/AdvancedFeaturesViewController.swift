@@ -220,13 +220,8 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 geometryInfoSection
                 layoutTreeSection
                 identityDiffSection
-
-                
-                Spacer(minLength: 40)
             }
         }
-//        .layout()
-//        .id("Hellow World")
     }
     
     // MARK: - Header
