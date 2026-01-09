@@ -20,26 +20,57 @@ A high-performance, SwiftUI-style declarative layout system built on **frame-bas
 
 ## ✨ Features
 
+### Core Features
+
 🚀 **High Performance** - Pure frame-based calculations, zero Auto Layout overhead  
 📱 **SwiftUI-Style API** - Familiar declarative syntax with `@LayoutBuilder`  
-📐 **GeometryReader** - Access container size and position dynamically  
-🔄 **Automatic View Management** - Smart view hierarchy handling  
-🌉 **UIKit ↔ SwiftUI Bridge** - Seamless integration between frameworks  
-📦 **Flexible Layouts** - VStack, HStack, ZStack, ScrollView, and more  
+🔄 **Automatic View Management** - Smart view hierarchy handling with automatic add/remove  
 🎯 **Zero Dependencies** - Pure UIKit with optional SwiftUI integration  
-⚡ **Animation Engine** - Built-in spring and timing animations  
-🔧 **Environment System** - Color scheme, layout direction support  
-📊 **Performance Profiler** - Real-time FPS and layout metrics  
-💾 **Layout Caching** - Intelligent caching for repeated layouts  
-🎨 **Preferences System** - Pass values up the view hierarchy  
 ⚙️ **Two-Phase Layout** - Separate measure and layout phases for optimal performance  
-🎯 **Efficient Modifiers** - Modifiers stored as properties, not new nodes  
-📏 **SwiftUI-Style Size Proposals** - Accurate size negotiation with unconstrained dimensions  
-🔄 **Layout Invalidation Rules** - Clear rules for when and how layouts update  
-🐛 **Debugging Hooks** - Custom hooks for debugging and monitoring  
-🔗 **UIKit Lifecycle Integration** - Seamless integration with view controller lifecycle  
+🎯 **Efficient Modifiers** - Modifiers stored as properties, not new nodes
+
+### Layout Components
+
+📦 **VStack** - Vertical stacking with spacing and alignment options  
+📦 **HStack** - Horizontal stacking with spacing and alignment options  
+📦 **ZStack** - Z-axis stacking with multiple alignment options  
+📜 **ScrollView** - Vertical and horizontal scrolling with content offset preservation  
+📏 **Spacer** - Flexible space component with minimum length support  
+🔄 **ForEach** - Dynamic list generation with identity-based diffing
+
+### Layout Modifiers
+
+📐 **Size** - Fixed or flexible width/height sizing  
+📦 **Padding** - Uniform or edge-specific padding  
+📍 **Offset** - Position adjustment from calculated layout  
+🎨 **Background** - Background color and view support  
+🔲 **Corner Radius** - Rounded corner styling  
+🆔 **Identity** - View identity for efficient diffing and reuse
+
+### Advanced Features
+
+📐 **GeometryReader** - Access container size and position dynamically  
+⚡ **Animation Engine** - Built-in spring and timing animations with `withAnimation`  
+🔧 **Environment System** - Color scheme, layout direction, and custom environment values  
+🌉 **UIKit ↔ SwiftUI Bridge** - Seamless integration between frameworks  
+🎨 **Preferences System** - Pass values up the view hierarchy  
 🌳 **Layout Tree & Dirty Propagation** - Incremental layout updates with partial recalculation  
-🆔 **Identity & Diff** - Efficient view updates based on identity tracking
+🆔 **Identity & Diff** - Efficient view updates based on identity tracking  
+🔄 **Layout Invalidation Rules** - Clear rules for when and how layouts update
+
+### Performance Features
+
+💾 **Layout Caching** - Intelligent caching for repeated layouts  
+📊 **Performance Profiler** - Real-time FPS and layout metrics  
+📏 **SwiftUI-Style Size Proposals** - Accurate size negotiation with unconstrained dimensions  
+⚡ **Incremental Layout** - Only recalculate changed parts of the layout tree
+
+### Developer Tools
+
+🐛 **Debugging Hooks** - Custom hooks for debugging and monitoring  
+🔍 **View Hierarchy Analysis** - Detailed layout structure inspection  
+📊 **Frame Rate Monitor** - Real-time FPS tracking  
+🔗 **UIKit Lifecycle Integration** - Seamless integration with view controller lifecycle
 
 ---
 
