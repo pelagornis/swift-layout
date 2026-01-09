@@ -67,7 +67,7 @@ final class HomeViewController: BaseViewController, Layout {
     }
     
     override func setLayout() {
-        layoutContainer.setBodyAndUpdate {
+        layoutContainer.updateBody {
             self.body
         }
     }
@@ -80,11 +80,11 @@ final class HomeViewController: BaseViewController, Layout {
             VStack(alignment: .center, spacing: 24) {
                 profileSection
                 statisticsCard
-                horizontalScrollSection  // HStack ScrollView 예시
-                zStackSection  // ZStack 예시
+                horizontalScrollSection
+                zStackSection
                 featureCardsSection
                 benefitsSection
-                spacerTestSection  // Spacer 테스트 섹션
+                spacerTestSection
                 actionButtonView
                 Spacer(minLength: 50)
             }

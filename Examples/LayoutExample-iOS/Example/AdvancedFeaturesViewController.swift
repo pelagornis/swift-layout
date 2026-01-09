@@ -99,7 +99,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         }
     }()    
     
-    // MARK: - UI Components (필요한 참조만)
+    // MARK: - UI Components
     
     private let animationDemoView: UIView = {
         let view = UIView()
@@ -172,7 +172,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     }
     
     private func setupIdentityDiffTest() {
-        // 뷰는 필요할 때 자동으로 생성됨 (초기화 불필요)
     }
     
     override func viewDidLayoutSubviews() {
@@ -198,7 +197,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     }
     
     override func setLayout() {
-        layoutContainer.setBodyAndUpdate {
+        layoutContainer.updateBody {
             self.body
         }
     }
@@ -211,7 +210,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             VStack(alignment: .center, spacing: 20) {
                 // Header
                 headerSection
-                
+
                 // Sections
                 animationSection
                 environmentSection
@@ -374,7 +373,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionHeader(title: "Layout Tree & Dirty Propagation", subtitle: "Incremental layout updates")
             
-            // 통계 및 상태 표시
             ZStack(alignment: .center) {
                 statsContainer.layout()
                     .size(width: 360, height: 86)
@@ -388,9 +386,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 }
             }
             
-            // 카드 그리드 (2열 3행)
             VStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
-                // 첫 번째 행: Card 1, Card 4
                 HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
                     cards[0].layout()
                         .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
@@ -399,7 +395,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                         .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
                 }
                 
-                // 두 번째 행: Card 2, Card 5
                 HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
                     cards[1].layout()
                         .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
@@ -408,7 +403,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                         .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
                 }
                 
-                // 세 번째 행: Card 3, Card 6
                 HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
                     cards[2].layout()
                         .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
@@ -418,9 +412,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 }
             }
             
-            // 버튼 섹션
             VStack(alignment: .center, spacing: 10) {
-                // 개별 카드 버튼들
                 HStack(alignment: .center, spacing: 10) {
                     createLayoutTreeButton(title: "Card 1", color: .systemRed, fontSize: 14) { [weak self] in
                         self?.updateLayoutTreeCard(at: 0)
@@ -461,7 +453,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                     .size(width: 100, height: 36)
                 }
                 
-                // 그룹 업데이트 버튼들
                 createLayoutTreeButton(title: "Update Cards 1-3", color: .systemIndigo) { [weak self] in
                     self?.updateLayoutTreeCards(range: 0..<3)
                 }
@@ -833,7 +824,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     private struct IdentityItem: Hashable {
         let id: String
         let title: String
-        let colorName: String  // UIColor 대신 String으로 저장
+        let colorName: String
         var count: Int = 0
         
         func hash(into hasher: inout Hasher) {
@@ -876,7 +867,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionHeader(title: "Identity & Diff", subtitle: "Efficient view updates with identity tracking")
             
-            // 설명 라벨
             let descriptionLabel = createLabel(
                 text: "Identity를 사용하여 뷰를 추적합니다.\n같은 Identity는 재사용되고, 새로운 Identity는 추가됩니다.",
                 font: .systemFont(ofSize: 12, weight: .regular),
@@ -885,14 +875,12 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             descriptionLabel.layout()
                 .size(width: 340, height: 50)
             
-            // 아이템 리스트
             VStack(alignment: .center, spacing: 8) {
                 ForEach(identityItems) { item in
                     self.createIdentityItemLayout(for: item)
                 }
             }
             
-            // 컨트롤 버튼들
             VStack(alignment: .center, spacing: 10) {
                 createLayoutTreeButton(title: "Add Item", color: .systemGreen) { [weak self] in
                     self?.addIdentityItem()
@@ -925,26 +913,18 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     // MARK: - Identity & Diff Helpers
     
     private func createIdentityItemLayout(for item: IdentityItem) -> some Layout {
-        // 뷰를 가져오거나 생성
         let itemView = getOrCreateItemView(for: item)
-        
-        // 항상 라벨 업데이트 수행 (데이터가 변경되었을 수 있음)
         updateItemViewLabel(for: item)
         
         return itemView.layout()
-            .id(item.id)  // Identity 설정 - 같은 ID면 뷰 재사용
+            .id(item.id)
             .size(width: 340, height: 50)
     }
     
     private func getOrCreateItemView(for item: IdentityItem) -> UIView {
-        // 기존 뷰 재사용 (Identity가 같으면 같은 뷰 인스턴스 재사용)
         if let existingView = identityItemViews[item.id] {
-            // 뷰가 이미 존재하므로 재사용
-            // performLayoutDiff가 뷰 계층 구조를 올바르게 관리함
             return existingView
         }
-        
-        // 새 뷰 생성 (새로운 Identity)
         let itemView = UIView()
         itemView.backgroundColor = item.color.withAlphaComponent(0.15)
         itemView.layer.cornerRadius = 8
@@ -959,7 +939,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         itemLabel.frame = CGRect(x: 10, y: 5, width: 320, height: 40)
         itemView.addSubview(itemLabel)
         
-        // 저장
         identityItemViews[item.id] = itemView
         identityItemLabels[item.id] = itemLabel
         
@@ -967,7 +946,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     }
     
     private func updateItemViewLabel(for item: IdentityItem) {
-        // 라벨이 존재하면 항상 업데이트 (데이터 변경 반영)
         if let itemLabel = identityItemLabels[item.id] {
             itemLabel.text = "\(item.title) - Count: \(item.count)"
         }
@@ -976,7 +954,6 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     // MARK: - Identity & Diff Actions
     
     private func addIdentityItem() {
-        // 최대 10개까지만 추가
         guard identityItems.count < 10 else { return }
         
         let newId = "item-\(identityItems.count + 1)"
@@ -985,31 +962,26 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         
         let newItem = IdentityItem(id: newId, title: "Item \(identityItems.count + 1)", colorName: colorName)
         identityItems.append(newItem)
-        
-        // 새 뷰는 createIdentityItemView에서 자동으로 생성됨
-        // 레이아웃 업데이트 (Identity 기반 diffing으로 새 뷰만 추가됨)
-        layoutContainer.setBodyAndUpdate { self.body }
+        layoutContainer.updateBody { self.body }
     }
     
     private func removeLastIdentityItem() {
         guard !identityItems.isEmpty else { return }
         let removedItem = identityItems.removeLast()
         
-        // 뷰를 계층에서 제거하고 맵에서도 제거
         if let removedView = identityItemViews[removedItem.id] {
             removedView.removeFromSuperview()
             identityItemViews.removeValue(forKey: removedItem.id)
         }
         identityItemLabels.removeValue(forKey: removedItem.id)
         
-        // 레이아웃 업데이트
-        layoutContainer.setBodyAndUpdate { self.body }
+        layoutContainer.updateBody { self.body }
     }
     
     private func shuffleIdentityItems() {
         identityItems.shuffle()
 
-        layoutContainer.setBodyAndUpdate { self.body }
+        layoutContainer.updateBody { self.body }
         layoutContainer.layoutIfNeeded()
     }
     
@@ -1018,7 +990,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             identityItems[index].count += 1
         }
 
-        layoutContainer.setBodyAndUpdate { self.body }
+        layoutContainer.updateBody { self.body }
     }
 }
 

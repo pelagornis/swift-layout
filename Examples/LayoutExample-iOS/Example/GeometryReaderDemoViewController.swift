@@ -33,7 +33,7 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
     }
     
     override func setLayout() {
-        layoutContainer.setBodyAndUpdate {
+        layoutContainer.updateBody {
             self.body
         }
     }
@@ -46,7 +46,6 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
             VStack(alignment: .center, spacing: 20) {
                 headerSection
                 
-                // 실제 GeometryReader 사용 데모들
                 proportionalLayoutWithGeometry
                 responsiveGridWithGeometry
                 liveGeometryInfo
@@ -173,13 +172,11 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
     
     private func createLiveInfoGeometryReader() -> GeometryReader {
         GeometryReader { [sizeLabel, centerLabel, globalLabel, safeAreaLabel] proxy, container in
-            // 실시간 정보 업데이트
             sizeLabel.text = "📐 Size: \(Int(proxy.size.width)) × \(Int(proxy.size.height))"
             centerLabel.text = "⭕ Center: (\(Int(proxy.size.width/2)), \(Int(proxy.size.height/2)))"
             globalLabel.text = "🌍 Global: x:\(Int(proxy.globalFrame.minX)) y:\(Int(proxy.globalFrame.minY))"
             safeAreaLabel.text = "🛡️ SafeArea: T:\(Int(proxy.safeAreaInsets.top)) B:\(Int(proxy.safeAreaInsets.bottom))"
             
-            // 레이블 배치
             let padding: CGFloat = 16
             var yOffset: CGFloat = padding
             

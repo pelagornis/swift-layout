@@ -88,7 +88,7 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     }
     
     override func setLayout() {
-        layoutContainer.setBodyAndUpdate {
+        layoutContainer.updateBody {
             self.body
         }
     }
