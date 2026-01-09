@@ -97,27 +97,27 @@ public class LayoutContainer: UIView {
     /// Updates the view hierarchy based on the current body layout.
     /// This method performs the actual view diffing and hierarchy updates.
     public func updateBody() {
+        guard body != nil else {
+            return
+        }
+        
         needsHierarchyUpdate = true
         
         if LayoutInvalidationRules.default.shouldInvalidate(for: .hierarchyChanged) {
             setNeedsLayout()
         }
-    }
-    
-    /// Sets the body and immediately updates the view hierarchy.
-    /// This is a convenience method that combines `setBody` and `updateBody`.
-    public func setBodyAndUpdate(@LayoutBuilder _ content: @escaping () -> any Layout) {
-        setBody(content)
         
-        guard body != nil else {
-            return
-        }
-        
-        updateBody()
         // Force immediate layout update to ensure body is evaluated with latest state
         layoutIfNeeded()
     }
     
+    /// Sets the body and immediately updates the view hierarchy.
+    /// This is a convenience method that combines `setBody` and `updateBody`.
+    public func updateBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
+        _body = content
+        updateBody()
+    }
+
     public func updateLayoutForOrientationChange() {
         needsHierarchyUpdate = true
         setNeedsLayout()
