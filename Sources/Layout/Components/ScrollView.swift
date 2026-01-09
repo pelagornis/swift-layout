@@ -26,6 +26,18 @@ public class ScrollView: UIScrollView, Layout {
         case vertical, horizontal
     }
     
+    /// Whether to adjust content offset for safe area insets
+    /// When true, the scroll view will preserve negative offsets that account for safe area
+    /// Note: UIScrollView automatically handles offset clamping, so we just preserve the current offset
+    public var adjustsContentOffsetForSafeArea: Bool = false
+    
+    public override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        if adjustsContentOffsetForSafeArea {
+            setNeedsLayout()
+        }
+    }
+    
     // MARK: - Child Layout Management
     
     /// Returns the current child layout managed by this ScrollView.
@@ -177,6 +189,14 @@ public class ScrollView: UIScrollView, Layout {
             }
             if contentSize != expectedContentSize {
                 contentSize = expectedContentSize
+                // Preserve current offset when contentSize changes
+                // UIScrollView will automatically clamp the offset to valid range
+                // We just need to preserve the current value (including negative for safe area/bounce)
+                if axis == .vertical {
+                    contentOffset.y = currentOffset.y
+                } else {
+                    contentOffset.x = currentOffset.x
+                }
             }
             return
         }
@@ -199,17 +219,6 @@ public class ScrollView: UIScrollView, Layout {
         let contentBounds = CGRect(x: 0, y: 0, width: bounds.width, height: actualContentHeight)
         let result = layout.calculateLayout(in: contentBounds)
         
-        // Preserve scroll offset when content size changes
-        let oldContentHeight = cachedContentSize.height
-        let hasExistingScrollOffset = abs(currentOffset.y) > 0.1
-        let desiredOffset: CGFloat?
-        if oldContentHeight > 0 || hasExistingScrollOffset {
-            let maxOffset = actualContentHeight - bounds.height
-            desiredOffset = currentOffset.y < 0 ? currentOffset.y : min(currentOffset.y, maxOffset)
-        } else {
-            desiredOffset = nil
-        }
-        
         contentView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: actualContentHeight)
         
         // Apply frames to child views
@@ -221,10 +230,11 @@ public class ScrollView: UIScrollView, Layout {
         }
 
         contentSize = expectedSize
-        // Restore scroll offset after contentSize is set
-        if let offset = desiredOffset {
-            contentOffset.y = offset
-        }
+        
+        // Preserve scroll offset after contentSize is set
+        // Simply preserve the current offset - UIScrollView handles clamping automatically
+        // The offset can be negative for bounce/safe area, and UIScrollView will handle it
+        contentOffset.y = currentOffset.y
     }
     
     /// Updates horizontal scroll layout and preserves scroll position
@@ -232,7 +242,6 @@ public class ScrollView: UIScrollView, Layout {
         let actualContentWidth = expectedSize.width
         let contentBounds = CGRect(x: 0, y: 0, width: actualContentWidth, height: bounds.height)
         let result = layout.calculateLayout(in: contentBounds)
-        let oldContentWidth = cachedContentSize.width
 
         contentView.frame = CGRect(x: 0, y: 0, width: actualContentWidth, height: bounds.height)
 
@@ -246,14 +255,9 @@ public class ScrollView: UIScrollView, Layout {
 
         contentSize = expectedSize
         
-        // Adjust scroll position if content size changed (clamp to valid bounds)
-        if oldContentWidth > 0 && actualContentWidth != oldContentWidth {
-            let maxOffset = max(0, actualContentWidth - bounds.width)
-            let newOffset = min(currentOffset.x, maxOffset)
-            if newOffset < currentOffset.x || abs(contentOffset.x - newOffset) > 0.1 {
-                contentOffset.x = newOffset
-            }
-        }
+        // Preserve scroll offset after contentSize is set
+        // Simply preserve the current offset - UIScrollView handles clamping automatically
+        contentOffset.x = currentOffset.x
     }
     
     public override func layoutSubviews() {
