@@ -26,26 +26,39 @@ public class ScrollView: UIScrollView, Layout {
         case vertical, horizontal
     }
     
-    /// Returns the current child layout (used by LayoutContainer for identity-based updates)
-    internal func getChildLayout() -> (any Layout)? {
+    // MARK: - Child Layout Management
+    
+    /// Returns the current child layout managed by this ScrollView.
+    /// Used by LayoutContainer for identity-based updates.
+    public func getChildLayout() -> (any Layout)? {
         return childLayout
     }
     
-    /// Updates the child layout when ScrollView is reused during layout updates
-    /// Preserves scroll offset and only updates views if they actually changed
-    internal func updateChildLayout(_ layout: any Layout) {
+    /// Updates the child layout when ScrollView is reused during layout updates.
+    /// Preserves scroll offset and only updates views if they actually changed.
+    public func updateChildLayout(_ layout: any Layout) {
         let oldViews = childLayout?.extractViews() ?? []
         let newViews = layout.extractViews()
+        
         let viewsChanged = oldViews.count != newViews.count || 
                           !oldViews.elementsEqual(newViews, by: { $0 === $1 })
         
         childLayout = layout
         
         if viewsChanged {
+            // Invalidate cache when views change to force layout recalculation
+            cachedContentSize = .zero
+            cachedBounds = .zero
+            
             contentView.subviews.forEach { $0.removeFromSuperview() }
             for view in newViews {
                 contentView.addSubview(view)
             }
+            updateContentLayout()
+        } else {
+            // Even if views haven't changed, we should update the layout
+            // because the content might have changed (e.g., item order, counts)
+            // But don't invalidate cache in this case - let updateContentLayout decide
             updateContentLayout()
         }
     }
@@ -123,8 +136,12 @@ public class ScrollView: UIScrollView, Layout {
     /// Updates the content layout and applies frames to child views
     /// Uses caching to avoid unnecessary recalculations when bounds/content size haven't changed
     private func updateContentLayout() {
-        guard let layout = childLayout else { return }
-        if bounds.width == 0 || bounds.height == 0 { return }
+        guard let layout = childLayout else { 
+            return 
+        }
+        if bounds.width == 0 || bounds.height == 0 { 
+            return 
+        }
         
         // Normalize bounds (UIScrollView's bounds.origin is negative of contentOffset)
         let normalizedBounds = CGRect(origin: .zero, size: bounds.size)
@@ -138,8 +155,26 @@ public class ScrollView: UIScrollView, Layout {
         
         let currentOffset = contentOffset
         
-        // Skip layout if nothing changed (optimization)
-        if cachedBounds.size == normalizedBounds.size && cachedContentSize == expectedContentSize {
+        // Check if bounds or content size changed
+        let boundsChanged = cachedBounds.size != normalizedBounds.size
+        let contentSizeChanged = cachedContentSize != expectedContentSize
+        let shouldSkipLayout = !boundsChanged && !contentSizeChanged
+        
+        if shouldSkipLayout {
+            // Still update contentView.frame and contentSize to ensure they're correct
+            // This is important when ScrollView's frame changes but content size doesn't
+            switch axis {
+            case .vertical:
+                let newContentViewFrame = CGRect(x: 0, y: 0, width: bounds.width, height: expectedContentSize.height)
+                if contentView.frame != newContentViewFrame {
+                    contentView.frame = newContentViewFrame
+                }
+            case .horizontal:
+                let newContentViewFrame = CGRect(x: 0, y: 0, width: expectedContentSize.width, height: bounds.height)
+                if contentView.frame != newContentViewFrame {
+                    contentView.frame = newContentViewFrame
+                }
+            }
             if contentSize != expectedContentSize {
                 contentSize = expectedContentSize
             }

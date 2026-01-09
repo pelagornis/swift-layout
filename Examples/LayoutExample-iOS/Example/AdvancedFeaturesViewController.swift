@@ -198,7 +198,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     }
     
     override func setLayout() {
-        layoutContainer.setBody {
+        layoutContainer.setBodyAndUpdate {
             self.body
         }
     }
@@ -993,7 +993,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         
         // 새 뷰는 createIdentityItemView에서 자동으로 생성됨
         // 레이아웃 업데이트 (Identity 기반 diffing으로 새 뷰만 추가됨)
-        layoutContainer.setBody { self.body }
+        layoutContainer.setBodyAndUpdate { self.body }
     }
     
     private func removeLastIdentityItem() {
@@ -1008,13 +1008,13 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         identityItemLabels.removeValue(forKey: removedItem.id)
         
         // 레이아웃 업데이트
-        layoutContainer.setBody { self.body }
+        layoutContainer.setBodyAndUpdate { self.body }
     }
     
     private func shuffleIdentityItems() {
         identityItems.shuffle()
 
-        layoutContainer.setBody { self.body }
+        layoutContainer.setBodyAndUpdate { self.body }
         layoutContainer.layoutIfNeeded()
     }
     
@@ -1023,7 +1023,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             identityItems[index].count += 1
         }
 
-        layoutContainer.setBody { self.body }
+        layoutContainer.setBodyAndUpdate { self.body }
     }
 }
 

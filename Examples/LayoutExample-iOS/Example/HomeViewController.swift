@@ -67,7 +67,7 @@ final class HomeViewController: BaseViewController, Layout {
     }
     
     override func setLayout() {
-        layoutContainer.setBody {
+        layoutContainer.setBodyAndUpdate {
             self.body
         }
     }

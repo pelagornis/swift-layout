@@ -75,6 +75,10 @@ public class LayoutContainer: UIView {
     private var identityToViewMap: [AnyHashable: UIView] = [:]
     private var rootNode: LayoutNode?
     
+    /// Maps new ScrollView instances to reused old ScrollView instances
+    /// Used when ScrollView instances without identity are reused
+    private var containerViewMapping: [ObjectIdentifier: UIView] = [:]
+    
     public var useIncrementalLayout: Bool = true
     
     // MARK: - Public API
@@ -84,13 +88,34 @@ public class LayoutContainer: UIView {
         set { _body = { newValue! } }
     }
     
+    /// Sets the body layout without immediately updating the view hierarchy.
+    /// Call `updateBody()` separately to apply the changes.
     public func setBody(@LayoutBuilder _ content: @escaping () -> any Layout) {
         _body = content
+    }
+    
+    /// Updates the view hierarchy based on the current body layout.
+    /// This method performs the actual view diffing and hierarchy updates.
+    public func updateBody() {
         needsHierarchyUpdate = true
         
         if LayoutInvalidationRules.default.shouldInvalidate(for: .hierarchyChanged) {
             setNeedsLayout()
         }
+    }
+    
+    /// Sets the body and immediately updates the view hierarchy.
+    /// This is a convenience method that combines `setBody` and `updateBody`.
+    public func setBodyAndUpdate(@LayoutBuilder _ content: @escaping () -> any Layout) {
+        setBody(content)
+        
+        guard body != nil else {
+            return
+        }
+        
+        updateBody()
+        // Force immediate layout update to ensure body is evaluated with latest state
+        layoutIfNeeded()
     }
     
     public func updateLayoutForOrientationChange() {
@@ -114,7 +139,7 @@ public class LayoutContainer: UIView {
     }
     
     public func setBodyAnimated(animation: LayoutAnimation = .default, @LayoutBuilder _ content: @escaping () -> any Layout) {
-        _body = content
+        setBody(content)
         guard let newBody = body else { return }
         
         let layout = prepareLayout(newBody)
@@ -151,7 +176,7 @@ public class LayoutContainer: UIView {
         let layout = prepareLayout(body)
         let newTopLevelViews = layout.extractViews()
         let oldLayout = cachedLayout
-        let (oldTopLevelViews, structureChanged) = checkLayoutStructureChange(
+        let (oldTopLevelViewsForDiff, structureChanged) = checkLayoutStructureChange(
             oldLayout: oldLayout,
             newTopLevelViews: newTopLevelViews
         )
@@ -159,7 +184,7 @@ public class LayoutContainer: UIView {
         cachedLayout = layout
         updateLayoutTree(layout: layout, structureChanged: structureChanged)
         performLayoutDiff(
-            oldTopLevelViews: oldTopLevelViews,
+            oldTopLevelViews: oldTopLevelViewsForDiff,
             newTopLevelViews: newTopLevelViews,
             oldLayout: oldLayout,
             newLayout: layout
@@ -169,6 +194,7 @@ public class LayoutContainer: UIView {
     private func clearHierarchy() {
         subviews.forEach { $0.removeFromSuperview() }
         identityToViewMap.removeAll()
+        containerViewMapping.removeAll()
         cachedLayout = nil
         rootNode = nil
     }
@@ -176,14 +202,14 @@ public class LayoutContainer: UIView {
     private func updateLayoutTree(layout: any Layout, structureChanged: Bool) {
         guard useIncrementalLayout else { return }
         
-        if rootNode == nil {
-            rootNode = LayoutNode(layout: layout)
-            rootNode?.buildTree()
-            rootNode?.markDirty()
+            if rootNode == nil {
+                rootNode = LayoutNode(layout: layout)
+                rootNode?.buildTree()
+                rootNode?.markDirty()
         } else if structureChanged {
-            rootNode = LayoutNode(layout: layout)
-            rootNode?.buildTree()
-            rootNode?.markDirty()
+                rootNode = LayoutNode(layout: layout)
+                rootNode?.buildTree()
+                rootNode?.markDirty()
         }
     }
     
@@ -204,16 +230,69 @@ public class LayoutContainer: UIView {
         let (newIdentityMap, newInstanceSet) = buildIdentityMaps(from: newTopLevelViews)
         identityToViewMap = newIdentityMap
         
+        // Handle ScrollView instances without identity that should be reused
+        // Find ScrollViews without identity that should be reused
+        var scrollViewsToUpdate: [(oldScrollView: ScrollView, newLayout: any Layout)] = []
+        var skipAddingContainers: Set<UIView> = []
+        
+        // Only process ScrollView matching if we have ScrollViews
+        let hasOldScrollViews = oldTopLevelViews.contains { $0 is ScrollView }
+        let hasNewScrollViews = newTopLevelViews.contains { $0 is ScrollView }
+        
+        if hasOldScrollViews || hasNewScrollViews {
+            // Find old ScrollViews from actual hierarchy (not from oldLayout.extractViews())
+            // This ensures we find ScrollViews that are actually in the view hierarchy
+            var oldScrollViews: [(scrollView: ScrollView, view: UIView)] = []
+            for subview in subviews {
+                if let scrollView = subview as? ScrollView,
+                   subview.layoutIdentity == nil {
+                    oldScrollViews.append((scrollView: scrollView, view: subview))
+                }
+            }
+            
+            // Find new ScrollViews
+            var newScrollViews: [(scrollView: ScrollView, view: UIView)] = []
+            for newView in newTopLevelViews {
+                if let scrollView = newView as? ScrollView,
+                   newView.layoutIdentity == nil {
+                    newScrollViews.append((scrollView: scrollView, view: newView))
+                }
+            }
+            
+            // Match old and new ScrollViews by type (for ScrollViews without identity)
+            // Reuse old ScrollView instances to preserve state (scroll offset, cache, etc.)
+            for (oldScrollView, oldView) in oldScrollViews {
+                if let (newScrollView, newView) = newScrollViews.first(where: { 
+                    $0.view !== oldView 
+                }) {
+                    if let newChildLayout = newScrollView.getChildLayout() {
+                        scrollViewsToUpdate.append((oldScrollView: oldScrollView, newLayout: newChildLayout))
+                        skipAddingContainers.insert(newView)
+                        // IMPORTANT: Also mark oldView to prevent removal
+                        skipAddingContainers.insert(oldView)
+                        // Map newView to oldView so applyFrames can find the correct instance
+                        containerViewMapping[ObjectIdentifier(newView)] = oldView
+                    }
+                }
+            }
+        }
+        
         let diff = calculateViewDiff(
             oldViews: oldTopLevelViews,
             newViews: newTopLevelViews,
             oldIdentityMap: oldIdentityMap,
             newIdentityMap: newIdentityMap,
             oldInstanceSet: oldInstanceSet,
-            newInstanceSet: newInstanceSet
+            newInstanceSet: newInstanceSet,
+            skipAddingContainers: skipAddingContainers
         )
         
         applyViewChanges(diff: diff)
+        
+        // Update ScrollViews after view hierarchy changes
+        for (oldScrollView, newChildLayout) in scrollViewsToUpdate {
+            oldScrollView.updateChildLayout(newChildLayout)
+        }
     }
     
     private func buildIdentityMaps(from views: [UIView]) -> ([AnyHashable: UIView], Set<ObjectIdentifier>) {
@@ -243,7 +322,8 @@ public class LayoutContainer: UIView {
         oldIdentityMap: [AnyHashable: UIView],
         newIdentityMap: [AnyHashable: UIView],
         oldInstanceSet: Set<ObjectIdentifier>,
-        newInstanceSet: Set<ObjectIdentifier>
+        newInstanceSet: Set<ObjectIdentifier>,
+        skipAddingContainers: Set<UIView> = []
     ) -> ViewDiff {
         var finalOrder: [UIView] = []
         var viewsToRemove: Set<UIView> = []
@@ -251,6 +331,11 @@ public class LayoutContainer: UIView {
         
         for newView in newViews {
             finalOrder.append(newView)
+            
+            // Skip adding containers that are being reused (but still add to finalOrder)
+            if skipAddingContainers.contains(newView) {
+                continue
+            }
             
             if newView.superview == nil {
                 viewsToAdd.insert(newView)
@@ -264,13 +349,21 @@ public class LayoutContainer: UIView {
         }
         
         for oldView in oldViews {
-            guard !viewsToRemove.contains(oldView) else { continue }
+            guard !viewsToRemove.contains(oldView) else { 
+                continue 
+            }
+            
+            // Don't remove old containers that are being reused
+            let oldViewId = ObjectIdentifier(oldView)
+            if skipAddingContainers.contains(oldView) {
+                continue
+            }
             
             let shouldRemove: Bool
             if let identity = oldView.layoutIdentity {
                 shouldRemove = !newIdentityMap.keys.contains(identity)
             } else {
-                shouldRemove = !newInstanceSet.contains(ObjectIdentifier(oldView))
+                shouldRemove = !newInstanceSet.contains(oldViewId)
             }
             
             if shouldRemove && oldView.superview == self {
@@ -306,7 +399,7 @@ public class LayoutContainer: UIView {
         
         viewsInHierarchy.forEach { view in
             if subviews.contains(view) {
-                view.removeFromSuperview()
+            view.removeFromSuperview()
             }
         }
         
@@ -331,7 +424,9 @@ public class LayoutContainer: UIView {
     // MARK: - Layout Application
     
     private func applyLayout() {
-        guard let layout = cachedLayout else { return }
+        guard let layout = cachedLayout else { 
+            return 
+        }
         
         let result = layout.calculateLayout(in: bounds)
         let centerOffset = calculateCenterOffset(for: result.totalSize)
@@ -354,14 +449,52 @@ public class LayoutContainer: UIView {
         centerOffset: CGPoint
     ) {
         for (view, frame) in result.frames {
-            guard shouldApplyFrame(to: view) else { continue }
-            view.frame = frame.offsetBy(dx: centerOffset.x, dy: centerOffset.y)
+            // Check if this view is a new container instance that should be mapped to an old instance
+            let viewId = ObjectIdentifier(view)
+            let actualView: UIView
+            if let mappedView = containerViewMapping[viewId] {
+                actualView = mappedView
+            } else {
+                actualView = view
+            }
+            
+            if shouldApplyFrame(to: actualView) {
+                let finalFrame = frame.offsetBy(dx: centerOffset.x, dy: centerOffset.y)
+                actualView.frame = finalFrame
+                
+                // If this is a ScrollView, trigger its internal layout update
+                // This ensures contentView and child views are laid out correctly
+                if actualView is ScrollView {
+                    actualView.setNeedsLayout()
+                }
+            }
         }
+        
+        // Clear mapping after use
+        containerViewMapping.removeAll()
     }
     
     private func shouldApplyFrame(to view: UIView) -> Bool {
         let viewId = ObjectIdentifier(view)
         if animatingViews.contains(view) || animatingViewIdentifiers.contains(viewId) {
+            return false
+        }
+        
+        // Always apply frame to ScrollView itself
+        // Only skip views that are INSIDE ScrollView's internal hierarchy
+        if view is ScrollView {
+            return view.superview != nil
+        }
+        
+        // Skip views that are inside ScrollView's internal hierarchy
+        // ScrollView manages its own internal views (e.g., contentView)
+        // We only skip views that are direct children of ScrollView's internal structure
+        // Check if view's superview is a ScrollView (not the ScrollView itself)
+        if let superview = view.superview,
+           superview is ScrollView,
+           view !== superview {
+            // This view is inside ScrollView's internal hierarchy, skip it
+            // ScrollView will manage this view's frame internally
             return false
         }
         
@@ -395,7 +528,7 @@ public class LayoutContainer: UIView {
             for view in views {
                 guard let frame = result.frames[view] else { continue }
                 guard self.shouldApplyFrame(to: view) else { continue }
-                view.frame = frame.offsetBy(dx: centerOffset.x, dy: centerOffset.y)
+                    view.frame = frame.offsetBy(dx: centerOffset.x, dy: centerOffset.y)
             }
         }
         
