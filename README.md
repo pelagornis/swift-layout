@@ -138,8 +138,8 @@ class MyViewController: UIViewController, Layout {
         // 4. Setup container using pure Manual Layout (no Auto Layout)
         setupLayoutContainer(layoutContainer)
 
-        // 5. Set the layout body
-        layoutContainer.setBody { self.body }
+        // 5. Set and update the layout body
+        layoutContainer.updateBody { self.body }
     }
 
     override func viewDidLayoutSubviews() {
@@ -171,9 +171,42 @@ class MyViewController: UIViewController, Layout {
 }
 ```
 
-### Using UIViewController Extension (Recommended)
+### Using BaseViewController (Recommended)
 
-For cleaner code, use the `UIViewController` extension:
+For the cleanest code, inherit from `BaseViewController`:
+
+```swift
+class MyViewController: BaseViewController, Layout {
+    let titleLabel = UILabel()
+    let actionButton = UIButton()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Setup views
+        titleLabel.text = "Welcome"
+        actionButton.setTitle("Get Started", for: .normal)
+
+        // Layout container is automatically set up
+        // Just override setLayout() to define your layout
+    }
+
+    override func setLayout() {
+        layoutContainer.updateBody { self.body }
+    }
+
+    @LayoutBuilder var body: some Layout {
+        VStack(alignment: .center, spacing: 24) {
+            titleLabel.layout().size(width: 280, height: 30)
+            actionButton.layout().size(width: 240, height: 50)
+        }
+    }
+}
+```
+
+### Using UIViewController Extension
+
+For minimal integration without a base class:
 
 ```swift
 class MyViewController: UIViewController, Layout {
@@ -191,8 +224,8 @@ class MyViewController: UIViewController, Layout {
         // Setup container (pure Manual Layout, no Auto Layout)
         setupLayoutContainer(layoutContainer)
 
-        // Set layout
-        layoutContainer.setBody { self.body }
+        // Set and update layout
+        layoutContainer.updateBody { self.body }
     }
 
     override func viewDidLayoutSubviews() {
@@ -253,8 +286,15 @@ if layoutContainer.isAnimating {
 ### Layout Updates
 
 ```swift
-// Update layout manually
+// Set body and update immediately (recommended)
+layoutContainer.updateBody { self.body }
+
+// Or set body first, then update separately
 layoutContainer.setBody { self.body }
+layoutContainer.updateBody()
+
+// Update existing body without changing it
+layoutContainer.updateBody()
 
 // Force layout update
 layoutContainer.setNeedsLayout()
@@ -361,9 +401,10 @@ ZStack(alignment: .topTrailing) {
 
 ### ScrollView
 
-Adds scrolling capability to content.
+Adds scrolling capability to content with automatic content offset preservation.
 
 ```swift
+// Vertical scrolling (default)
 ScrollView {
     VStack(alignment: .center, spacing: 20) {
         // Header
@@ -380,6 +421,22 @@ ScrollView {
         Spacer(minLength: 100)
     }
 }
+
+// Horizontal scrolling
+ScrollView(.horizontal) {
+    HStack(spacing: 16) {
+        ForEach(items) { item in
+            itemView.layout()
+                .size(width: 200, height: 150)
+        }
+    }
+}
+
+// With safe area offset adjustment
+let scrollView = ScrollView {
+    contentView.layout()
+}
+scrollView.adjustsContentOffsetForSafeArea = true
 ```
 
 ### Spacer
@@ -534,13 +591,18 @@ GeometryReader { proxy, container in
 React to size changes:
 
 ```swift
-GeometryReader { proxy in
+let geometryReader = GeometryReader { proxy in
     contentView.layout()
+        .size(width: proxy.size.width, height: proxy.size.height)
 }
 .onGeometryChange { proxy in
     print("Size changed: \(proxy.size)")
     print("Global position: \(proxy.globalFrame.origin)")
 }
+
+// Use in layout
+geometryReader.layout()
+    .size(width: 300, height: 200)
 ```
 
 ---
@@ -588,7 +650,7 @@ withAnimation(.easeInOut(duration: 0.5))
 withAnimation(.linear(duration: 0.3))
 
 // Custom spring
-withAnimation(.spring(damping: 0.6, velocity: 0.8, duration: 0.5))
+withAnimation(.spring(damping: 0.6, velocity: 0.8))
 ```
 
 ### Protecting Animations from Layout System
@@ -870,7 +932,7 @@ class MyViewController: BaseViewController, Layout {
         super.viewDidLoad()
         layoutContainer.useIncrementalLayout = true
         setupLayoutContainer(layoutContainer)
-        layoutContainer.setBody { self.body }
+        layoutContainer.updateBody { self.body }
     }
 
     @LayoutBuilder var body: some Layout {
@@ -946,21 +1008,40 @@ The layout tree mirrors your layout hierarchy:
 
 ```
 LayoutContainer (rootNode)
-└── VStack
-    ├── HStack
+└── VStack (LayoutNode)
+    ├── HStack (LayoutNode)
     │   ├── Card 1 (LayoutNode)
     │   └── Card 2 (LayoutNode)
-    └── HStack
+    └── HStack (LayoutNode)
         ├── Card 3 (LayoutNode)
         └── Card 4 (LayoutNode)
 ```
 
 Each `LayoutNode` tracks:
 
-- Its dirty state
-- Cached layout result
-- Parent-child relationships
-- Child nodes for nested layouts
+- **Dirty State**: Whether the node needs recalculation (new nodes start dirty)
+- **Cached Result**: Layout result when node is clean
+- **Parent-Child Relationships**: Tree structure for efficient traversal
+- **Child Nodes**: Automatically built from layout hierarchy (VStack, HStack, etc.)
+
+### Dirty Propagation
+
+When a child node is marked dirty, it automatically propagates to its parent:
+
+```swift
+// Child node becomes dirty
+childNode.markDirty()
+
+// Parent is automatically marked dirty due to propagation
+// This ensures parent layout is recalculated when child changes
+```
+
+### Layout Calculation Flow
+
+1. **Initial State**: New `LayoutNode` instances start with `isDirty = true`
+2. **Calculation**: `calculateLayout()` is called, node is marked clean
+3. **Children Cleanup**: After parent calculation, dirty children are marked clean
+4. **Incremental Updates**: Only dirty nodes are recalculated in subsequent passes
 
 ---
 
@@ -1031,7 +1112,7 @@ class ItemListViewController: BaseViewController, Layout {
 
     func updateItems(_ newItems: [Item]) {
         items = newItems
-        layoutContainer.setBody { self.body }
+        layoutContainer.updateBody { self.body }
         // Only changed items are updated, others are reused!
     }
 }
@@ -1298,19 +1379,18 @@ NSLayoutConstraint.activate([
 ### After (Layout - Pure Manual Layout)
 
 ```swift
-class MyViewController: UIViewController, Layout {
-    let layoutContainer = LayoutContainer()
+class MyViewController: BaseViewController, Layout {
+    let titleLabel = UILabel()
+    let subtitleLabel = UILabel()
+    let button = UIButton()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Pure Manual Layout - no Auto Layout constraints
-        setupLayoutContainer(layoutContainer)
-        layoutContainer.setBody { self.body }
+        // BaseViewController automatically sets up layoutContainer
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        updateLayoutContainer(layoutContainer)
+    override func setLayout() {
+        layoutContainer.updateBody { self.body }
     }
 
     // Clean, declarative layout
