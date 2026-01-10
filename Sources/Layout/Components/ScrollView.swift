@@ -268,13 +268,100 @@ public class ScrollView: UIScrollView, Layout {
     
     // MARK: - Layout Protocol
     
-    /// Returns only ScrollView itself in the layout result
+    /// Calculates the layout of ScrollView and its content
+    /// Returns ScrollView's frame and the actual content size
     /// Internal content views are managed separately by updateContentLayout()
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        var frames: [UIView: CGRect] = [:]
+        frames[self] = bounds
+        
+        // If bounds are invalid or no child layout, return bounds size
         if bounds.width == 0 || bounds.height == 0 {
-            return LayoutResult(frames: [self: bounds], totalSize: bounds.size)
+            return LayoutResult(frames: frames, totalSize: bounds.size)
         }
-        return LayoutResult(frames: [self: bounds], totalSize: bounds.size)
+        
+        guard let layout = childLayout else {
+            return LayoutResult(frames: frames, totalSize: bounds.size)
+        }
+        
+        // Calculate actual content size based on axis
+        let contentSize: CGSize
+        switch axis {
+        case .vertical:
+            let contentHeight = calculateContentHeight(layout: layout, availableWidth: bounds.width)
+            contentSize = CGSize(width: bounds.width, height: max(contentHeight, bounds.height))
+        case .horizontal:
+            let contentWidth = calculateContentWidth(layout: layout, availableHeight: bounds.height)
+            contentSize = CGSize(width: max(contentWidth, bounds.width), height: bounds.height)
+        }
+        
+        return LayoutResult(frames: frames, totalSize: contentSize)
+    }
+    
+    /// Calculates content height for a given layout and available width
+    private func calculateContentHeight(layout: any Layout, availableWidth: CGFloat) -> CGFloat {
+        // Check if layout is directly a VStack
+        if let vStack = layout as? VStack {
+            let availableBounds = CGRect(x: 0, y: 0, width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
+            return vStack.calculateLayout(in: availableBounds).totalSize.height
+        }
+        
+        // Check if layout is a TupleLayout containing a VStack
+        if let tupleLayout = layout as? TupleLayout {
+            for childLayout in tupleLayout.layouts {
+                if let vStack = childLayout as? VStack {
+                    let availableBounds = CGRect(x: 0, y: 0, width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
+                    return vStack.calculateLayout(in: availableBounds).totalSize.height
+                }
+            }
+        }
+        
+        // Check if extractViews() returns a VStack (VStack.extractViews() returns [self])
+        let views = layout.extractViews()
+        for view in views {
+            if let vStack = view as? VStack {
+                let availableBounds = CGRect(x: 0, y: 0, width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
+                return vStack.calculateLayout(in: availableBounds).totalSize.height
+            }
+        }
+        
+        // Fallback: calculate layout directly with unlimited height
+        let availableBounds = CGRect(x: 0, y: 0, width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
+        let result = layout.calculateLayout(in: availableBounds)
+        return result.totalSize.height
+    }
+    
+    /// Calculates content width for a given layout and available height
+    private func calculateContentWidth(layout: any Layout, availableHeight: CGFloat) -> CGFloat {
+        // Check if layout is directly an HStack
+        if let hStack = layout as? HStack {
+            let availableBounds = CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: availableHeight)
+            return hStack.calculateLayout(in: availableBounds).totalSize.width
+        }
+        
+        // Check if layout is a TupleLayout containing an HStack
+        if let tupleLayout = layout as? TupleLayout {
+            for childLayout in tupleLayout.layouts {
+                if let hStack = childLayout as? HStack {
+                    let availableBounds = CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: availableHeight)
+                    return hStack.calculateLayout(in: availableBounds).totalSize.width
+                }
+            }
+        }
+        
+        // Check if extractViews() returns an HStack (HStack.extractViews() returns [self])
+        let views = layout.extractViews()
+        for view in views {
+            if let hStack = view as? HStack {
+                let availableBounds = CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: availableHeight)
+                return hStack.calculateLayout(in: availableBounds).totalSize.width
+            }
+        }
+        
+        // Fallback: calculate layout directly with unlimited width
+        let availableBounds = CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: availableHeight)
+        let result = layout.calculateLayout(in: availableBounds)
+        return result.totalSize.width
     }
     
     public func extractViews() -> [UIView] {

@@ -36,7 +36,7 @@ public final class LayoutNode {
     /// Creates a layout node
     public init(layout: any Layout) {
         self.layout = layout
-        self.isDirty = false
+        self.isDirty = true  // New nodes start dirty until first calculation
     }
     
     /// Adds a child node and establishes parent-child relationship
@@ -63,21 +63,27 @@ public final class LayoutNode {
     /// - Parameter propagateToParent: If true, marks parent as dirty (default: true)
     ///   Set to false for partial updates where only this node should be recalculated
     public func markDirty(propagateToParent: Bool = true) {
-        guard !isDirty else { return }
-        
+        let wasDirty = isDirty
         isDirty = true
         cachedResult = nil
         cachedBounds = .zero
         
-        // Propagate to parent only if requested
-        // For partial updates, we don't propagate to allow incremental recalculation
-        if propagateToParent {
+        // Propagate to parent only if requested and this node was not already dirty
+        // If node was already dirty, we assume parent is already aware (or was dirty)
+        // This prevents infinite loops while ensuring clean nodes properly propagate
+        if propagateToParent && !wasDirty {
             parent?.markDirty(propagateToParent: true)
         }
     }
     
     /// Marks this node as clean (after successful calculation)
     private func markClean() {
+        isDirty = false
+    }
+    
+    /// Internal method to force clean state (used when parent calculates children)
+    /// This allows marking children as clean without recalculating them
+    internal func forceClean() {
         isDirty = false
     }
     
@@ -128,6 +134,19 @@ public final class LayoutNode {
         cachedResult = result
         cachedBounds = bounds
         markClean()
+        
+        // Mark all children as clean after parent calculation
+        // This ensures that after parent calculation, all children are also clean
+        // We mark children as clean directly without recalculating them to avoid
+        // potential infinite loops and unnecessary calculations
+        // The actual layout calculation was done by layout.calculateLayout() above
+        for child in children {
+            if child.isDirty {
+                // Mark child as clean since parent calculation already handled the layout
+                // The child's layout result is already part of the parent's result
+                child.forceClean()
+            }
+        }
         
         return result
     }
@@ -199,16 +218,44 @@ public final class LayoutNode {
     
     /// Recursively finds a node that contains the given view
     public func findNode(containing view: UIView) -> LayoutNode? {
-        // Check if this layout's views contain the target view
-        let views = layout.extractViews()
-        if views.contains(where: { $0 === view || $0.subviews.contains(view) }) {
-            return self
-        }
-        
-        // Recursively search children
+        // First, recursively search children (this handles nested structures)
+        // This must come first because we want to find the deepest node containing the view
         for child in children {
             if let found = child.findNode(containing: view) {
                 return found
+            }
+        }
+        
+        // If not found in children, check if this node directly contains the view
+        // For ViewLayout nodes, check if the wrapped view matches
+        if let viewLayout = layout as? ViewLayout {
+            if viewLayout.view === view {
+                return self
+            }
+            return nil
+        }
+        
+        // For VStack, HStack, ZStack - check their subviews directly
+        if let vstack = layout as? VStack {
+            // Check if view is a direct subview (only if children are empty or view not found in children)
+            if vstack.subviews.contains(view) {
+                // If we have children, the view should have been found above
+                // If not found, return nil since it means the tree wasn't built correctly
+                return nil
+            }
+        } else if let hstack = layout as? HStack {
+            if hstack.subviews.contains(view) {
+                return nil
+            }
+        } else if let zstack = layout as? ZStack {
+            if zstack.subviews.contains(view) {
+                return nil
+            }
+        } else {
+            // For other layouts, check extracted views directly
+            let views = layout.extractViews()
+            if views.contains(where: { $0 === view }) {
+                return self
             }
         }
         

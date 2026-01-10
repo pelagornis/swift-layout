@@ -101,7 +101,20 @@ public class GeometryReader: UIView, Layout {
         var frames: [UIView: CGRect] = [:]
         frames[self] = bounds
         
-        if let content = currentContent {
+        // If currentContent is nil, try to create it from contentBuilder
+        // This allows calculateLayout to work even when called directly (e.g., in tests)
+        var content = currentContent
+        if content == nil, let builder = contentBuilder, bounds.width > 0 && bounds.height > 0 {
+            let proxy = GeometryProxy(
+                size: bounds.size,
+                safeAreaInsets: .zero,
+                globalFrame: bounds
+            )
+            content = builder(proxy)
+            currentContent = content
+        }
+        
+        if let content = content {
             let contentResult = content.calculateLayout(in: bounds)
             frames.merge(contentResult.frames) { _, new in new }
         }
