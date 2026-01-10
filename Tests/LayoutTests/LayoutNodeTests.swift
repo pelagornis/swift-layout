@@ -14,36 +14,34 @@ final class LayoutNodeTests: XCTestCase, @unchecked Sendable {
     
     override func setUp() {
         super.setUp()
-        MainActor.assumeIsolated {
-            testView1 = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
-            testView1.backgroundColor = .red
-            
-            testView2 = UIView(frame: CGRect(x: 0, y: 0, width: 80, height: 40))
-            testView2.backgroundColor = .blue
-            
-            testView3 = UIView(frame: CGRect(x: 0, y: 0, width: 60, height: 30))
-            testView3.backgroundColor = .green
-            
-            label1 = UILabel()
-            label1.text = "Label 1"
-            
-            label2 = UILabel()
-            label2.text = "Label 2"
-            
-            label3 = UILabel()
-            label3.text = "Label 3"
-        }
+        // @MainActor class, so setUp() already runs on MainActor
+        testView1 = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
+        testView1.backgroundColor = .red
+        
+        testView2 = UIView(frame: CGRect(x: 0, y: 0, width: 80, height: 40))
+        testView2.backgroundColor = .blue
+        
+        testView3 = UIView(frame: CGRect(x: 0, y: 0, width: 60, height: 30))
+        testView3.backgroundColor = .green
+        
+        label1 = UILabel()
+        label1.text = "Label 1"
+        
+        label2 = UILabel()
+        label2.text = "Label 2"
+        
+        label3 = UILabel()
+        label3.text = "Label 3"
     }
     
     override func tearDown() {
-        MainActor.assumeIsolated {
-            testView1 = nil
-            testView2 = nil
-            testView3 = nil
-            label1 = nil
-            label2 = nil
-            label3 = nil
-        }
+        // @MainActor class, so tearDown() already runs on MainActor
+        testView1 = nil
+        testView2 = nil
+        testView3 = nil
+        label1 = nil
+        label2 = nil
+        label3 = nil
         super.tearDown()
     }
     

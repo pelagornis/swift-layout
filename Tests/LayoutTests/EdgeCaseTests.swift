@@ -7,7 +7,8 @@ import SwiftUI
 class EdgeCaseTests: XCTestCase {
     
     @MainActor func testEmptyLayout() {
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 300, height: 400)
         
         container.setBody {
             VStack {
@@ -45,7 +46,8 @@ class EdgeCaseTests: XCTestCase {
     
     @MainActor func testVeryLargeLayout() {
         let views = (0..<10000).map { _ in UIView() }
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 300, height: 400)
         
         // Should handle very large number of views
         XCTAssertNoThrow {

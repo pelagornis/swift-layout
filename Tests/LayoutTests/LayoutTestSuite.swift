@@ -19,7 +19,8 @@ final class LayoutTestSuite: XCTestCase {
     /// Test that verifies the entire library is working correctly
     // Disabled: Stack container behavior
     @MainActor func xtestLibraryIntegration() {
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 320, height: 568))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 320, height: 568)
         let label = UILabel()
         let button = UIButton()
         

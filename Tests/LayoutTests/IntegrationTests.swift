@@ -7,7 +7,8 @@ class IntegrationTests: XCTestCase {
     
     // Disabled: Test expectations don't match actual stack container implementation
     @MainActor func xtestCompleteUserInterface() {
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 320, height: 568))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 320, height: 568)
         
         // Create UI components
         let headerView = UIView()
@@ -74,7 +75,8 @@ class IntegrationTests: XCTestCase {
     
     // Disabled: Test expectations don't match actual stack container implementation
     @MainActor func xtestDynamicContentUpdate() {
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 300, height: 400)
         var items = ["Item 1", "Item 2", "Item 3"]
         var itemViews: [UILabel] = []
         

@@ -12,24 +12,23 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
     
     override func setUp() {
         super.setUp()
-        MainActor.assumeIsolated {
-            layoutContainer = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 400, height: 300))
-            testView1 = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
-            testView1.backgroundColor = .red
-            testView2 = UIView(frame: CGRect(x: 0, y: 0, width: 80, height: 40))
-            testView2.backgroundColor = .blue
-            testView3 = UIView(frame: CGRect(x: 0, y: 0, width: 60, height: 30))
-            testView3.backgroundColor = .green
-        }
+        // @MainActor class, so setUp() already runs on MainActor
+        layoutContainer = LayoutContainer()
+        layoutContainer.frame = CGRect(x: 0, y: 0, width: 400, height: 300)
+        testView1 = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
+        testView1.backgroundColor = .red
+        testView2 = UIView(frame: CGRect(x: 0, y: 0, width: 80, height: 40))
+        testView2.backgroundColor = .blue
+        testView3 = UIView(frame: CGRect(x: 0, y: 0, width: 60, height: 30))
+        testView3.backgroundColor = .green
     }
     
     override func tearDown() {
-        MainActor.assumeIsolated {
-            layoutContainer = nil
-            testView1 = nil
-            testView2 = nil
-            testView3 = nil
-        }
+        // @MainActor class, so tearDown() already runs on MainActor
+        layoutContainer = nil
+        testView1 = nil
+        testView2 = nil
+        testView3 = nil
         super.tearDown()
     }
     
@@ -63,12 +62,62 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         XCTAssertTrue(retrievedBody?.extractViews().first === testView1)
     }
     
+    // MARK: - UpdateBody Tests
+    
+    func testUpdateBodyWithoutParameter() {
+        layoutContainer.setBody {
+            self.testView1.layout()
+        }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
+        layoutContainer.layoutIfNeeded()
+        
+        let initialSubviewsCount = layoutContainer.subviews.count
+        XCTAssertGreaterThanOrEqual(initialSubviewsCount, 1, "Initial body should have at least one subview")
+        
+        // Update body again without changing it
+        layoutContainer.updateBody()
+        layoutContainer.layoutIfNeeded()
+        
+        // Should still have the same number of subviews
+        XCTAssertEqual(layoutContainer.subviews.count, initialSubviewsCount)
+    }
+    
+    func testUpdateBodyWithParameter() {
+        layoutContainer.updateBody {
+            self.testView1.layout()
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        XCTAssertNotNil(layoutContainer.body)
+        XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
+    }
+    
+    func testUpdateBodyReplacesExistingBody() {
+        layoutContainer.setBody {
+            self.testView1.layout()
+        }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
+        layoutContainer.layoutIfNeeded()
+        
+        layoutContainer.updateBody {
+            self.testView2.layout()
+        }
+        layoutContainer.layoutIfNeeded()
+        
+        let views = layoutContainer.body?.extractViews() ?? []
+        XCTAssertTrue(views.contains(testView2))
+    }
+    
     // MARK: - SetBody Tests
     
     func testSetBodySingleView() {
         layoutContainer.setBody {
             self.testView1.layout()
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Single view wrapped in auto VStack
@@ -83,6 +132,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout()
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // VStack is the direct subview of container
@@ -104,6 +155,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout()
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // HStack is the direct subview
@@ -125,6 +178,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView3.layout()
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // ZStack is the direct subview
@@ -146,6 +201,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         layoutContainer.setBody {
             self.testView1.layout()
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
         
@@ -153,6 +210,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         layoutContainer.setBody {
             self.testView2.layout()
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
     }
@@ -162,6 +221,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         layoutContainer.setBody {
             self.testView1.layout()
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         XCTAssertGreaterThanOrEqual(layoutContainer.subviews.count, 1)
         
@@ -172,6 +233,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout()
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Now container has VStack as single subview
@@ -309,15 +372,17 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         var layoutCallCount = 0
         
         // Create a custom container to track layout calls
-        let customContainer = TestLayoutContainer(frame: CGRect(x: 0, y: 0, width: 400, height: 300))
+        let customContainer = TestLayoutContainer()
+        customContainer.frame = CGRect(x: 0, y: 0, width: 400, height: 300)
         customContainer.layoutCallback = { layoutCallCount += 1 }
         
         customContainer.setBody {
             self.testView1.layout()
         }
         
-        // setBody should trigger setNeedsLayout
-        customContainer.layoutIfNeeded()
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        // updateBody triggers setNeedsLayout and layoutIfNeeded
+        customContainer.updateBody()
         XCTAssertGreaterThan(layoutCallCount, 0)
     }
     
@@ -326,6 +391,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         layoutContainer.setBody {
             self.testView1.layout()
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         XCTAssertNotNil(layoutContainer.body)
         
@@ -335,6 +402,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout()
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         XCTAssertNotNil(layoutContainer.body)
         
@@ -372,6 +441,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout().size(width: 80, height: 40)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Layout tree should be built
@@ -388,6 +459,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView1.layout().size(width: 100, height: 50)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Should still work without incremental layout
@@ -405,6 +478,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView1.layout().size(width: 100, height: 50)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Mark label as dirty
@@ -431,6 +506,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout().size(width: 80, height: 40)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Invalidate entire tree
@@ -449,6 +526,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView1.layout().size(width: 100, height: 50)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         let initialSubviewCount = layoutContainer.subviews.count
@@ -471,6 +550,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView2.layout().size(width: 80, height: 40)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         let subviewCountBefore = layoutContainer.subviews.count
@@ -508,6 +589,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView1.layout().size(width: 100, height: 50)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Update label1 multiple times
@@ -532,6 +615,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 self.testView3.layout().size(width: 60, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Get initial view references
@@ -555,7 +640,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         // Set identity
         label.layoutIdentity = AnyHashable("test-label")
         XCTAssertNotNil(label.layoutIdentity)
-        XCTAssertEqual(label.layoutIdentity as? String, "test-label")
+        // AnyHashable preserves the value for equality comparison
+        XCTAssertEqual(label.layoutIdentity, AnyHashable("test-label"))
     }
     
     func testIdentityBasedDiffing() {
@@ -574,6 +660,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 label2.layout().size(width: 200, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         let initialSubviewCount = layoutContainer.subviews.count
@@ -593,6 +681,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 newLabel2.layout().size(width: 200, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Views should be updated (identity-based diffing)
@@ -610,6 +700,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 label.layout().size(width: 200, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         let initialView = layoutContainer.subviews.first(where: { ($0 as? VStack)?.subviews.contains(label) ?? false })
@@ -621,6 +713,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 label.layout().size(width: 200, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Same view instance should be reused
@@ -644,6 +738,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 label2.layout().size(width: 200, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // Update body to remove label2
@@ -652,6 +748,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 label1.layout().size(width: 200, height: 30)
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // label1 should still be present, label2 should be removed
@@ -667,7 +765,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         
         // Identity should be set
         XCTAssertNotNil(label.layoutIdentity)
-        XCTAssertEqual(label.layoutIdentity as? String, "test-id")
+        // AnyHashable preserves the original value, so we can compare directly
+        XCTAssertEqual(label.layoutIdentity, AnyHashable("test-id"))
     }
     
     func testViewLayoutIdWithString() {
@@ -677,7 +776,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         // Use .id() with string
         _ = label.layout().id("my-label")
         
-        XCTAssertEqual(label.layoutIdentity as? String, "my-label")
+        XCTAssertNotNil(label.layoutIdentity)
+        XCTAssertEqual(label.layoutIdentity, AnyHashable("my-label"))
     }
     
     func testViewLayoutIdWithInt() {
@@ -687,7 +787,12 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
         // Use .id() with integer
         _ = label.layout().id(123)
         
-        XCTAssertEqual(label.layoutIdentity as? Int, 123)
+        // AnyHashable preserves the value for equality comparison
+        XCTAssertNotNil(label.layoutIdentity)
+        
+        // Compare AnyHashable values directly (AnyHashable preserves value equality)
+        let expectedIdentity = AnyHashable(123)
+        XCTAssertEqual(label.layoutIdentity, expectedIdentity)
     }
     
     func testIdentityWithForEach() {
@@ -710,6 +815,8 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
                 }
             }
         }
+        // setBody alone doesn't trigger hierarchy update, need to call updateBody
+        layoutContainer.updateBody()
         layoutContainer.layoutIfNeeded()
         
         // All labels should be in hierarchy
@@ -719,6 +826,7 @@ final class LayoutContainerTests: XCTestCase, @unchecked Sendable {
 
 // MARK: - Helper Classes
 
+@MainActor
 private class TestLayoutContainer: LayoutContainer {
     var layoutCallback: (() -> Void)?
     

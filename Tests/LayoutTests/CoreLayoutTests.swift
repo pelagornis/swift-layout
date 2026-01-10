@@ -4,6 +4,7 @@ import SwiftUI
 @testable import Layout
 
 /// Tests for core layout protocols and basic functionality
+@MainActor
 final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
     
     var testView: UIView!
@@ -11,13 +12,13 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
     
     override func setUp() {
         super.setUp()
-        MainActor.assumeIsolated {
-            testView = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
-            layoutContainer = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
-        }
+        // @MainActor class, so setUp() already runs on MainActor
+        testView = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
+        layoutContainer = LayoutContainer()
     }
     
     override func tearDown() {
+        // @MainActor class, so tearDown() already runs on MainActor
         testView = nil
         layoutContainer = nil
         super.tearDown()
@@ -35,7 +36,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(result.totalSize, CGSize(width: 200, height: 300))
     }
     
-    @MainActor func testLayoutResultApplying() {
+    func testLayoutResultApplying() {
         let targetFrame = CGRect(x: 50, y: 75, width: 120, height: 60)
         let result = LayoutResult(frames: [testView: targetFrame], totalSize: .zero)
         
@@ -47,7 +48,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
     
     // MARK: - ViewLayout Tests
     
-    @MainActor func testViewLayoutBasicCreation() {
+    func testViewLayoutBasicCreation() {
         let viewLayout = ViewLayout(testView)
         
         XCTAssertTrue(viewLayout.view === testView)
@@ -56,7 +57,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(viewLayout.extractViews(), [testView])
     }
     
-    @MainActor func testViewLayoutSizeModifier() {
+    func testViewLayoutSizeModifier() {
         let viewLayout = testView.layout()
             .size(width: 200, height: 100)
         
@@ -71,7 +72,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(frame.size, CGSize(width: 200, height: 100))
     }
     
-    @MainActor func testViewLayoutCenterModifier() {
+    func testViewLayoutCenterModifier() {
         let viewLayout = testView.layout()
             .size(width: 100, height: 50)
             .center()
@@ -88,7 +89,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
         XCTAssertEqual(frame.origin.y, 125) // (300 - 50) / 2
     }
     
-    @MainActor func testViewLayoutOffsetModifier() {
+    func testViewLayoutOffsetModifier() {
         let viewLayout = testView.layout()
             .offset(x: 20, y: 30)
         
@@ -105,7 +106,7 @@ final class CoreLayoutTests: XCTestCase, @unchecked Sendable {
     }
     
     // Disabled: Modifier chaining behavior needs investigation
-    @MainActor func xtestViewLayoutChainedModifiers() {
+    func xtestViewLayoutChainedModifiers() {
         let viewLayout = testView.layout()
             .size(width: 100, height: 50)
             .centerX()

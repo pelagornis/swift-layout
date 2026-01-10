@@ -23,7 +23,8 @@ class LayoutPerformanceTests: XCTestCase {
     
     @MainActor func testSimpleLayoutPerformance() {
         let views = (0..<100).map { _ in UIView() }
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 300, height: 400)
         
         container.setBody {
             VStack(spacing: 4) {
@@ -40,7 +41,8 @@ class LayoutPerformanceTests: XCTestCase {
     }
     
     @MainActor func testComplexNestedLayoutPerformance() {
-        let container = LayoutContainer(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
+        let container = LayoutContainer()
+        container.frame = CGRect(x: 0, y: 0, width: 300, height: 400)
         let views = (0..<50).map { _ in
             CardViews(
                 container: UIView(),
