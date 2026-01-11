@@ -44,7 +44,7 @@ final class LayoutNodeTests: XCTestCase, @unchecked Sendable {
         label3 = nil
         super.tearDown()
     }
-    
+
     // MARK: - LayoutNode Initialization Tests
     
     func testLayoutNodeInitialization() {
