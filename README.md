@@ -475,6 +475,53 @@ myView.layout()
 // Height only (width flexible)
 myView.layout()
     .size(height: 50)
+
+// Percentage-based size
+myView.layout()
+    .size(width: 90%, height: 100)
+
+// Mixed fixed and percentage
+myView.layout()
+    .size(width: 80%, height: 50)
+
+// Percentage syntax with postfix operator
+let width: Percent = 80%  // Using postfix % operator
+myView.layout()
+    .size(width: width, height: 100)
+```
+
+**Percentage-based Sizing:**
+
+Layout supports percentage-based sizing using the `%` postfix operator:
+
+```swift
+// Direct percentage syntax
+myView.layout()
+    .size(width: 90%, height: 100)
+
+// Percentage is calculated relative to parent container's size
+VStack(alignment: .center, spacing: 16) {
+    headerView.layout()
+        .size(width: 90%, height: 60)  // 90% of VStack's width
+
+    contentView.layout()
+        .size(width: 80%, height: 200)  // 80% of VStack's width
+}
+
+// Mix percentage and fixed sizes
+cardView.layout()
+    .size(width: 50%, height: 140)  // 50% width, fixed 140pt height
+```
+
+**Edge Positioning with Percentages:**
+
+```swift
+// Position views using percentage offsets
+myView.layout()
+    .size(width: 100, height: 100)
+    .top(10%)      // 10% from top
+    .leading(20%)  // 20% from leading edge
+    .centerX()     // Center horizontally
 ```
 
 ### Padding
@@ -1430,12 +1477,43 @@ class MyViewController: BaseViewController, Layout {
 
 ---
 
+## 🆕 Recent Updates
+
+### Percentage-Based Sizing
+
+Layout now supports percentage-based sizing and positioning:
+
+- **Postfix `%` Operator**: Use `80%` syntax for intuitive percentage values
+- **Mixed Types**: Combine percentage and fixed sizes (e.g., `size(width: 80%, height: 50)`)
+- **Edge Positioning**: Position views using percentage offsets (e.g., `.top(10%)`, `.leading(20%)`)
+- **Responsive Layouts**: Automatically adapts to screen rotation and size changes
+
+```swift
+// Simple percentage syntax
+myView.layout()
+    .size(width: 90%, height: 100)
+    .centerX()
+
+// Mixed fixed and percentage
+cardView.layout()
+    .size(width: 50%, height: 140)
+```
+
+### DSL-First Approach
+
+Example app components have been refactored to use DSL syntax instead of imperative methods:
+
+- **Before**: UIView creation with manual frame calculations
+- **After**: Declarative VStack/HStack with percentage-based sizing
+- **Benefits**: Better readability, automatic layout updates, responsive design
+
+---
+
 ## 🙏 Inspiration
 
 Layout is inspired by:
 
 - [SwiftUI](https://developer.apple.com/xcode/swiftui/) - Declarative syntax and result builders
-- [PinLayout](https://github.com/layoutBox/PinLayout) - Performance-first philosophy
 - [Yoga](https://yogalayout.com/) - Flexbox layout concepts
 - [ComponentKit](https://componentkit.org/) - Declarative UI for iOS
 
