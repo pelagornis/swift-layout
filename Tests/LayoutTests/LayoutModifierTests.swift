@@ -18,7 +18,7 @@ class LayoutModifierTests: XCTestCase {
     }
     
     func testSizeModifierPartial() {
-        let modifier = SizeModifier(width: 200, height: nil)
+        let modifier = SizeModifier(width: 200)
         let result = modifier.apply(to: testFrame, in: testBounds)
         
         XCTAssertEqual(result.width, 200)
