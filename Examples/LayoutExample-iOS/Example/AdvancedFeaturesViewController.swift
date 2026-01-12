@@ -13,10 +13,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     // Layout Tree Test Properties
     private enum LayoutTreeConstants {
         static let cardCount = 6
-        static let cardWidth: CGFloat = 165
-        static let cardHeight: CGFloat = 140
         static let cardPadding: CGFloat = 12
-        static let cardSpacing: CGFloat = 12
         static let cardLabelYOffset: CGFloat = 20
         
         static let colors: [UIColor] = [
@@ -185,7 +182,10 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         let yOffset = LayoutTreeConstants.cardLabelYOffset
         
         for index in 0..<LayoutTreeConstants.cardCount {
-            let width = LayoutTreeConstants.cardWidth - padding * 2
+            // Use actual card bounds instead of fixed cardWidth
+            let card = cards[index]
+            let cardWidth = card.bounds.width > 0 ? card.bounds.width : (view.bounds.width * 0.9 / 2 - 12 / 2)
+            let width = max(0, cardWidth - padding * 2)
             cardLabels[index].frame = CGRect(x: padding, y: yOffset, width: width, height: 24)
             cardCounterLabels[index].frame = CGRect(x: padding, y: yOffset + 30, width: width, height: 20)
             cardTimeLabels[index].frame = CGRect(x: padding, y: yOffset + 55, width: width, height: 16)
@@ -233,7 +233,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             color: .label
         )
         .layout()
-        .size(width: 320, height: 36)
+        .size(width: 90%, height: 36)
         .offset(y: 16)
     }
     
@@ -253,11 +253,10 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             }
             .padding(20)
             .layout()
-            .size(width: 360, height: 140)
+            .size(width: 90%, height: 140)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Environment Section
@@ -268,7 +267,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             
             VStack(alignment: .center, spacing: 12) {
                 environmentLabel.layout()
-                    .size(width: 300, height: 24)
+                    .size(width: 90%, height: 24)
                 
                 HStack(alignment: .center, spacing: 16) {
                     environmentInfoItem(
@@ -286,11 +285,10 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             }
             .padding(16)
             .layout()
-            .size(width: 360, height: 130)
+            .size(width: 90%, height: 130)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Performance Section
@@ -299,7 +297,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionHeader(title: "Performance Monitor", subtitle: "Real-time FPS & cache metrics")
             
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: 8) {
                 performanceStatCard(
                     icon: "⚡️",
                     label: performanceLabel,
@@ -320,11 +318,11 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             }
             .padding(12)
             .layout()
-            .size(width: 360, height: 105)
+            .size(width: 90%, height: 105)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
+            .centerX()
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Priority Section
@@ -333,18 +331,18 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionHeader(title: "Priority System", subtitle: "Layout priority distribution")
             
-            HStack(alignment: .center, spacing: 10) {
-                priorityCard(label: "High\nPriority", color: .systemRed, width: 105)
-                priorityCard(label: "Medium", color: .systemOrange, width: 105)
-                priorityCard(label: "Low", color: .systemGreen, width: 105)
+            HStack(alignment: .center, spacing: 8) {
+                priorityCard(label: "High\nPriority", color: .systemRed, width: 33%)
+                priorityCard(label: "Medium", color: .systemOrange, width: 33%)
+                priorityCard(label: "Low", color: .systemGreen, width: 33%)
             }
             .padding(12)
             .layout()
-            .size(width: 360, height: 95)
+            .size(width: 90%, height: 95)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
+            .centerX()
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Geometry Info Section
@@ -361,11 +359,10 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             }
             .padding(16)
             .layout()
-            .size(width: 360, height: 160)
+            .size(width: 90%, height: 160)
             .background(.tertiarySystemBackground)
             .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Layout Tree Test Section
@@ -376,43 +373,42 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             
             ZStack(alignment: .center) {
                 statsContainer.layout()
-                    .size(width: 360, height: 86)
+                    .size(width: 90%, height: 86)
                 
                 VStack(alignment: .center, spacing: 8) {
                     statsLabel.layout()
-                        .size(width: 340, height: 30)
+                        .size(width: 90%, height: 30)
                     
                     statusLabel.layout()
-                        .size(width: 340, height: 40)
+                        .size(width: 90%, height: 40)
                 }
             }
             
-            VStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
-                HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+            VStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     cards[0].layout()
-                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                        .size(width: 150, height: 140)
                     
                     cards[3].layout()
-                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                        .size(width: 150, height: 140)
                 }
                 
-                HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+                HStack(alignment: .center, spacing: 12) {
                     cards[1].layout()
-                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                        .size(width: 150, height: 140)
                     
                     cards[4].layout()
-                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                        .size(width: 150, height: 140)
                 }
                 
-                HStack(alignment: .center, spacing: LayoutTreeConstants.cardSpacing) {
+                HStack(alignment: .center, spacing: 12) {
                     cards[2].layout()
-                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                        .size(width: 150, height: 140)
                     
                     cards[5].layout()
-                        .size(width: LayoutTreeConstants.cardWidth, height: LayoutTreeConstants.cardHeight)
+                        .size(width: 150, height: 140)
                 }
             }
-            
             VStack(alignment: .center, spacing: 10) {
                 HStack(alignment: .center, spacing: 10) {
                     createLayoutTreeButton(title: "Card 1", color: .systemRed, fontSize: 14) { [weak self] in
@@ -458,28 +454,27 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                     self?.updateLayoutTreeCards(range: 0..<3)
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
                 
                 createLayoutTreeButton(title: "Update Cards 4-6", color: .systemPink) { [weak self] in
                     self?.updateLayoutTreeCards(range: 3..<6)
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
                 
                 createLayoutTreeButton(title: "Update All Cards", color: .systemPurple) { [weak self] in
                     self?.updateAllLayoutTreeCards()
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
                 
                 createLayoutTreeButton(title: "Toggle Incremental Layout", color: .systemOrange) { [weak self] in
                     self?.toggleIncrementalLayout()
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
             }
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Section Header
@@ -490,17 +485,17 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 text: title,
                 font: .systemFont(ofSize: 16, weight: .bold),
                 color: .label
-            ).layout().size(width: 340, height: 20)
+            ).layout().size(width: 90%, height: 20)
             
             createLabel(
                 text: subtitle,
                 font: .systemFont(ofSize: 11, weight: .regular),
                 color: .secondaryLabel
-            ).layout().size(width: 340, height: 14)
+            ).layout().size(width: 90%, height: 14)
         }
         .padding(UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12))
         .layout()
-        .size(width: 360, height: 50)
+        .size(width: 90%, height: 50)
         .background(.secondarySystemBackground)
         .cornerRadius(12)
     }
@@ -521,91 +516,82 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     private func environmentInfoItem(icon: String, title: String, value: String) -> some Layout {
         VStack(alignment: .center, spacing: 4) {
             createLabel(text: icon, font: .systemFont(ofSize: 24), color: .label)
-                .layout().size(width: 150, height: 28)
+                .layout().size(width: 100%, height: 28)
             
             createLabel(text: title, font: .systemFont(ofSize: 11, weight: .medium), color: .secondaryLabel)
-                .layout().size(width: 150, height: 14)
+                .layout().size(width: 100%, height: 14)
             
             createLabel(text: value, font: .systemFont(ofSize: 14, weight: .bold), color: .systemIndigo)
-                .layout().size(width: 150, height: 18)
+                .layout().size(width: 100%, height: 18)
         }
         .layout()
-        .size(width: 150, height: 70)
+        .size(width: 50%, height: 70)
     }
     
     // MARK: - Helper: Performance Stat Card
     
     private func performanceStatCard(icon: String, label: UILabel, title: String) -> some Layout {
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 80))
-        container.backgroundColor = .clear
+        // Ensure label properties are set correctly
+        label.textAlignment = .left
+        label.numberOfLines = 1
         
-        let iconLabel = UILabel(frame: CGRect(x: 0, y: 8, width: 100, height: 24))
-        iconLabel.text = icon
-        iconLabel.font = .systemFont(ofSize: 20)
-        iconLabel.textAlignment = .center
-        container.addSubview(iconLabel)
-        
-        label.frame = CGRect(x: 0, y: 36, width: 100, height: 22)
-        label.textAlignment = .center
-        container.addSubview(label)
-        
-        let titleLabel = UILabel(frame: CGRect(x: 0, y: 60, width: 100, height: 14))
-        titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 10, weight: .medium)
-        titleLabel.textColor = .secondaryLabel
-        titleLabel.textAlignment = .center
-        container.addSubview(titleLabel)
-        
-        return container.layout().size(width: 100, height: 80)
+        return VStack(alignment: .center, spacing: 4) {
+            createLabel(text: icon, font: .systemFont(ofSize: 20), color: .label)
+                .layout()
+                .size(width: 100%, height: 24)
+            
+            label
+                .layout()
+                .size(width: 100%, height: 22)
+            
+            createLabel(text: title, font: .systemFont(ofSize: 10, weight: .medium), color: .secondaryLabel)
+                .layout()
+                .size(width: 100%, height: 14)
+        }
+        .layout()
+        .size(width: 30%, height: 80)
     }
     
     private func staticStatCard(icon: String, value: String, title: String) -> some Layout {
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 80))
-        container.backgroundColor = .clear
-        
-        let iconLabel = UILabel(frame: CGRect(x: 0, y: 8, width: 100, height: 24))
-        iconLabel.text = icon
-        iconLabel.font = .systemFont(ofSize: 20)
-        iconLabel.textAlignment = .center
-        container.addSubview(iconLabel)
-        
-        let valueLabel = UILabel(frame: CGRect(x: 0, y: 36, width: 100, height: 22))
-        valueLabel.text = value
-        valueLabel.font = .monospacedSystemFont(ofSize: 14, weight: .bold)
-        valueLabel.textColor = .systemIndigo
-        valueLabel.textAlignment = .center
-        container.addSubview(valueLabel)
-        
-        let titleLabel = UILabel(frame: CGRect(x: 0, y: 60, width: 100, height: 14))
-        titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 10, weight: .medium)
-        titleLabel.textColor = .secondaryLabel
-        titleLabel.textAlignment = .center
-        container.addSubview(titleLabel)
-        
-        return container.layout().size(width: 100, height: 80)
+        VStack(alignment: .center, spacing: 4) {
+            createLabel(text: icon, font: .systemFont(ofSize: 20), color: .label)
+                .layout()
+                .size(width: 100%, height: 24)
+            
+            createLabel(text: value, font: .monospacedSystemFont(ofSize: 14, weight: .bold), color: .systemIndigo)
+                .layout()
+                .size(width: 100%, height: 22)
+            
+            createLabel(text: title, font: .systemFont(ofSize: 10, weight: .medium), color: .secondaryLabel)
+                .layout()
+                .size(width: 100%, height: 14)
+        }
+        .layout()
+        .size(width: 30%, height: 80)
     }
     
     // MARK: - Helper: Priority Card
     
-    private func priorityCard(label: String, color: UIColor, width: CGFloat) -> some Layout {
-        let height: CGFloat = 70
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        container.backgroundColor = color.withAlphaComponent(0.2)
-        container.layer.cornerRadius = 12
-        container.layer.borderWidth = 2
-        container.layer.borderColor = color.cgColor
-        
-        let textLabel = UILabel(frame: CGRect(x: 4, y: 4, width: width - 8, height: height - 8))
-        textLabel.text = label
-        textLabel.font = .systemFont(ofSize: 13, weight: .bold)
-        textLabel.textColor = color
+    private func priorityCard(label: String, color: UIColor, width: Percent) -> some Layout {
+        let textLabel = createLabel(text: label, font: .systemFont(ofSize: 13, weight: .bold), color: color)
         textLabel.textAlignment = .center
         textLabel.numberOfLines = 2
-        textLabel.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        container.addSubview(textLabel)
         
-        return container.layout().size(width: width, height: height)
+        let vStack = VStack(alignment: .center, spacing: 0) {
+            textLabel.layout()
+                .size(width: 100%, height: 100%)
+        }
+        .padding(4)
+        
+        // Apply styling to VStack
+        vStack.backgroundColor = color.withAlphaComponent(0.2)
+        vStack.layer.cornerRadius = 12
+        vStack.layer.borderWidth = 2
+        vStack.layer.borderColor = color.cgColor
+        vStack.layer.masksToBounds = true
+        
+        return vStack.layout()
+            .size(width: width, height: 70)
     }
     
     // MARK: - Helper: Geometry Info Row
@@ -616,10 +602,10 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 .layout().size(width: 24, height: 24)
             
             createLabel(text: text, font: .systemFont(ofSize: 13, weight: .medium), color: .secondaryLabel)
-                .layout().size(width: 280, height: 20)
+                .layout().size(width: 90%, height: 20)
         }
         .layout()
-        .size(width: 320, height: 28)
+        .size(width: 90%, height: 28)
     }
     
     // MARK: - Actions & Updates
@@ -700,7 +686,46 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         super.traitCollectionDidChange(previousTraitCollection)
         updateEnvironmentLabel()
         EnvironmentProvider.shared.updateSystemEnvironment()
+        
+        // Handle screen rotation - update original position after layout completes
+        if previousTraitCollection != nil {
+            // Wait for layout to complete, then update position
+            DispatchQueue.main.async { [weak self] in
+                self?.updateAnimationViewPositionAfterRotation()
+            }
+        }
     }
+    
+    private func updateAnimationViewPositionAfterRotation() {
+        // Update original position after layout to handle screen rotation
+        // This ensures the view stays centered when screen rotates
+        if animatedOffset != 0, animationDemoViewOriginalX != nil {
+            // Protect the view during position update
+            layoutContainer.startAnimating(animationDemoView)
+            
+            // Recalculate original position based on current layout position and offset
+            // After layout, the view should be at its centered position
+            let currentX = animationDemoView.frame.origin.x
+            let newOriginalX = currentX - animatedOffset
+            animationDemoViewOriginalX = newOriginalX
+            
+            // Update frame to maintain offset from new original position
+            let currentFrame = animationDemoView.frame
+            animationDemoView.frame = CGRect(
+                x: newOriginalX + animatedOffset,
+                y: currentFrame.origin.y,
+                width: currentFrame.width,
+                height: currentFrame.height
+            )
+            
+            layoutContainer.stopAnimating(animationDemoView)
+        } else if animatedOffset == 0 {
+            // If offset is 0, update original position to current position
+            // This ensures next animation starts from the correct center position
+            animationDemoViewOriginalX = animationDemoView.frame.origin.x
+        }
+    }
+    
     
     // MARK: - Layout Tree Test Helpers
     
@@ -900,7 +925,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 color: .secondaryLabel
             )
             descriptionLabel.layout()
-                .size(width: 340, height: 50)
+                .size(width: 90%, height: 50)
             
             VStack(alignment: .center, spacing: 8) {
                 ForEach(identityItems) { item in
@@ -913,28 +938,27 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                     self?.addIdentityItem()
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
                 
                 createLayoutTreeButton(title: "Remove Last", color: .systemRed) { [weak self] in
                     self?.removeLastIdentityItem()
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
                 
                 createLayoutTreeButton(title: "Shuffle Items", color: .systemBlue) { [weak self] in
                     self?.shuffleIdentityItems()
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
                 
                 createLayoutTreeButton(title: "Update All Counts", color: .systemPurple) { [weak self] in
                     self?.updateAllIdentityItemCounts()
                 }
                 .layout()
-                .size(width: 340, height: 44)
+                .size(width: 90%, height: 44)
             }
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     // MARK: - Identity & Diff Helpers
@@ -945,31 +969,60 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         
         return itemView.layout()
             .id(item.id)
-            .size(width: 340, height: 50)
+            .size(width: 90%, height: 50)
+            .centerX() // Center the item view horizontally
     }
     
     private func getOrCreateItemView(for item: IdentityItem) -> UIView {
         if let existingView = identityItemViews[item.id] {
             return existingView
         }
-        let itemView = UIView()
-        itemView.backgroundColor = item.color.withAlphaComponent(0.15)
-        itemView.layer.cornerRadius = 8
-        itemView.layer.borderWidth = 1
-        itemView.layer.borderColor = item.color.cgColor
-        
-        let itemLabel = UILabel()
-        itemLabel.font = .systemFont(ofSize: 14, weight: .medium)
-        itemLabel.textColor = item.color
-        itemLabel.textAlignment = .center
-        itemLabel.text = "\(item.title) - Count: \(item.count)"
-        itemLabel.frame = CGRect(x: 10, y: 5, width: 320, height: 40)
-        itemView.addSubview(itemLabel)
+        let itemView = ResponsiveIdentityItemView(item: item)
         
         identityItemViews[item.id] = itemView
-        identityItemLabels[item.id] = itemLabel
+        identityItemLabels[item.id] = itemView.itemLabel
         
         return itemView
+    }
+    
+    // Helper class to handle dynamic label sizing for identity items
+    private class ResponsiveIdentityItemView: UIView {
+        let itemLabel: UILabel
+        
+        init(item: IdentityItem) {
+            let label = UILabel()
+            label.font = .systemFont(ofSize: 14, weight: .medium)
+            label.textColor = item.color
+            label.textAlignment = .center
+            label.text = "\(item.title) - Count: \(item.count)"
+            self.itemLabel = label
+            
+            super.init(frame: .zero)
+            
+            self.backgroundColor = item.color.withAlphaComponent(0.15)
+            self.layer.cornerRadius = 8
+            self.layer.borderWidth = 1
+            self.layer.borderColor = item.color.cgColor
+            
+            addSubview(label)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            
+            let padding: CGFloat = 10
+            let topPadding: CGFloat = 5
+            itemLabel.frame = CGRect(
+                x: padding,
+                y: topPadding,
+                width: max(bounds.width - padding * 2, 0),
+                height: max(bounds.height - topPadding * 2, 30)
+            )
+        }
     }
     
     private func updateItemViewLabel(for item: IdentityItem) {

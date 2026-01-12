@@ -64,6 +64,55 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         super.viewDidAppear(animated)
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // When layout changes (e.g., screen rotation), update slideBoxOriginalX to new center position
+        // and reapply current offset if it exists with smooth animation
+        if currentOffset != 0 && slideBoxOriginalX != nil {
+            // Layout has changed, need to update the reference position
+            // First, let layout system calculate the new centered position
+            layoutContainer.updateBody { self.body }
+            
+            // Get the new centered position and current position
+            let newCenteredX = slideBox.frame.origin.x
+            let currentX = slideBox.frame.origin.x
+            slideBoxOriginalX = newCenteredX
+            
+            // Calculate target position with offset
+            let currentFrame = slideBox.frame
+            let targetX = newCenteredX + currentOffset
+            let targetFrame = CGRect(
+                x: targetX,
+                y: currentFrame.origin.y,
+                width: currentFrame.width,
+                height: currentFrame.height
+            )
+            
+            // Only animate if the position actually changed significantly
+            if abs(currentX - targetX) > 1 {
+                // Ensure slideBox starts from current position
+                slideBox.frame = currentFrame
+                
+                // Use smooth spring animation for better feel
+                layoutContainer.startAnimating(slideBox)
+                withAnimation(.spring(damping: 0.7, velocity: 0.5), {
+                    self.slideBox.frame = targetFrame
+                }, completion: { _ in
+                    self.layoutContainer.stopAnimating(self.slideBox)
+                })
+            } else {
+                // No significant change, just set the frame without animation
+                layoutContainer.startAnimating(slideBox)
+                slideBox.frame = targetFrame
+                layoutContainer.stopAnimating(slideBox)
+            }
+        } else if slideBoxOriginalX != nil {
+            // Just update the reference position if no offset is applied
+            layoutContainer.updateBody { self.body }
+            slideBoxOriginalX = slideBox.frame.origin.x
+        }
+    }
+    
     override func setLayout() {
         layoutContainer.updateBody {
             self.body
@@ -93,11 +142,11 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 8) {
             createLabel(text: "🎬 Animation Demo", fontSize: 28, weight: .bold, color: .label)
                 .layout()
-                .size(width: 300, height: 40)
+                .size(width: 90%, height: 40)
             
             createLabel(text: "SwiftUI-style animations with Layout", fontSize: 14, weight: .regular, color: .secondaryLabel)
                 .layout()
-                .size(width: 300, height: 20)
+                .size(width: 90%, height: 20)
         }
         .padding(UIEdgeInsets(top: 20, left: 20, bottom: 10, right: 20))
     }
@@ -161,13 +210,18 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         .padding(UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20))
     }
     
+    private lazy var chainDemoView: ResponsiveChainDemoView = {
+        let view = ResponsiveChainDemoView()
+        return view
+    }()
+    
     private var chainSection: some Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionTitle("withAnimation Function")
             
-            createChainDemoView()
+            chainDemoView
                 .layout()
-                .size(width: 320, height: 100)
+                .size(width: 90%, height: 100)
             
             chainButton.layout()
                 .size(width: 200, height: 44)
@@ -183,7 +237,7 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         label.font = .systemFont(ofSize: 16, weight: .semibold)
         label.textColor = .label
         label.textAlignment = .center
-        return label.layout().size(width: 300, height: 24)
+        return label.layout().size(width: 90%, height: 24)
     }
     
     private func createButton(title: String, color: UIColor) -> UIButton {
@@ -205,38 +259,99 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         return label
     }
     
-    private func createChainDemoView() -> UIView {
-        let container = UIView()
-        container.backgroundColor = .secondarySystemBackground
-        container.layer.cornerRadius = 16
+    // Helper class to handle dynamic layout for chain demo view
+    private class ResponsiveChainDemoView: UIView {
+        let box1: UIView
+        let box2: UIView
+        let box3: UIView
+        private let label: UILabel
         
-        let box1 = UIView(frame: CGRect(x: 20, y: 30, width: 40, height: 40))
-        box1.backgroundColor = .systemRed
-        box1.layer.cornerRadius = 8
-        box1.tag = 101
+        init() {
+            let b1 = UIView()
+            b1.backgroundColor = .systemRed
+            b1.layer.cornerRadius = 8
+            b1.tag = 101
+            self.box1 = b1
+            
+            let b2 = UIView()
+            b2.backgroundColor = .systemYellow
+            b2.layer.cornerRadius = 8
+            b2.tag = 102
+            self.box2 = b2
+            
+            let b3 = UIView()
+            b3.backgroundColor = .systemBlue
+            b3.layer.cornerRadius = 8
+            b3.tag = 103
+            self.box3 = b3
+            
+            let lbl = UILabel()
+            lbl.text = "Tap button!"
+            lbl.font = .systemFont(ofSize: 12, weight: .medium)
+            lbl.textColor = .secondaryLabel
+            lbl.textAlignment = .center
+            lbl.tag = 104
+            self.label = lbl
+            
+            super.init(frame: .zero)
+            
+            self.backgroundColor = .secondarySystemBackground
+            self.layer.cornerRadius = 16
+            
+            addSubview(box1)
+            addSubview(box2)
+            addSubview(box3)
+            addSubview(label)
+        }
         
-        let box2 = UIView(frame: CGRect(x: 80, y: 30, width: 40, height: 40))
-        box2.backgroundColor = .systemYellow
-        box2.layer.cornerRadius = 8
-        box2.tag = 102
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
         
-        let box3 = UIView(frame: CGRect(x: 140, y: 30, width: 40, height: 40))
-        box3.backgroundColor = .systemBlue
-        box3.layer.cornerRadius = 8
-        box3.tag = 103
-        
-        let label = UILabel(frame: CGRect(x: 200, y: 35, width: 100, height: 30))
-        label.text = "Tap button!"
-        label.font = .systemFont(ofSize: 12, weight: .medium)
-        label.textColor = .secondaryLabel
-        label.tag = 104
-        
-        container.addSubview(box1)
-        container.addSubview(box2)
-        container.addSubview(box3)
-        container.addSubview(label)
-        
-        return container
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            
+            let containerWidth = bounds.width
+            let containerHeight = bounds.height
+            let boxSize: CGFloat = 40
+            let spacing: CGFloat = 20
+            let labelWidth: CGFloat = 100
+            let labelHeight: CGFloat = 30
+            
+            // Calculate total width needed
+            let totalContentWidth = boxSize * 3 + spacing * 2 + labelWidth + spacing
+            let startX = max(0, (containerWidth - totalContentWidth) / 2)
+            let centerY = containerHeight / 2
+            
+            // Layout boxes and label centered
+            box1.frame = CGRect(
+                x: startX,
+                y: centerY - boxSize / 2,
+                width: boxSize,
+                height: boxSize
+            )
+            
+            box2.frame = CGRect(
+                x: startX + boxSize + spacing,
+                y: centerY - boxSize / 2,
+                width: boxSize,
+                height: boxSize
+            )
+            
+            box3.frame = CGRect(
+                x: startX + (boxSize + spacing) * 2,
+                y: centerY - boxSize / 2,
+                width: boxSize,
+                height: boxSize
+            )
+            
+            label.frame = CGRect(
+                x: startX + (boxSize + spacing) * 3,
+                y: centerY - labelHeight / 2,
+                width: labelWidth,
+                height: labelHeight
+            )
+        }
     }
     
     // MARK: - Actions Setup
@@ -347,13 +462,8 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     }
     
     @objc private func slideTapped() {
-        // Save current frame before any changes
-        let currentFrame = slideBox.frame
-        
-        // Store original x position on first use
-        if slideBoxOriginalX == nil {
-            slideBoxOriginalX = currentFrame.origin.x
-        }
+        // Save current frame before any changes (this is the starting position for animation)
+        let startFrame = slideBox.frame
         
         // Toggle offset: 0 -> 80, 80 -> 0
         currentOffset = currentOffset == 0 ? 80 : 0
@@ -361,22 +471,32 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         // Mark slideBox as animating to prevent layout from overriding
         layoutContainer.startAnimating(slideBox)
         
-        // Update layout first (other views will update immediately, slideBox is skipped)
+        // Update layout first (other views update immediately, slideBox is skipped)
         layoutContainer.updateBody { self.body }
         
-        // Ensure slideBox starts from current position
-        slideBox.frame = currentFrame
+        // After layout update, get the new centered position
+        let newCenteredFrame = slideBox.frame
         
-        // Calculate target frame: original position + offset
+        // Update slideBoxOriginalX to the new centered position
+        // This ensures we have the correct reference point after rotation
+        if slideBoxOriginalX == nil || abs(slideBoxOriginalX! - newCenteredFrame.origin.x) > 10 {
+            slideBoxOriginalX = newCenteredFrame.origin.x
+        }
+        
+        // Calculate target frame: centered position + offset
         guard let originalX = slideBoxOriginalX else { return }
         let targetFrame = CGRect(
             x: originalX + currentOffset,
-            y: currentFrame.origin.y,
-            width: currentFrame.width,
-            height: currentFrame.height
+            y: newCenteredFrame.origin.y,
+            width: newCenteredFrame.width,
+            height: newCenteredFrame.height
         )
         
-        // Animate only the slideBox
+        // Ensure slideBox starts from its current position (before animation)
+        // This is important for smooth animation from current position to target
+        slideBox.frame = startFrame
+        
+        // Animate from current position to target position
         withAnimation(.easeOut(duration: 0.3), {
             self.slideBox.frame = targetFrame
         }, completion: { _ in
@@ -387,41 +507,46 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     }
     
     @objc private func chainTapped() {
-        // Find the chain demo view and animate boxes sequentially
-        guard let chainView = view.viewWithTag(101)?.superview else { return }
-        
-        let box1 = chainView.viewWithTag(101)
-        let box2 = chainView.viewWithTag(102)
-        let box3 = chainView.viewWithTag(103)
+        // Mark boxes as animating to prevent layout from overriding
+        layoutContainer.startAnimating(chainDemoView.box1)
+        layoutContainer.startAnimating(chainDemoView.box2)
+        layoutContainer.startAnimating(chainDemoView.box3)
         
         // Reset first
-        box1?.transform = .identity
-        box2?.transform = .identity
-        box3?.transform = .identity
+        chainDemoView.box1.transform = .identity
+        chainDemoView.box2.transform = .identity
+        chainDemoView.box3.transform = .identity
         
         // Chain animation using Layout library's withAnimation
         withAnimation(.spring(damping: 0.6)) {
-            box1?.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+            self.chainDemoView.box1.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             withAnimation(.spring(damping: 0.6)) {
-                box2?.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+                self.chainDemoView.box2.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
             }
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.spring(damping: 0.6)) {
-                box3?.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+                self.chainDemoView.box3.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
             }
         }
         
         // Reset after delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation(.spring(damping: 0.7)) {
-                box1?.transform = .identity
-                box2?.transform = .identity
-                box3?.transform = .identity
+                self.chainDemoView.box1.transform = .identity
+                self.chainDemoView.box2.transform = .identity
+                self.chainDemoView.box3.transform = .identity
+            }
+            
+            // Stop animating after all animations complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.layoutContainer.stopAnimating(self.chainDemoView.box1)
+                self.layoutContainer.stopAnimating(self.chainDemoView.box2)
+                self.layoutContainer.stopAnimating(self.chainDemoView.box3)
             }
         }
     }

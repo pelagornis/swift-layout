@@ -64,15 +64,14 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
                 text: "GeometryReader Examples",
                 font: .systemFont(ofSize: 26, weight: .bold),
                 color: .label
-            ).layout().size(width: 350, height: 32)
+            ).layout().size(width: 90%, height: 32)
             
             createLabel(
                 text: "Dynamic layouts using GeometryProxy",
                 font: .systemFont(ofSize: 13, weight: .regular),
                 color: .secondaryLabel
-            ).layout().size(width: 350, height: 18)
+            ).layout().size(width: 90%, height: 18)
         }
-        .padding(UIEdgeInsets(top: 16, left: 20, bottom: 8, right: 20))
     }
     
     // MARK: - Demo 1: Proportional Layout with GeometryReader
@@ -83,11 +82,10 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
             
             createProportionalGeometryReader()
                 .layout()
-                .size(width: 360, height: 140)
+                .size(width: 90%, height: 140)
                 .background(.tertiarySystemBackground)
                 .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private func createProportionalGeometryReader() -> GeometryReader {
@@ -122,11 +120,10 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
             
             createGridGeometryReader()
                 .layout()
-                .size(width: 360, height: 140)
+                .size(width: 90%, height: 140)
                 .background(.tertiarySystemBackground)
                 .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private func createGridGeometryReader() -> GeometryReader {
@@ -163,11 +160,10 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
             
             createLiveInfoGeometryReader()
                 .layout()
-                .size(width: 360, height: 140)
+                .size(width: 90%, height: 140)
                 .background(UIColor.systemIndigo.withAlphaComponent(0.1))
                 .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private func createLiveInfoGeometryReader() -> GeometryReader {
@@ -196,11 +192,10 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
             
             createPositionEffectGeometryReader()
                 .layout()
-                .size(width: 360, height: 180)
+                .size(width: 90%, height: 180)
                 .background(.tertiarySystemBackground)
                 .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private func createPositionEffectGeometryReader() -> GeometryReader {
@@ -236,17 +231,17 @@ final class GeometryReaderDemoViewController: BaseViewController, Layout {
                 text: title,
                 font: .systemFont(ofSize: 16, weight: .bold),
                 color: .label
-            ).layout().size(width: 340, height: 20)
+            ).layout().size(width: 90%, height: 20)
             
             createLabel(
                 text: subtitle,
                 font: .systemFont(ofSize: 11, weight: .regular),
                 color: .secondaryLabel
-            ).layout().size(width: 340, height: 14)
+            ).layout().size(width: 90%, height: 14)
         }
         .padding(UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12))
         .layout()
-        .size(width: 360, height: 50)
+        .size(width: 90%, height: 50)
         .background(.secondarySystemBackground)
         .cornerRadius(12)
     }

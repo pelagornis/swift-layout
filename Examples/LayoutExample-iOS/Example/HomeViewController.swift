@@ -86,7 +86,7 @@ final class HomeViewController: BaseViewController, Layout {
                 benefitsSection
                 spacerTestSection
                 actionButtonView
-                Spacer(minLength: 50)
+                Spacer(minLength: 100) // Increased to prevent content from being covered by tab bar
             }
         }
     }
@@ -97,10 +97,10 @@ final class HomeViewController: BaseViewController, Layout {
                 .size(width: 100, height: 100)
             
             nameLabel.layout()
-                .size(width: 320, height: 44)
+                .size(width: 90%, height: 44)
             
             descriptionLabel.layout()
-                .size(width: 300, height: 50)
+                .size(width: 90%, height: 50)
         }
         .padding(UIEdgeInsets(top: 40, left: 20, bottom: 20, right: 20))
     }
@@ -108,32 +108,34 @@ final class HomeViewController: BaseViewController, Layout {
     private var statisticsCard: some Layout {
         createStatisticsCard()
             .layout()
-            .size(width: 350, height: 100)
+            .size(width: 90%, height: 100)
+            .centerX() // Center the statistics card horizontally
     }
     
     private var featureCardsSection: some Layout {
         VStack(alignment: .center, spacing: 16) {
             createSectionTitle(text: "Key Features")
                 .layout()
-                .size(width: 350, height: 30)
+                .size(width: 90%, height: 30)
             
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: 1) {
                 createFeatureCard(icon: "🎨", title: "Design", color: .systemPink)
                     .layout()
-                    .size(width: 110, height: 140)
+                    .size(width: 33%, height: 140)
                     .cornerRadius(16)
                 
                 createFeatureCard(icon: "⚡️", title: "Performance", color: .systemOrange)
                     .layout()
-                    .size(width: 110, height: 140)
+                    .size(width: 33%, height: 140)
                     .cornerRadius(16)
                 
                 createFeatureCard(icon: "🚀", title: "Simplicity", color: .systemBlue)
                     .layout()
-                    .size(width: 110, height: 140)
+                    .size(width: 33%, height: 140)
                     .cornerRadius(16)
             }
-            .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
+            .layout()
+            .size(width: 90%, height: 140)
         }
     }
     
@@ -141,7 +143,7 @@ final class HomeViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             createSectionTitle(text: "Horizontal Scroll (HStack)")
                 .layout()
-                .size(width: 350, height: 30)
+                .size(width: 90%, height: 30)
             
             // HStack with horizontal scrolling
             ScrollView(.horizontal) {
@@ -172,7 +174,7 @@ final class HomeViewController: BaseViewController, Layout {
                 }
             }
             .layout()
-            .size(width: 390, height: 120)  // Full width for horizontal scroll
+            .size(width: 100%, height: 120)  // Full width for horizontal scroll
         }
     }
     
@@ -180,13 +182,13 @@ final class HomeViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 16) {
             createSectionTitle(text: "ZStack Examples")
                 .layout()
-                .size(width: 350, height: 30)
+                .size(width: 90%, height: 30)
             
             // Example 1: Card with badge overlay
             ZStack(alignment: .topTrailing) {
                 createZStackCard(backgroundColor: .systemIndigo, title: "Card with Badge")
                     .layout()
-                    .size(width: 300, height: 120)
+                    .size(width: 100%, height: 120)
                 
                 createBadgeView(text: "NEW", color: .systemRed)
                     .layout()
@@ -194,26 +196,26 @@ final class HomeViewController: BaseViewController, Layout {
                     .offset(x: -10, y: 10)
             }
             .layout()
-            .size(width: 300, height: 120)
+            .size(width: 90%, height: 120)
             
             // Example 2: Image with text overlay (center)
             ZStack(alignment: .center) {
                 createZStackCard(backgroundColor: .systemTeal, title: "")
                     .layout()
-                    .size(width: 300, height: 150)
+                    .size(width: 100%, height: 150)
                 
                 createOverlayText(text: "Overlay Text", color: .white)
                     .layout()
                     .size(width: 200, height: 40)
             }
             .layout()
-            .size(width: 300, height: 150)
+            .size(width: 90%, height: 150)
             
             // Example 3: Multiple layers with different alignments
             ZStack(alignment: .bottomLeading) {
                 createZStackCard(backgroundColor: .systemOrange, title: "")
                     .layout()
-                    .size(width: 300, height: 100)
+                    .size(width: 100%, height: 100)
                 
                 createOverlayText(text: "Bottom Left", color: .white)
                     .layout()
@@ -221,39 +223,38 @@ final class HomeViewController: BaseViewController, Layout {
                     .offset(x: 10, y: -10)
             }
             .layout()
-            .size(width: 300, height: 100)
+            .size(width: 90%, height: 100)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private var benefitsSection: some Layout {
         VStack(alignment: .center, spacing: 16) {
             createSectionTitle(text: "Benefits")
                 .layout()
-                .size(width: 350, height: 30)
+                .size(width: 90%, height: 30)
             
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .center, spacing: 12) {
                 createBenefitRow(icon: "✓", text: "SwiftUI-like declarative syntax")
                     .layout()
-                    .size(width: 350, height: 40)
+                    .size(width: 100%, height: 40)
                 
                 createBenefitRow(icon: "✓", text: "Fast layout performance")
                     .layout()
-                    .size(width: 350, height: 40)
+                    .size(width: 100%, height: 40)
                 
                 createBenefitRow(icon: "✓", text: "Easy customization")
                     .layout()
-                    .size(width: 350, height: 40)
+                    .size(width: 100%, height: 40)
             }
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
+        .padding(UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10))
     }
     
     private var spacerTestSection: some Layout {
         VStack(alignment: .center, spacing: 12) {
             createSectionTitle(text: "Spacer Test")
                 .layout()
-                .size(width: 350, height: 30)
+                .size(width: 90%, height: 30)
             
             // VStack with Spacer minLength test
             VStack(alignment: .center, spacing: 0) {
@@ -274,7 +275,7 @@ final class HomeViewController: BaseViewController, Layout {
                     .size(width: 100, height: 40)
             }
             .layout()
-            .size(width: 350, height: 240)
+            .size(width: 90%, height: 240)
             .background(.tertiarySystemFill)
             .cornerRadius(16)
             
@@ -297,26 +298,21 @@ final class HomeViewController: BaseViewController, Layout {
                     .size(width: 50, height: 50)
             }
             .layout()
-            .size(width: 350, height: 70)
+            .size(width: 90%, height: 70)
             .background(.tertiarySystemFill)
             .cornerRadius(16)
         }
-        .padding(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
     }
     
     private var actionButtonView: some Layout {
         actionButton.layout()
-            .size(width: 280, height: 56)
+            .size(width: 90%, height: 56)
             .offset(y: 10)
     }
     
     // MARK: - Helper Methods
     
-    private func createFeatureCard(icon: String, title: String, color: UIColor) -> UIView {
-        let container = UIView()
-        container.backgroundColor = color.withAlphaComponent(0.1)
-        container.layer.masksToBounds = true
-        
+    private func createFeatureCard(icon: String, title: String, color: UIColor) -> VStack {
         let iconLabel = UILabel()
         iconLabel.text = icon
         iconLabel.font = .systemFont(ofSize: 40)
@@ -331,65 +327,137 @@ final class HomeViewController: BaseViewController, Layout {
         
         let vStack = VStack(alignment: .center, spacing: 8) {
             iconLabel.layout()
-                .size(width: 60, height: 60)
+                .size(width: 100%, height: 60)
             titleLabel.layout()
-                .size(width: 100, height: 40)
+                .size(width: 100%, height: 40)
         }
         .padding(16)
         
-        container.addSubview(vStack)
-        vStack.frame = CGRect(x: 0, y: 0, width: 110, height: 140)
+        vStack.backgroundColor = color.withAlphaComponent(0.1)
+        vStack.layer.masksToBounds = true
         
-        return container
+        return vStack
     }
     
     private func createStatisticsCard() -> UIView {
-        let container = UIView()
-        container.backgroundColor = .secondarySystemBackground
-        container.layer.cornerRadius = 16
-        container.layer.masksToBounds = true
-        
-        let leftVStack = VStack(alignment: .center, spacing: 4) {
-            createLabel(text: "Manual", fontSize: 24, weight: .bold, color: .systemIndigo)
-                .layout()
-                .size(width: 140, height: 30)
-            
-            createLabel(text: "Layout", fontSize: 13, weight: .regular, color: .secondaryLabel)
-                .layout()
-                .size(width: 140, height: 20)
-        }
-        .padding(UIEdgeInsets(top: 15, left: 5, bottom: 15, right: 5))
-        
-        let rightVStack = VStack(alignment: .center, spacing: 4) {
-            createLabel(text: "4.9", fontSize: 24, weight: .bold, color: .systemIndigo)
-                .layout()
-                .size(width: 140, height: 30)
-            
-            createLabel(text: "Rating", fontSize: 13, weight: .regular, color: .secondaryLabel)
-                .layout()
-                .size(width: 140, height: 20)
-        }
-        .padding(UIEdgeInsets(top: 15, left: 5, bottom: 15, right: 5))
-        
-        let hStack = HStack(alignment: .center, spacing: 10) {
-            leftVStack
-                .layout()
-                .size(width: 150, height: 80)
-            
-            UIView()
-                .layout()
-                .size(width: 1, height: 60)
-                .background(.separator)
-            
-            rightVStack
-                .layout()
-                .size(width: 150, height: 80)
-        }
-        
-        container.addSubview(hStack)
-        hStack.frame = CGRect(x: 0, y: 0, width: 350, height: 100)
-        
+        let container = ResponsiveStatisticsCard()
         return container
+    }
+    
+    // Helper class to handle dynamic layout for statistics card
+    private class ResponsiveStatisticsCard: UIView {
+        private let manualLabel: UILabel
+        private let layoutLabel: UILabel
+        private let ratingLabel: UILabel
+        private let ratingTextLabel: UILabel
+        private let separator: UIView
+        
+        init() {
+            let manualLbl = UILabel()
+            manualLbl.text = "Manual"
+            manualLbl.font = .systemFont(ofSize: 24, weight: .bold)
+            manualLbl.textColor = .systemIndigo
+            manualLbl.textAlignment = .center
+            self.manualLabel = manualLbl
+            
+            let layoutLbl = UILabel()
+            layoutLbl.text = "Layout"
+            layoutLbl.font = .systemFont(ofSize: 13, weight: .regular)
+            layoutLbl.textColor = .secondaryLabel
+            layoutLbl.textAlignment = .center
+            self.layoutLabel = layoutLbl
+            
+            let ratingLbl = UILabel()
+            ratingLbl.text = "4.9"
+            ratingLbl.font = .systemFont(ofSize: 24, weight: .bold)
+            ratingLbl.textColor = .systemIndigo
+            ratingLbl.textAlignment = .center
+            self.ratingLabel = ratingLbl
+            
+            let ratingTextLbl = UILabel()
+            ratingTextLbl.text = "Rating"
+            ratingTextLbl.font = .systemFont(ofSize: 13, weight: .regular)
+            ratingTextLbl.textColor = .secondaryLabel
+            ratingTextLbl.textAlignment = .center
+            self.ratingTextLabel = ratingTextLbl
+            
+            let sep = UIView()
+            sep.backgroundColor = .separator
+            self.separator = sep
+            
+            super.init(frame: .zero)
+            
+            self.backgroundColor = .secondarySystemBackground
+            self.layer.cornerRadius = 16
+            self.layer.masksToBounds = true
+            
+            addSubview(manualLabel)
+            addSubview(layoutLabel)
+            addSubview(ratingLabel)
+            addSubview(ratingTextLabel)
+            addSubview(separator)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            
+            let containerWidth = bounds.width
+            let containerHeight = bounds.height
+            let padding: CGFloat = 15
+            let spacing: CGFloat = 10
+            let separatorWidth: CGFloat = 1
+            let separatorHeight: CGFloat = 60
+            
+            // Calculate left and right section widths (each 50% minus spacing)
+            let sectionWidth = (containerWidth - separatorWidth - spacing * 2) / 2
+            let leftSectionX: CGFloat = padding
+            let rightSectionX = containerWidth - sectionWidth - padding
+            
+            // Calculate label widths (accounting for padding)
+            let labelWidth = max(0, sectionWidth - 10) // 10 for internal padding
+            
+            // Left section
+            let leftCenterX = leftSectionX + sectionWidth / 2
+            manualLabel.frame = CGRect(
+                x: leftCenterX - labelWidth / 2,
+                y: padding,
+                width: labelWidth,
+                height: 30
+            )
+            layoutLabel.frame = CGRect(
+                x: leftCenterX - labelWidth / 2,
+                y: padding + 30 + 4,
+                width: labelWidth,
+                height: 20
+            )
+            
+            // Separator (centered vertically)
+            separator.frame = CGRect(
+                x: (containerWidth - separatorWidth) / 2,
+                y: (containerHeight - separatorHeight) / 2,
+                width: separatorWidth,
+                height: separatorHeight
+            )
+            
+            // Right section
+            let rightCenterX = rightSectionX + sectionWidth / 2
+            ratingLabel.frame = CGRect(
+                x: rightCenterX - labelWidth / 2,
+                y: padding,
+                width: labelWidth,
+                height: 30
+            )
+            ratingTextLabel.frame = CGRect(
+                x: rightCenterX - labelWidth / 2,
+                y: padding + 30 + 4,
+                width: labelWidth,
+                height: 20
+            )
+        }
     }
     
     private func createLabel(text: String, fontSize: CGFloat, weight: UIFont.Weight, color: UIColor) -> UILabel {
@@ -411,31 +479,59 @@ final class HomeViewController: BaseViewController, Layout {
     }
     
     private func createBenefitRow(icon: String, text: String) -> UIView {
-        let container = UIView()
-        container.backgroundColor = .tertiarySystemBackground
-        container.layer.cornerRadius = 12
-        container.layer.masksToBounds = true
-        
-        let iconLabel = UILabel()
-        iconLabel.text = icon
-        iconLabel.font = .systemFont(ofSize: 18, weight: .bold)
-        iconLabel.textColor = .systemGreen
-        iconLabel.textAlignment = .center
-        
-        let textLabel = UILabel()
-        textLabel.text = text
-        textLabel.font = .systemFont(ofSize: 15, weight: .medium)
-        textLabel.textColor = .label
-        
-        let hStack = HStack(alignment: .center, spacing: 12) {
-            iconLabel.layout().size(width: 30, height: 30)
-            textLabel.layout().size(width: 280, height: 30)
-        }
-        .padding(UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10))
-        
-        container.addSubview(hStack)
-        hStack.frame = CGRect(x: 0, y: 0, width: 350, height: 40)
+        let container = ResponsiveBenefitRow(icon: icon, text: text)
         return container
+    }
+    
+    // Helper class to handle dynamic layout for benefit rows
+    private class ResponsiveBenefitRow: UIView {
+        private let iconLabel: UILabel
+        private let textLabel: UILabel
+        private let hStack: HStack
+        
+        init(icon: String, text: String) {
+            let iconLbl = UILabel()
+            iconLbl.text = icon
+            iconLbl.font = .systemFont(ofSize: 18, weight: .bold)
+            iconLbl.textColor = .systemGreen
+            iconLbl.textAlignment = .center
+            self.iconLabel = iconLbl
+            
+            let textLbl = UILabel()
+            textLbl.text = text
+            textLbl.font = .systemFont(ofSize: 15, weight: .medium)
+            textLbl.textColor = .label
+            textLbl.numberOfLines = 0
+            self.textLabel = textLbl
+            
+            let stack = HStack(alignment: .center, spacing: 12) {
+                iconLbl.layout().size(width: 30, height: 30)
+                textLbl.layout().size(width: 280, height: 30)
+            }
+            .padding(UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10))
+            self.hStack = stack
+            
+            super.init(frame: .zero)
+            
+            self.backgroundColor = .tertiarySystemBackground
+            self.layer.cornerRadius = 12
+            self.layer.masksToBounds = true
+            
+            addSubview(stack)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            // Update hStack frame to fill container
+            hStack.frame = bounds
+            // Update textLabel width to be responsive
+            let availableWidth = bounds.width - 30 - 12 - 20 // icon width + spacing + padding
+            textLabel.frame.size.width = max(availableWidth, 0)
+        }
     }
     
     private func createScrollCard(title: String, color: UIColor) -> UIView {
@@ -483,25 +579,59 @@ final class HomeViewController: BaseViewController, Layout {
     }
     
     private func createZStackCard(backgroundColor: UIColor, title: String) -> UIView {
-        let container = UIView()
-        container.backgroundColor = backgroundColor.withAlphaComponent(0.2)
-        container.layer.cornerRadius = 16
-        container.layer.masksToBounds = true
-        container.layer.borderWidth = 2
-        container.layer.borderColor = backgroundColor.withAlphaComponent(0.4).cgColor
+        let container = ResponsiveZStackCard(backgroundColor: backgroundColor, title: title)
+        return container
+    }
+    
+    // Helper class to handle dynamic label sizing
+    private class ResponsiveZStackCard: UIView {
+        private let titleLabel: UILabel?
         
-        if !title.isEmpty {
-            let titleLabel = UILabel()
-            titleLabel.text = title
-            titleLabel.font = .systemFont(ofSize: 18, weight: .bold)
-            titleLabel.textColor = backgroundColor
-            titleLabel.textAlignment = .center
+        init(backgroundColor: UIColor, title: String) {
+            self.titleLabel = title.isEmpty ? nil : {
+                let label = UILabel()
+                label.text = title
+                label.font = .systemFont(ofSize: 18, weight: .bold)
+                label.textColor = backgroundColor
+                label.textAlignment = .center
+                label.numberOfLines = 0
+                label.adjustsFontSizeToFitWidth = true
+                label.minimumScaleFactor = 0.7
+                return label
+            }()
             
-            container.addSubview(titleLabel)
-            titleLabel.frame = CGRect(x: 0, y: 20, width: 300, height: 30)
+            super.init(frame: .zero)
+            
+            self.backgroundColor = backgroundColor.withAlphaComponent(0.2)
+            self.layer.cornerRadius = 16
+            self.layer.masksToBounds = true
+            self.layer.borderWidth = 2
+            self.layer.borderColor = backgroundColor.withAlphaComponent(0.4).cgColor
+            
+            if let titleLabel = titleLabel {
+                addSubview(titleLabel)
+            }
         }
         
-        return container
+        required init?(coder: NSCoder) {
+            self.titleLabel = nil
+            super.init(coder: coder)
+        }
+        
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            
+            if let titleLabel = titleLabel {
+                let padding: CGFloat = 10
+                let topPadding: CGFloat = 20
+                titleLabel.frame = CGRect(
+                    x: padding,
+                    y: topPadding,
+                    width: max(bounds.width - padding * 2, 0),
+                    height: max(bounds.height - topPadding * 2, 30)
+                )
+            }
+        }
     }
     
     private func createBadgeView(text: String, color: UIColor) -> UIView {
