@@ -144,6 +144,10 @@ public class VStack: UIView, Layout {
                     // Store ViewLayout information for all views (including Stack components)
                     if let viewLayout = childLayout as? ViewLayout {
                         storeViewLayout(viewLayout, for: childView)
+                    } else if !childView.layoutModifiers.isEmpty {
+                        // If view (including ZStack, HStack, etc.) has layout modifiers, create ViewLayout for it
+                        // This allows calculateLayout to properly size views with Percent-based modifiers
+                        storeViewLayout(ViewLayout(childView), for: childView)
                     }
                 }
             }
@@ -163,8 +167,8 @@ public class VStack: UIView, Layout {
                 if let viewLayout = layout as? ViewLayout {
                     storeViewLayout(viewLayout, for: childView)
                 } else if !childView.layoutModifiers.isEmpty {
-                    // If view has layout modifiers (from ForEach items), create ViewLayout for it
-                    // This allows calculateLayout to properly size views with modifiers
+                    // If view has layout modifiers (from ForEach items or Stack components like ZStack),
+                    // create ViewLayout for it. This allows calculateLayout to properly size views with modifiers
                     storeViewLayout(ViewLayout(childView), for: childView)
                 }
             }
@@ -535,8 +539,10 @@ public class VStack: UIView, Layout {
                     currentY += size.height + spacing
                 }
             } else if let layoutView = subview as? (any Layout) {
-                // Pass limited size to child layout (prevent infinite)
-                let childBounds = CGRect(x: 0, y: 0, width: maxWidth, height: maxHeight)
+                // For center/trailing alignment, use full safeBounds.width for child layout bounds
+                // This ensures Percent-based sizes are calculated correctly
+                let childBoundsWidth = alignment != .leading ? safeBounds.width : maxWidth
+                let childBounds = CGRect(x: 0, y: 0, width: childBoundsWidth, height: maxHeight)
                 let childResult = layoutView.calculateLayout(in: childBounds)
                 
                 // Apply alignment to child layout frames
@@ -554,7 +560,7 @@ public class VStack: UIView, Layout {
                 }
                 
                 // Apply size limits
-                let limitedWidth = min(childResult.totalSize.width, maxWidth)
+                let limitedWidth = min(childResult.totalSize.width, childBoundsWidth)
                 let limitedHeight = min(childResult.totalSize.height, maxHeight)
                 // For center/trailing alignment, use full width. For leading, use max width
                 // Note: We don't update totalSize.width here for center/trailing alignment,

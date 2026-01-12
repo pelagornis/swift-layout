@@ -98,10 +98,16 @@ public struct ViewLayout: Layout {
         for modifier in modifiers {
             if let sizeModifier = modifier as? SizeModifier {
                 if let width = sizeModifier.width {
-                    measuredSize.width = width
+                    // Always use actual bounds.width for Percent calculation to ensure consistency
+                    // If bounds.width is 0, we'll recalculate in layoutFrame with actual bounds
+                    let parentWidth = bounds.width > 0 ? bounds.width : (proposedWidth ?? 375)
+                    measuredSize.width = width.calculate(relativeTo: parentWidth)
                 }
                 if let height = sizeModifier.height {
-                    measuredSize.height = height
+                    // Always use actual bounds.height for Percent calculation to ensure consistency
+                    // If bounds.height is 0, we'll recalculate in layoutFrame with actual bounds
+                    let parentHeight = bounds.height > 0 ? bounds.height : (proposedHeight ?? 667)
+                    measuredSize.height = height.calculate(relativeTo: parentHeight)
                 }
             } else if let aspectRatioModifier = modifier as? AspectRatioModifier {
                 // Apply aspect ratio during measure
@@ -127,14 +133,34 @@ public struct ViewLayout: Layout {
     /// LAYOUT PHASE: Determines the final position of the view
     /// This happens after measure phase
     private func layoutFrame(size: CGSize, in bounds: CGRect) -> CGRect {
-        let safeBounds = bounds.width > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
+        // Use actual bounds if available, otherwise use safe fallback
+        let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
         
-        // Start with relative coordinates
-        var frame = CGRect(origin: .zero, size: size)
+        // Recalculate size if we have Percent modifiers - always use actual bounds for consistency
+        // This ensures Percent calculations use the actual bounds from parent container
+        var finalSize = size
+        for modifier in modifiers {
+            if let sizeModifier = modifier as? SizeModifier {
+                // Always recalculate Percent-based sizes with actual bounds to ensure consistency
+                // This fixes issues where measureSize used fallback values but layoutFrame has real bounds
+                if let width = sizeModifier.width {
+                    finalSize.width = width.calculate(relativeTo: safeBounds.width)
+                }
+                if let height = sizeModifier.height {
+                    finalSize.height = height.calculate(relativeTo: safeBounds.height)
+                }
+            }
+        }
+        
+        // Ensure minimum size to prevent invisible views
+        finalSize = CGSize(width: max(finalSize.width, 1), height: max(finalSize.height, 1))
+        
+        // Start with relative coordinates using recalculated size
+        var frame = CGRect(origin: .zero, size: finalSize)
         
         // Apply modifiers in sequence (layout phase - positioning)
         for modifier in modifiers {
-            // Skip size modifiers (already applied in measure phase)
+            // Skip size modifiers (already applied above)
             if modifier is SizeModifier || modifier is AspectRatioModifier {
                 continue
             }
@@ -171,12 +197,71 @@ public struct ViewLayout: Layout {
     
     /// Sets the width and/or height of the view.
     ///
+    /// Supports both fixed values and percentage (using `%` operator).
+    ///
     /// - Parameters:
-    ///   - width: Optional width to set
-    ///   - height: Optional height to set
+    ///   - width: Optional width to set (fixed value or percentage like `80%`)
+    ///   - height: Optional height to set (fixed value or percentage like `50%`)
     /// - Returns: A new ``ViewLayout`` with the size modifier applied
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// // Fixed size
+    /// view.layout().size(width: 200, height: 100)
+    ///
+    /// // Percentage (PinLayout-style)
+    /// view.layout().size(width: 80%, height: 50%)
+    ///
+    /// // Mixed
+    /// view.layout().size(width: 80%, height: 100)
+    /// ```
     /// Note: Modifier is stored on the view itself, not creating a new node
     public func size(width: CGFloat? = nil, height: CGFloat? = nil) -> ViewLayout {
+        view.addLayoutModifier(SizeModifier(width: width, height: height))
+        return self
+    }
+    
+    /// Sets the width and/or height of the view using SizeValue (supports percentage).
+    ///
+    /// - Parameters:
+    ///   - width: Optional width value (fixed or percentage)
+    ///   - height: Optional height value (fixed or percentage)
+    /// - Returns: A new ``ViewLayout`` with the size modifier applied
+    public func size(width: SizeValue? = nil, height: SizeValue? = nil) -> ViewLayout {
+        view.addLayoutModifier(SizeModifier(width: width, height: height))
+        return self
+    }
+    
+    /// Sets the width and/or height of the view using Percent (PinLayout-style).
+    ///
+    /// - Parameters:
+    ///   - width: Optional width as Percent (e.g., `80%`)
+    ///   - height: Optional height as Percent (e.g., `50%`)
+    /// - Returns: A new ``ViewLayout`` with the size modifier applied
+    public func size(width: Percent? = nil, height: Percent? = nil) -> ViewLayout {
+        view.addLayoutModifier(SizeModifier(width: width, height: height))
+        return self
+    }
+    
+    /// Sets the width and/or height of the view with mixed types (Percent width, CGFloat height).
+    ///
+    /// - Parameters:
+    ///   - width: Optional width as Percent (e.g., `80%`)
+    ///   - height: Optional height as fixed value
+    /// - Returns: A new ``ViewLayout`` with the size modifier applied
+    public func size(width: Percent?, height: CGFloat?) -> ViewLayout {
+        view.addLayoutModifier(SizeModifier(width: width, height: height))
+        return self
+    }
+    
+    /// Sets the width and/or height of the view with mixed types (CGFloat width, Percent height).
+    ///
+    /// - Parameters:
+    ///   - width: Optional width as fixed value
+    ///   - height: Optional height as Percent (e.g., `50%`)
+    /// - Returns: A new ``ViewLayout`` with the size modifier applied
+    public func size(width: CGFloat?, height: Percent?) -> ViewLayout {
         view.addLayoutModifier(SizeModifier(width: width, height: height))
         return self
     }
@@ -188,6 +273,7 @@ public struct ViewLayout: Layout {
     public func size(_ size: CGSize) -> ViewLayout {
         return self.size(width: size.width, height: size.height)
     }
+    
     
     /// Sets the frame dimensions of the view.
     ///
@@ -226,6 +312,88 @@ public struct ViewLayout: Layout {
         return self
     }
     
+    // MARK: - PinLayout-style Edge Positioning
+    
+    /// Positions the view from the top edge (PinLayout-style).
+    ///
+    /// - Parameter value: Distance from top (fixed value or percentage like `25%`)
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// view.layout()
+    ///     .top(25%)  // 25% from top
+    ///     .centerX()
+    /// ```
+    public func top(_ value: Percent) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .top, percent: value))
+        return self
+    }
+    
+    /// Positions the view from the top edge with fixed value.
+    ///
+    /// - Parameter value: Distance from top in points
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func top(_ value: CGFloat) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .top, value: .fixed(value)))
+        return self
+    }
+    
+    /// Positions the view from the bottom edge (PinLayout-style).
+    ///
+    /// - Parameter value: Distance from bottom (fixed value or percentage like `25%`)
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func bottom(_ value: Percent) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .bottom, percent: value))
+        return self
+    }
+    
+    /// Positions the view from the bottom edge with fixed value.
+    ///
+    /// - Parameter value: Distance from bottom in points
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func bottom(_ value: CGFloat) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .bottom, value: .fixed(value)))
+        return self
+    }
+    
+    /// Positions the view from the leading edge (PinLayout-style).
+    ///
+    /// - Parameter value: Distance from leading (fixed value or percentage like `25%`)
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func leading(_ value: Percent) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .leading, percent: value))
+        return self
+    }
+    
+    /// Positions the view from the leading edge with fixed value.
+    ///
+    /// - Parameter value: Distance from leading in points
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func leading(_ value: CGFloat) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .leading, value: .fixed(value)))
+        return self
+    }
+    
+    /// Positions the view from the trailing edge (PinLayout-style).
+    ///
+    /// - Parameter value: Distance from trailing (fixed value or percentage like `25%`)
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func trailing(_ value: Percent) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .trailing, percent: value))
+        return self
+    }
+    
+    /// Positions the view from the trailing edge with fixed value.
+    ///
+    /// - Parameter value: Distance from trailing in points
+    /// - Returns: A new ``ViewLayout`` with the edge modifier applied
+    public func trailing(_ value: CGFloat) -> ViewLayout {
+        view.addLayoutModifier(EdgeModifier(edge: .trailing, value: .fixed(value)))
+        return self
+    }
+
     /// Sets the position of the view.
     ///
     /// - Parameters:

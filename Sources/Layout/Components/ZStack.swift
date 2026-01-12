@@ -263,6 +263,23 @@ public class ZStack: UIView, Layout {
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
         
+        // If ZStack itself has ViewLayout (from .layout() modifier), use it for size calculation
+        // This handles Percent-based sizes correctly
+        var zStackSize: CGSize? = nil
+        if let storedViewLayout = getViewLayout(for: self) {
+            let viewResult = storedViewLayout.calculateLayout(in: bounds)
+            if let frame = viewResult.frames[self] {
+                zStackSize = frame.size
+                frames[self] = frame
+            }
+        } else if explicitSize.width > 0 || explicitSize.height > 0 {
+            // Use explicit size if set
+            zStackSize = CGSize(
+                width: explicitSize.width > 0 ? explicitSize.width : bounds.width,
+                height: explicitSize.height > 0 ? explicitSize.height : bounds.height
+            )
+        }
+        
         // Calculate layout for each child
         for subview in subviews {
             if let layoutView = subview as? (any Layout) {
@@ -322,9 +339,14 @@ public class ZStack: UIView, Layout {
             }
         }
         
-        // Add padding to total size
-        totalSize.width += padding.left + padding.right
-        totalSize.height += padding.top + padding.bottom
+        // If we have a size from ViewLayout or explicitSize, use it
+        if let zStackSize = zStackSize {
+            totalSize = zStackSize
+        } else {
+            // Otherwise, calculate from children and add padding
+            totalSize.width += padding.left + padding.right
+            totalSize.height += padding.top + padding.bottom
+        }
         
         // Set frame for ZStack itself using totalSize (actual content size)
         frames[self] = CGRect(x: 0, y: 0, width: totalSize.width, height: totalSize.height)
