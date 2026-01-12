@@ -115,4 +115,32 @@ public struct LayoutAdapter: NewLayoutNode {
         }
         return hasher.finalize()
     }
+    
+    /// Converts a `Layout` to a `LayoutElement`
+    ///
+    /// This is a convenience method that creates a LayoutAdapter and wraps it
+    /// in a LayoutElement for use with the new layout system.
+    ///
+    /// - Parameters:
+    ///   - layout: The layout to convert
+    ///   - id: Unique identifier for this element (defaults to UUID)
+    ///   - environment: Environment values for this element
+    /// - Returns: A `LayoutElement` representing the layout
+    public static func toElement(
+        _ layout: any Layout,
+        id: LayoutID = AnyHashable(UUID()),
+        environment: EnvironmentValues = EnvironmentValues()
+    ) -> LayoutElement {
+        let adapter = LayoutAdapter(layout: layout, id: id)
+        let views = layout.extractViews()
+        let view = views.first // For now, use first view (simplified)
+        
+        return LayoutElement(
+            id: id,
+            node: adapter,
+            children: [],
+            view: view,
+            environment: environment
+        )
+    }
 }

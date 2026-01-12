@@ -81,6 +81,16 @@ public class LayoutContainer: UIView {
     
     public var useIncrementalLayout: Bool = true
     
+    /// Whether to use the new LayoutEngine architecture
+    /// When enabled, uses LayoutEngine and LayoutRenderer instead of direct layout calculation
+    public var useNewEngine: Bool = false
+    
+    /// New layout engine (only used when useNewEngine is true)
+    private var layoutEngine: LayoutEngine?
+    
+    /// Layout renderer (only used when useNewEngine is true)
+    private var layoutRenderer: LayoutRenderer?
+    
     // MARK: - Public API
     
     public var body: (any Layout)? {
@@ -428,6 +438,13 @@ public class LayoutContainer: UIView {
             return 
         }
         
+        // Use new engine if enabled
+        if useNewEngine {
+            applyLayoutWithNewEngine()
+            return
+        }
+        
+        // Legacy layout application
         let result = layout.calculateLayout(in: bounds)
         let centerOffset = calculateCenterOffset(for: result.totalSize)
         
@@ -435,6 +452,64 @@ public class LayoutContainer: UIView {
             from: result,
             centerOffset: centerOffset
         )
+    }
+    
+    /// Applies layout using the new LayoutEngine architecture
+    private func applyLayoutWithNewEngine() {
+        guard let layout = cachedLayout else { return }
+        
+        // Initialize engine and renderer if needed
+        if layoutEngine == nil {
+            layoutRenderer = LayoutRenderer()
+        }
+        
+        // Convert Layout to LayoutElement
+        let rootElement = LayoutAdapter.toElement(
+            layout,
+            environment: EnvironmentProvider.shared.rootEnvironment
+        )
+        
+        // Create or update engine
+        if let engine = layoutEngine {
+            engine.updateRoot(rootElement)
+        } else {
+            layoutEngine = LayoutEngine(root: rootElement)
+        }
+        
+        // Set transaction if animating
+        if let transaction = LayoutAnimationTransaction.current {
+            layoutEngine?.setTransaction(transaction)
+        }
+        
+        // Perform layout
+        let placement = layoutEngine?.performLayout(in: bounds) ?? PlacementResult.empty
+        
+        // Build element registry for view lookup
+        var elementRegistry: [LayoutID: LayoutElement] = [:]
+        func buildRegistry(from element: LayoutElement) {
+            elementRegistry[element.id] = element
+            for child in element.children {
+                buildRegistry(from: child)
+            }
+        }
+        buildRegistry(from: rootElement)
+        
+        // Apply placement using renderer
+        layoutRenderer?.apply(
+            placement: placement,
+            elements: elementRegistry,
+            transaction: LayoutAnimationTransaction.current
+        )
+        
+        // Apply center offset
+        let centerOffset = calculateCenterOffset(for: placement.totalSize)
+        for (id, frame) in placement.frames {
+            guard let element = elementRegistry[id],
+                  let view = element.view else {
+                continue
+            }
+            view.frame = frame.offsetBy(dx: centerOffset.x, dy: centerOffset.y)
+        }
     }
     
     private func calculateCenterOffset(for contentSize: CGSize) -> CGPoint {
