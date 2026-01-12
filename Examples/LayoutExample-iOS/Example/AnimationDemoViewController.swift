@@ -8,6 +8,7 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     private var isVisible = true
     private var currentScale: CGFloat = 1.0
     private var currentOffset: CGFloat = 0
+    private var slideBoxOriginalX: CGFloat? // Store original x position
     private var displayLink: CADisplayLink?
     private var shouldSkipPositionUpdate = false // Flag to skip position update after animation
     
@@ -16,13 +17,6 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         let view = UIView()
         view.backgroundColor = .systemIndigo
         view.layer.cornerRadius = 16
-        return view
-    }()
-    
-    // Placeholder for layout system (expandableBox will be positioned on top)
-    private let expandablePlaceholder: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
         return view
     }()
 
@@ -68,23 +62,6 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
-        if expandableBox.superview != expandablePlaceholder {
-            expandablePlaceholder.addSubview(expandableBox)
-            
-            // Set initial position and size
-            let placeholderBounds = expandablePlaceholder.bounds
-            if placeholderBounds.width > 0 && placeholderBounds.height > 0 {
-                let centerX = placeholderBounds.midX
-                let centerY = placeholderBounds.midY
-                expandableBox.frame = CGRect(
-                    x: centerX - 75,
-                    y: centerY - 30,
-                    width: 150,
-                    height: 60
-                )
-            }
-        }
     }
     
     override func setLayout() {
@@ -129,10 +106,13 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionTitle("Size Animation (.easeInOut)")
 
-            // Use placeholder for layout (expandableBox will be positioned on top)
-            expandablePlaceholder
+            // Use expandableBox directly with dynamic size based on isExpanded state
+            expandableBox
                 .layout()
-                .size(width: 300, height: 120) // Reserve max space
+                .size(
+                    width: isExpanded ? 300 : 150,
+                    height: isExpanded ? 120 : 60
+                )
 
             expandButton
                 .layout()
@@ -171,9 +151,9 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         VStack(alignment: .center, spacing: 12) {
             sectionTitle("Offset Animation (.easeOut)")
             
+            // Don't use offset modifier - we'll animate frame directly
             slideBox.layout()
                 .size(width: 150, height: 60)
-                .offset(x: currentOffset)
             
             slideButton.layout()
                 .size(width: 200, height: 44)
@@ -276,20 +256,16 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     }
     
     @objc private func expandTapped() {
-        // Force layout to settle
-        layoutContainer.layoutIfNeeded()
+        // Save current frame before any changes
+        let currentFrame = expandableBox.frame
+        let currentWidth = currentFrame.width > 0 ? currentFrame.width : 150
+        let currentHeight = currentFrame.height > 0 ? currentFrame.height : 60
+        let centerX = currentFrame.midX
+        let centerY = currentFrame.midY
         
-        // Get placeholder center in placeholder's coordinate space (bounds)
-        let placeholderBounds = expandablePlaceholder.bounds
-        let placeholderCenter = CGPoint(
-            x: placeholderBounds.midX,
-            y: placeholderBounds.midY
-        )
-        
-        // Save current size
-        let currentSize = expandableBox.frame.size
-        let currentWidth = currentSize.width > 0 ? currentSize.width : 150
-        let currentHeight = currentSize.height > 0 ? currentSize.height : 60
+        // Save slideBox position if it has been moved
+        let slideBoxCurrentFrame = slideBox.frame
+        let slideBoxNeedsProtection = currentOffset != 0
         
         // Toggle state
         isExpanded.toggle()
@@ -298,31 +274,56 @@ final class AnimationDemoViewController: BaseViewController, Layout {
         let targetWidth: CGFloat = isExpanded ? 300 : 150
         let targetHeight: CGFloat = isExpanded ? 120 : 60
         
-        // Mark view as animating to prevent layout from overriding
+        // Mark expandableBox and slideBox (if moved) as animating to prevent layout from overriding
         layoutContainer.startAnimating(expandableBox)
+        if slideBoxNeedsProtection {
+            layoutContainer.startAnimating(slideBox)
+        }
         
-        // Ensure we start from current frame (relative to placeholder's bounds)
+        // Update layout first (other views will update immediately, protected views are skipped)
+        layoutContainer.updateBody { self.body }
+        
+        // Ensure expandableBox starts from current frame
         expandableBox.frame = CGRect(
-            x: placeholderCenter.x - currentWidth / 2,
-            y: placeholderCenter.y - currentHeight / 2,
+            x: centerX - currentWidth / 2,
+            y: centerY - currentHeight / 2,
             width: currentWidth,
             height: currentHeight
         )
         
-        // Calculate target frame maintaining placeholder center position (relative to placeholder's bounds)
+        // Restore slideBox position if it was moved
+        if slideBoxNeedsProtection {
+            slideBox.frame = slideBoxCurrentFrame
+        }
+        
+        // Calculate target frame maintaining center position
         let targetFrame = CGRect(
-            x: placeholderCenter.x - targetWidth / 2,
-            y: placeholderCenter.y - targetHeight / 2,
+            x: centerX - targetWidth / 2,
+            y: centerY - targetHeight / 2,
             width: targetWidth,
             height: targetHeight
         )
         
-        // Animate the entire frame (not just size)
+        // Animate only the expandableBox
         withAnimation(.easeInOut(duration: 0.3), {
             self.expandableBox.frame = targetFrame
         }, completion: { _ in
             // Stop animating after animation completes
             self.layoutContainer.stopAnimating(self.expandableBox)
+            if slideBoxNeedsProtection {
+                self.layoutContainer.stopAnimating(self.slideBox)
+            }
+            // Update layout one more time to ensure everything is in sync
+            self.layoutContainer.updateBody { self.body }
+            // Restore slideBox position after layout update
+            if slideBoxNeedsProtection, let originalX = self.slideBoxOriginalX {
+                self.slideBox.frame = CGRect(
+                    x: originalX + self.currentOffset,
+                    y: slideBoxCurrentFrame.origin.y,
+                    width: slideBoxCurrentFrame.width,
+                    height: slideBoxCurrentFrame.height
+                )
+            }
         })
     }
     
@@ -346,12 +347,43 @@ final class AnimationDemoViewController: BaseViewController, Layout {
     }
     
     @objc private func slideTapped() {
+        // Save current frame before any changes
+        let currentFrame = slideBox.frame
+        
+        // Store original x position on first use
+        if slideBoxOriginalX == nil {
+            slideBoxOriginalX = currentFrame.origin.x
+        }
+        
+        // Toggle offset: 0 -> 80, 80 -> 0
         currentOffset = currentOffset == 0 ? 80 : 0
         
-        // Directly animate the slideBox transform using Layout library's withAnimation
-        withAnimation(.easeOut(duration: 0.3)) {
-            self.slideBox.transform = CGAffineTransform(translationX: self.currentOffset, y: 0)
-        }
+        // Mark slideBox as animating to prevent layout from overriding
+        layoutContainer.startAnimating(slideBox)
+        
+        // Update layout first (other views will update immediately, slideBox is skipped)
+        layoutContainer.updateBody { self.body }
+        
+        // Ensure slideBox starts from current position
+        slideBox.frame = currentFrame
+        
+        // Calculate target frame: original position + offset
+        guard let originalX = slideBoxOriginalX else { return }
+        let targetFrame = CGRect(
+            x: originalX + currentOffset,
+            y: currentFrame.origin.y,
+            width: currentFrame.width,
+            height: currentFrame.height
+        )
+        
+        // Animate only the slideBox
+        withAnimation(.easeOut(duration: 0.3), {
+            self.slideBox.frame = targetFrame
+        }, completion: { _ in
+            // Stop animating after animation completes
+            // Don't update layout again - it would reset the position
+            self.layoutContainer.stopAnimating(self.slideBox)
+        })
     }
     
     @objc private func chainTapped() {

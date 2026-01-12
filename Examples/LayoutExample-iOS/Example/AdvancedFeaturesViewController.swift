@@ -8,6 +8,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     
     private var isAnimating = false
     private var animatedOffset: CGFloat = 0
+    private var animationDemoViewOriginalX: CGFloat? // Store original x position
     
     // Layout Tree Test Properties
     private enum LayoutTreeConstants {
@@ -243,9 +244,9 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
             sectionHeader(title: "Animation Engine", subtitle: "Spring animation with Layout library")
             
             VStack(alignment: .center, spacing: 16) {
+                // Don't use offset modifier - we'll animate frame directly
                 animationDemoView.layout()
                     .size(width: 50, height: 50)
-                    .offset(x: animatedOffset)
                 
                 animateButton.layout()
                     .size(width: 140, height: 44)
@@ -631,20 +632,46 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         guard !isAnimating else { return }
         isAnimating = true
         
-        LayoutAnimationEngine.shared.animateSpring(
-            damping: 0.6,
-            initialVelocity: 0.5,
-            duration: 0.6,
-            animations: { [weak self] in
-                guard let self = self else { return }
-                let newOffset: CGFloat = self.animatedOffset == 0 ? 100 : 0
-                self.animatedOffset = newOffset
-                self.animationDemoView.transform = CGAffineTransform(translationX: newOffset, y: 0)
-            },
-            completion: { [weak self] in
-                self?.isAnimating = false
-            }
+        // Save current frame before any changes
+        let currentFrame = animationDemoView.frame
+        
+        // Store original x position on first use
+        if animationDemoViewOriginalX == nil {
+            animationDemoViewOriginalX = currentFrame.origin.x
+        }
+        
+        // Toggle offset: 0 -> 100, 100 -> 0
+        animatedOffset = animatedOffset == 0 ? 100 : 0
+        
+        // Mark animationDemoView as animating to prevent layout from overriding
+        layoutContainer.startAnimating(animationDemoView)
+        
+        // Update layout first (other views will update immediately, animationDemoView is skipped)
+        layoutContainer.updateBody { self.body }
+        
+        // Ensure animationDemoView starts from current position
+        animationDemoView.frame = currentFrame
+        
+        // Calculate target frame: original position + offset
+        guard let originalX = animationDemoViewOriginalX else {
+            isAnimating = false
+            return
+        }
+        let targetFrame = CGRect(
+            x: originalX + animatedOffset,
+            y: currentFrame.origin.y,
+            width: currentFrame.width,
+            height: currentFrame.height
         )
+        
+        // Animate only the animationDemoView using spring animation
+        withAnimation(.spring(damping: 0.6, velocity: 0.5), {
+            self.animationDemoView.frame = targetFrame
+        }, completion: { _ in
+            // Stop animating after animation completes
+            self.layoutContainer.stopAnimating(self.animationDemoView)
+            self.isAnimating = false
+        })
     }
     
     private func startMonitoring() {
