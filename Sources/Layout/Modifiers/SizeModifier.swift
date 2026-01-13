@@ -1,4 +1,4 @@
-import UIKit
+import CoreGraphics
 
 /// Represents a percentage value (PinLayout-style)
 ///

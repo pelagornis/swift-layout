@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A layout that applies animations to its content
 @MainActor
 public struct AnimatedLayout: Layout {
@@ -35,5 +37,3 @@ public struct AnimatedLayout: Layout {
         return base.intrinsicContentSize
     }
 }
-
-

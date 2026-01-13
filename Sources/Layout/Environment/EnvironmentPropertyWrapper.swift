@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Property wrapper to read environment values
 @MainActor
 @propertyWrapper

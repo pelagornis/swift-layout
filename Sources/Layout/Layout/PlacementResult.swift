@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Result of placement phase
 ///
 /// `PlacementResult` contains the final positions of all views after the

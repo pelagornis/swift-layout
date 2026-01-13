@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A layout that represents a tuple of layouts
 /// Automatically arranges multiple layouts vertically like a VStack when not wrapped in an explicit container
 public struct TupleLayout: Layout {

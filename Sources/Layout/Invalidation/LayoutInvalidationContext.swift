@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Manages layout invalidation across the view hierarchy
 @MainActor
 public final class LayoutInvalidationContext {

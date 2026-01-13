@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 public enum ColorScheme: Sendable {
     case light
     case dark

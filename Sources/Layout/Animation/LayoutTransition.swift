@@ -1,4 +1,4 @@
-import UIKit
+import CoreGraphics
 
 /// Types of transitions for layout changes
 public enum LayoutTransition: Sendable {

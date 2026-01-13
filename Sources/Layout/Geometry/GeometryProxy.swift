@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Provides access to the size and coordinate space of a container
 @MainActor
 public struct GeometryProxy {

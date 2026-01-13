@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Layout element that separates identity from layout logic
 ///
 /// `LayoutElement` is the core building block of the improved layout system.

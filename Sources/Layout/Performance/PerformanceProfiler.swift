@@ -1,4 +1,4 @@
-import UIKit
+import Foundation
 import QuartzCore
 
 /// Profiling context for tracking operations

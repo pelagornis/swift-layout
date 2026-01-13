@@ -1,4 +1,4 @@
-import UIKit
+import CoreGraphics
 
 /// Modifier for positioning views relative to edges with percentage support
 ///

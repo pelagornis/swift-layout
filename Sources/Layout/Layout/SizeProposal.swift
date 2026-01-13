@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Size proposal for measurement (like SwiftUI's ProposedViewSize)
 ///
 /// A `SizeProposal` represents constraints that a parent layout provides to its children

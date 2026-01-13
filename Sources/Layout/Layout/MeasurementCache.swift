@@ -1,5 +1,4 @@
-import UIKit
-
+import Foundation
 /// Cache for measurement results
 ///
 /// `MeasurementCache` stores measured sizes by proposal, allowing efficient

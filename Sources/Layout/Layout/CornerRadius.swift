@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A layout that applies corner radius to its base layout
 public struct CornerRadiusLayout: Layout {
     public typealias Body = Never

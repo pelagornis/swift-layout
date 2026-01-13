@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A layout that creates multiple views from a collection of data.
 ///
 /// ``ForEach`` is equivalent to SwiftUI's ForEach and creates multiple views

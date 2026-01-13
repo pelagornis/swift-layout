@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Tracks dirty regions for optimized partial layout updates
 @MainActor
 public final class DirtyRegionTracker {

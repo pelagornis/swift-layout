@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A SwiftUI-style container view that automatically manages view hierarchy and centers content.
 ///
 /// ``LayoutContainer`` provides a SwiftUI-like experience with automatic content centering

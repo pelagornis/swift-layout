@@ -1,5 +1,4 @@
-import UIKit
-
+import Foundation
 /// Unique identifier for a layout element
 ///
 /// `LayoutID` is a type alias for `AnyHashable`, allowing any hashable type

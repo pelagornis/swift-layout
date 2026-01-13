@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Modifier for maintaining aspect ratios.
 ///
 /// Use ``AspectRatioModifier`` to ensure a view maintains a specific

@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A modifier that applies background color to a view.
 ///
 /// ``BackgroundModifier`` applies background color to a view,

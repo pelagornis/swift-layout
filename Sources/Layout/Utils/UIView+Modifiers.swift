@@ -1,4 +1,7 @@
+#if canImport(UIKit)
 import UIKit
+
+#endif
 import ObjectiveC
 
 /// Stores layout modifiers on UIView using associated objects

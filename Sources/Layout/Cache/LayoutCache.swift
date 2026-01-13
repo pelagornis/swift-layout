@@ -1,5 +1,4 @@
-import UIKit
-
+import Foundation
 /// High-performance layout cache using LRU eviction
 @MainActor
 public final class LayoutCache {

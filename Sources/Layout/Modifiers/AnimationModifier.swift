@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// A modifier that applies animation to layout changes.
 ///
 /// ``AnimationModifier`` stores animation configuration to be applied

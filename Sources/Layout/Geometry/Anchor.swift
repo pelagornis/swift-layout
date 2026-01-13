@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Represents a specific point or region in a view's geometry
 public struct Anchor<Value> {
     fileprivate let value: Value

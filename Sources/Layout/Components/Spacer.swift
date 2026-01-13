@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A flexible space layout for pushing other layouts apart.
 ///
 /// ``Spacer`` is equivalent to SwiftUI's Spacer and expands to fill

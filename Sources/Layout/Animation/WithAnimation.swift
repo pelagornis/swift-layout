@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 // MARK: - withAnimation Function
 
 /// Executes the given closure with animation

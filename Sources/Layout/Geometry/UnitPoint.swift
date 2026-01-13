@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// A unit point in normalized coordinates (0-1)
 public struct UnitPoint: Hashable, Sendable {
     public let x: CGFloat

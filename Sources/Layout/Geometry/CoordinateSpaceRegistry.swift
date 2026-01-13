@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Registry for named coordinate spaces
 @MainActor
 public final class CoordinateSpaceRegistry {

@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Extension to integrate Layout system with UIKit lifecycle
 /// This provides minimal integration without requiring a base class
 public extension UIViewController {

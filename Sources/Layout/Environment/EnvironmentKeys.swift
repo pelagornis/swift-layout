@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Color scheme (light/dark mode)
 public struct ColorSchemeKey: EnvironmentKey {
     public static let defaultValue: ColorScheme = .light

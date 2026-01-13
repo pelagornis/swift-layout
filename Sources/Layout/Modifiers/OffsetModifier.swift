@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Modifier for applying offset transformations.
 ///
 /// Use ``OffsetModifier`` to move a view by specific x and y amounts

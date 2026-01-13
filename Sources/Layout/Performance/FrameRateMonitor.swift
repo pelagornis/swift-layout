@@ -1,4 +1,4 @@
-import UIKit
+import Foundation
 import QuartzCore
 
 /// Monitors frame rate during layout operations

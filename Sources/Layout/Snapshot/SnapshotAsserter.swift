@@ -1,4 +1,4 @@
-import UIKit
+import CoreGraphics
 
 /// Helper for snapshot assertions in tests
 @MainActor

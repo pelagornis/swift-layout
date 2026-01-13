@@ -1,5 +1,4 @@
-import UIKit
-
+import Foundation
 /// Reason for layout invalidation in the new layout system
 ///
 /// `LayoutInvalidationReason` provides context about why a layout node needs to be

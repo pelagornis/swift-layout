@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Engine for creating and comparing layout snapshots
 @MainActor
 public final class SnapshotEngine {

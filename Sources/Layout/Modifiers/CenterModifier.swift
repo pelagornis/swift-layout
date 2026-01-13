@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Modifier for centering views horizontally and/or vertically.
 ///
 /// Use ``CenterModifier`` to center a view within the available bounds

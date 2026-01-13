@@ -1,5 +1,5 @@
-import UIKit
-
+import Foundation
+import CoreGraphics
 /// Cache key for layout calculations
 public struct LayoutCacheKey: Hashable {
     let bounds: CGRect
@@ -27,4 +27,3 @@ public struct CachedLayoutResult {
         return CachedLayoutResult(result: result, timestamp: timestamp, hitCount: hitCount + 1)
     }
 }
-

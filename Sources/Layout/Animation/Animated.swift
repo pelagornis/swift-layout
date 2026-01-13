@@ -1,4 +1,4 @@
-import UIKit
+import Foundation
 
 /// Property wrapper that automatically animates value changes
 @MainActor
@@ -59,4 +59,3 @@ public final class Animated<Value: VectorArithmetic> {
         )
     }
 }
-

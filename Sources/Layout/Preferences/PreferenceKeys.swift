@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Anchor preferences for geometry
 public struct AnchorPreferenceKey<Value>: PreferenceKey {
     public static var defaultValue: [Value] { [] }

@@ -1,4 +1,4 @@
-import UIKit
+import CoreGraphics
 
 /// Protocol for values that can be interpolated
 public protocol VectorArithmetic {

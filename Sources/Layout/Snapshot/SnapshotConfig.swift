@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Configuration for snapshot testing
 public struct SnapshotConfig {
     /// Size for the snapshot

@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Provides environment values to child layouts
 @MainActor
 public final class EnvironmentProvider {

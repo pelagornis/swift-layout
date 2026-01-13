@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Result of measurement phase
 ///
 /// `MeasuredSize` represents the size that a layout node wants to occupy,

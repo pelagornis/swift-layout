@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A type-erased wrapper for any Layout.
 ///
 /// ``AnyLayout`` allows you to store and work with different layout types

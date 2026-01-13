@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A token that automatically invalidates layout when properties change
 @MainActor
 @propertyWrapper

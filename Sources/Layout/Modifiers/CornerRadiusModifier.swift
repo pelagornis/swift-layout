@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// A modifier that applies corner radius to a view.
 ///
 /// ``CornerRadiusModifier`` applies corner radius to a view's layer,

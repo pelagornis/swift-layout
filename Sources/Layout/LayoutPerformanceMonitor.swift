@@ -1,4 +1,3 @@
-import UIKit
 import Foundation
 
 /// Performance monitoring for layout calculations

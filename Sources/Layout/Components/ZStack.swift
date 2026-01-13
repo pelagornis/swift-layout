@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A z-axis stack layout that layers child layouts on top of each other.
 ///
 /// ``ZStack`` arranges its child layouts in layers, with later children appearing on top

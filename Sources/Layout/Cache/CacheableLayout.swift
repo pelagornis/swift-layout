@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Protocol for layouts that support caching
 @MainActor
 public protocol CacheableLayout: Layout {

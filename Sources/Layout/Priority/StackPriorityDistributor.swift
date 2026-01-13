@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// Distributes space in stacks based on child priorities
 @MainActor
 public final class StackPriorityDistributor {

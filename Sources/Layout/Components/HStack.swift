@@ -1,5 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
+#endif
 /// A horizontal stack layout that arranges child layouts horizontally.
 ///
 /// ``HStack`` arranges its child layouts in a horizontal row with optional spacing

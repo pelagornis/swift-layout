@@ -1,4 +1,4 @@
-import UIKit
+import Foundation
 
 /// Transaction for layout updates with animation
 ///

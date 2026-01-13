@@ -1,5 +1,4 @@
-import UIKit
-
+import CoreGraphics
 /// Calculates sizes based on priorities
 @MainActor
 public final class PrioritySizeCalculator {
