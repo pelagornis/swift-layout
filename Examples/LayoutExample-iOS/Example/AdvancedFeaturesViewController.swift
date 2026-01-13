@@ -220,6 +220,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
                 geometryInfoSection
                 layoutTreeSection
                 identityDiffSection
+                Spacer(minLength: 40)
             }
         }
     }
