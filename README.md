@@ -1899,31 +1899,31 @@ Modifiers are stored as properties on views, not as new layout nodes:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    View Instance                             │
+│                    View Instance                            │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  UIView                                                       │
-│    │                                                          │
-│    │ (Associated Object)                                      │
-│    ▼                                                          │
-│  ┌──────────────────────┐                                    │
-│  │ layoutModifiers[]    │                                    │
-│  ├──────────────────────┤                                    │
-│  │ • SizeModifier       │                                    │
-│  │ • OffsetModifier     │                                    │
-│  │ • BackgroundModifier │                                    │
-│  │ • PaddingModifier    │                                    │
-│  └──────────────────────┘                                    │
-│                                                               │
+│                                                             │
+│  UIView                                                     │
+│    │                                                        │
+│    │ (Associated Object)                                    │
+│    ▼                                                        │
+│  ┌──────────────────────┐                                   │
+│  │ layoutModifiers[]    │                                   │
+│  ├──────────────────────┤                                   │
+│  │ • SizeModifier       │                                   │
+│  │ • OffsetModifier     │                                   │
+│  │ • BackgroundModifier │                                   │
+│  │ • PaddingModifier    │                                   │
+│  └──────────────────────┘                                   │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
                     ▲
                     │
 ┌───────────────────┴───────────────────────────────────────────┐
-│              Modifier Chain (User Code)                      │
+│              Modifier Chain (User Code)                       │
 ├───────────────────────────────────────────────────────────────┤
 │                                                               │
 │  view.ui()                                                    │
-│    .size(width: 200, height: 100)  ────┐                     │
+│    .size(width: 200, height: 100)  ────┐                      │
 │    .offset(x: 10, y: 20)            ────┤                     │
 │    .background(.systemBlue)         ────┼──► Stores in        │
 │    .padding(16)                      ────┤   layoutModifiers[]│
@@ -1934,19 +1934,19 @@ Modifiers are stored as properties on views, not as new layout nodes:
 ┌─────────────────────────────────────────────────────────────┐
 │            Layout Calculation                               │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  calculateLayout(in:)                                        │
-│    │                                                          │
-│    │ Reads layoutModifiers[]                                 │
-│    ▼                                                          │
-│  Applies modifiers in order:                                  │
-│    1. Size modifiers (Measure Phase)                          │
-│    2. Position modifiers (Layout Phase)                      │
-│    3. Style modifiers                                        │
-│    │                                                          │
-│    ▼                                                          │
-│  Final Frame                                                  │
-│                                                               │
+│                                                             │
+│  calculateLayout(in:)                                       │
+│    │                                                        │
+│    │ Reads layoutModifiers[]                                │
+│    ▼                                                        │
+│  Applies modifiers in order:                                │
+│    1. Size modifiers (Measure Phase)                        │
+│    2. Position modifiers (Layout Phase)                     │
+│    3. Style modifiers                                       │
+│    │                                                        │
+│    ▼                                                        │
+│  Final Frame                                                │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -1975,13 +1975,13 @@ Modifiers are stored as properties on views, not as new layout nodes:
 │   width: 200 │ │   x: 10      │ │   .systemBlue│
 │              │ │   y: 20      │ │              │
 │ • Percentage │ │              │ │ • Corner     │
-│   width: 80% │ │ • Center     │ │   Radius: 12│
+│   width: 80% │ │ • Center     │ │   Radius: 12 │
 │              │ │   centerX    │ │              │
 │ • Flexible   │ │   centerY    │ │ • Padding    │
 │   height: nil│ │              │ │   insets: 16 │
 │              │ │ • Alignment  │ │              │
 │              │ │   leading    │ │              │
-│              │ │   trailing    │ │              │
+│              │ │   trailing   │ │              │
 └──────────────┘ └──────────────┘ └──────────────┘
         │                │                │
         └────────────────┼────────────────┘
@@ -2062,60 +2062,60 @@ User Code
 ┌─────────────────────────────────────────────────────────────┐
 │                    User API                                 │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │withAnimation │  │startAnimating│  │stopAnimating │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│         │                │                │                │
-│         └────────────────┼────────────────┘                │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │withAnimation │  │startAnimating│  │stopAnimating │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│         │                │                │                 │
+│         └────────────────┼────────────────┘                 │
 │                         │                                   │
 └─────────────────────────┼───────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                LayoutContainer                               │
+│                LayoutContainer                              │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────────────┐  ┌──────────────────────┐        │
+│                                                             │
+│  ┌──────────────────────┐  ┌────────────────────────┐       │
 │  │ animatingViews Set   │  │animatingViewIdentifiers│       │
-│  │                      │  │                      │        │
-│  │ • Tracks animating   │  │ • ObjectIdentifier   │        │
-│  │   views              │  │   tracking          │        │
-│  └──────────────────────┘  └──────────────────────┘        │
-│         │                                                    │
-│         │ Protects from layout updates                       │
-│         ▼                                                    │
+│  │                      │  │                        │       │
+│  │ • Tracks animating   │  │ • ObjectIdentifier     │       │
+│  │   views              │  │   tracking             │       │
+│  └──────────────────────┘  └────────────────────────┘       │
+│         │                                                   │
+│         │ Protects from layout updates                      │
+│         ▼                                                   │
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Animation Engine                                │
+│              Animation Engine                               │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────────────┐                                    │
-│  │LayoutAnimationEngine │                                    │
-│  │                      │                                    │
-│  │ • Manages animation  │                                    │
-│  │   state              │                                    │
-│  │ • Coordinates timing │                                    │
-│  └──────────────────────┘                                    │
-│         │                                                    │
+│                                                             │
+│  ┌──────────────────────┐                                   │
+│  │LayoutAnimationEngine │                                   │
+│  │                      │                                   │
+│  │ • Manages animation  │                                   │
+│  │   state              │                                   │
+│  │ • Coordinates timing │                                   │
+│  └──────────────────────┘                                   │
+│         │                                                   │
 │         ├──────────────┬──────────────┐                     │
 │         ▼              ▼              ▼                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
-│  │Layout    │  │Timing    │  │Platform  │                  │
-│  │Animation │  │Function  │  │APIs      │                  │
-│  └──────────┘  └──────────┘  └──────────┘                  │
-│                                                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                   │
+│  │Layout    │  │Timing    │  │Platform  │                   │
+│  │Animation │  │Function  │  │APIs      │                   │
+│  └──────────┘  └──────────┘  └──────────┘                   │
+│                                                             │
 │         │              │              │                     │
 │         └──────────────┴──────────────┘                     │
-│                          │                                   │
-│                          ▼                                   │
-│              ┌──────────────────────┐                        │
-│              │ UIView.animate      │                        │
-│              │ NSAnimationContext │                        │
-│              └──────────────────────┘                        │
-│                                                               │
+│                          │                                  │
+│                          ▼                                  │
+│              ┌──────────────────────┐                       │
+│              │ UIView.animate       │                       │
+│              │ NSAnimationContext   │                       │
+│              └──────────────────────┘                       │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
