@@ -1272,98 +1272,98 @@ Layout is built on a **frame-based calculation system** that separates measureme
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        User Code Layer                           │
+│                        User Code Layer                          │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌──────────────┐         ┌──────────────┐                      │
+│                                                                 │
+│  ┌────────────────┐       ┌──────────────┐                      │
 │  │UIViewController│──────►│@LayoutBuilder│                      │
-│  │              │         │    body     │                      │
-│  └──────────────┘         └──────────────┘                      │
-│         │                        │                               │
-│         └────────────┬───────────┘                               │
-│                      ▼                                           │
+│  │                │       │    body      │                      │
+│  └────────────────┘       └──────────────┘                      │
+│         │                        │                              │
+│         └────────────┬───────────┘                              │
+│                      ▼                                          │
 └─────────────────────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      LayoutContainer                             │
+│                      LayoutContainer                            │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
+│                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │   │
-│  │  │View Hierarchy│  │Layout Calc   │  │Identity Map  │  │   │
-│  │  │  Management │  │Orchestration │  │   Tracking   │  │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  │   │
-│  │                                                           │   │
-│  │  ┌──────────────┐  ┌──────────────┐                    │   │
-│  │  │Animation     │  │Incremental   │                    │   │
-│  │  │Protection    │  │Layout Updates│                    │   │
-│  │  └──────────────┘  └──────────────┘                    │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │View Hierarchy│  │Layout Calc   │  │Identity Map  │    │   │
+│  │  │  Management  │  │Orchestration │  │   Tracking   │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  │                                                          │   │
+│  │  ┌──────────────┐  ┌──────────────┐                      │   │
+│  │  │Animation     │  │Incremental   │                      │   │
+│  │  │Protection    │  │Layout Updates│                      │   │
+│  │  └──────────────┘  └──────────────┘                      │   │
 │  └──────────────────────────────────────────────────────────┘   │
-│                                                                   │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Layout System                               │
+│                      Layout System                              │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌──────────────┐         ┌──────────────┐                     │
-│  │ Layout Tree  │────────►│ LayoutNodes  │                     │
-│  │              │         │              │                     │
-│  └──────────────┘         └──────────────┘                     │
+│                                                                 │
+│  ┌──────────────┐         ┌──────────────┐                      │
+│  │ Layout Tree  │────────►│ LayoutNodes  │                      │
+│  │              │         │              │                      │
+│  └──────────────┘         └──────────────┘                      │
 │         │                        │                              │
 │         │                        ▼                              │
-│         │              ┌──────────────────┐                    │
-│         │              │ Dirty State       │                    │
-│         │              │ Cache Management  │                    │
-│         │              └──────────────────┘                    │
-│         │                                                        │
-└─────────┼────────────────────────────────────────────────────────┘
+│         │              ┌──────────────────┐                     │
+│         │              │ Dirty State      │                     │
+│         │              │ Cache Management │                     │
+│         │              └──────────────────┘                     │
+│         │                                                       │
+└─────────┼───────────────────────────────────────────────────────┘
           │
           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Layout Components                             │
+│                    Layout Components                            │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  │
-│  │ VStack │  │ HStack │  │ ZStack │  │ScrollView│ │ViewLayout│ │
-│  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘  │
-│                                                                   │
+│                                                                 │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌──────────┐  ┌───────────┐│
+│  │ VStack │  │ HStack │  │ ZStack │  │ScrollView│  │ViewLayout ││
+│  └────────┘  └────────┘  └────────┘  └──────────┘  └───────────┘│
+│                                                                 │
 │  ┌────────┐  ┌────────┐                                         │
 │  │ Spacer │  │ForEach │                                         │
 │  └────────┘  └────────┘                                         │
-│                                                                   │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  Two-Phase Layout System                         │
+│                  Two-Phase Layout System                        │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
+│                                                                 │
 │  ┌──────────────────────┐         ┌──────────────────────┐      │
-│  │  Measure Phase       │────────►│  Layout Phase       │      │
-│  │  Calculate Size      │         │  Calculate Position │      │
+│  │  Measure Phase       │────────►│  Layout Phase        │      │
+│  │  Calculate Size      │         │  Calculate Position  │      │
 │  │                      │         │                      │      │
-│  │  • Intrinsic Size    │         │  • Alignment        │      │
-│  │  • Size Modifiers    │         │  • Position Mods    │      │
-│  │  • Percentage Calc   │         │  • Final Frame      │      │
+│  │  • Intrinsic Size    │         │  • Alignment         │      │
+│  │  • Size Modifiers    │         │  • Position Mods     │      │
+│  │  • Percentage Calc   │         │  • Final Frame       │      │
 │  └──────────────────────┘         └──────────────────────┘      │
-│                                                                   │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Modifier System                               │
+│                    Modifier System                              │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
+│                                                                 │
 │  UIView ──(Associated Object)──► layoutModifiers[]              │
-│                                    │                             │
+│                                    │                            │
 │                                    ├─► SizeModifier             │
 │                                    ├─► OffsetModifier           │
 │                                    ├─► BackgroundModifier       │
 │                                    └─► PaddingModifier          │
-│                                                                   │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1438,38 +1438,38 @@ graph TD
 ┌─────────────────────────────────────────────────────────────┐
 │                    Phase 1: Measure                         │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Proposed Bounds                                             │
-│       │                                                       │
-│       ▼                                                       │
-│  Intrinsic Size                                              │
-│       │                                                       │
-│       ▼                                                       │
-│  Size Modifiers                                               │
-│  (Fixed, Percentage, Flexible)                               │
-│       │                                                       │
-│       ▼                                                       │
-│  Measured Size ───────────────────┐                          │
-│                                   │                          │
-└───────────────────────────────────┼──────────────────────────┘
+│                                                             │
+│  Proposed Bounds                                            │
+│       │                                                     │
+│       ▼                                                     │
+│  Intrinsic Size                                             │
+│       │                                                     │
+│       ▼                                                     │
+│  Size Modifiers                                             │
+│  (Fixed, Percentage, Flexible)                              │
+│       │                                                     │
+│       ▼                                                     │
+│  Measured Size ───────────────────┐                         │
+│                                   │                         │
+└───────────────────────────────────┼─────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Phase 2: Layout                          │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Measured Size                                                │
-│       │                                                       │
-│       ▼                                                       │
-│  Position Modifiers                                           │
-│  (Offset, Center, Alignment)                                 │
-│       │                                                       │
-│       ▼                                                       │
-│  Alignment Rules                                              │
-│       │                                                       │
-│       ▼                                                       │
-│  Final Frame                                                  │
-│                                                               │
+│                                                             │
+│  Measured Size                                              │
+│       │                                                     │
+│       ▼                                                     │
+│  Position Modifiers                                         │
+│  (Offset, Center, Alignment)                                │
+│       │                                                     │
+│       ▼                                                     │
+│  Alignment Rules                                            │
+│       │                                                     │
+│       ▼                                                     │
+│  Final Frame                                                │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -1479,55 +1479,55 @@ graph TD
 ┌─────────────────────────────────────────────────────────────┐
 │                    Initial State                            │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  All Nodes Clean ✓                                           │
-│       │                                                       │
-│       ▼                                                       │
-│  Layout Calculated                                            │
-│       │                                                       │
-│       ▼                                                       │
-│  Results Cached                                               │
-│                                                               │
+│                                                             │
+│  All Nodes Clean ✓                                          │
+│       │                                                     │
+│       ▼                                                     │
+│  Layout Calculated                                          │
+│       │                                                     │
+│       ▼                                                     │
+│  Results Cached                                             │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
                     │
                     │ Change Detected
                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  Change Detected                             │
+│                  Change Detected                            │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  View Content Changes                                         │
-│       │                                                       │
-│       ▼                                                       │
-│  Mark View as Dirty ⚠️                                        │
-│       │                                                       │
-│       ▼                                                       │
-│  Propagate to Parent                                          │
-│  (Dirty State Propagation)                                    │
-│                                                               │
+│                                                             │
+│  View Content Changes                                       │
+│       │                                                     │
+│       ▼                                                     │
+│  Mark View as Dirty                                         │
+│       │                                                     │
+│       ▼                                                     │
+│  Propagate to Parent                                        │
+│  (Dirty State Propagation)                                  │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
                     │
                     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                Incremental Update                            │
+│                Incremental Update                           │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Find Dirty Nodes                                             │
-│       │                                                       │
-│       ├──────────────────┬──────────────────┐                │
-│       │                  │                  │                │
-│       ▼                  ▼                  ▼                │
+│                                                             │
+│  Find Dirty Nodes                                           │
+│       │                                                     │
+│       ├──────────────────┬──────────────────┐               │
+│       │                  │                  │               │
+│       ▼                  ▼                  ▼               │
 │  Recalculate        Use Cache          Skip Clean           │
 │  Only Dirty         for Clean          Nodes                │
-│       │                  │                  │                │
-│       └──────────────────┴──────────────────┘                │
-│                       │                                       │
-│                       ▼                                       │
-│              Update Frames                                    │
-│                       │                                       │
-│                       ▼                                       │
-│              Mark as Clean ✓                                  │
-│                                                               │
+│       │                  │                  │               │
+│       └──────────────────┴──────────────────┘               │
+│                       │                                     │
+│                       ▼                                     │
+│              Update Frames                                  │
+│                       │                                     │
+│                       ▼                                     │
+│              Mark as Clean ✓                                │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
                     │
                     │ (Loop back)
@@ -1557,13 +1557,13 @@ graph TD
                     │   Diff Results        │
                     ├───────────────────────┤
                     │                       │
-                    │ Match: View A ───────┼──► Reuse (State Preserved)
+                    │ Match: View A ────────┼──► Reuse (State Preserved)
                     │                       │
-                    │ Changed: B → D ──────┼──► Replace
+                    │ Changed: B → D ───────┼──► Replace
                     │                       │
-                    │ New: View E ─────────┼──► Create
+                    │ New: View E ──────────┼──► Create
                     │                       │
-                    │ Removed: View C ─────┼──► Remove
+                    │ Removed: View C ──────┼──► Remove
                     │                       │
                     └───────────────────────┘
                                 │
@@ -1696,10 +1696,10 @@ User Code
     ├─────────┬─────────┐
     │ Dirty   │ Clean   │
     ▼         ▼         │
-┌─────────┐ ┌─────────┐│
-│ Measure │ │ Use     ││
-│ Phase   │ │ Cached  ││
-└─────────┘ └─────────┘│
+┌─────────┐ ┌─────────┐ │
+│ Measure │ │ Use     │ │
+│ Phase   │ │ Cached  │ │
+└─────────┘ └─────────┘ │
     │         │         │
     └─────────┴─────────┘
               │
@@ -1761,15 +1761,15 @@ The layout tree mirrors your view hierarchy, with each component represented as 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    LayoutContainer                               │
+│                    LayoutContainer                              │
 │                    (rootNode)                                   │
 │                    isDirty: false ✓                             │
 └────────────────────────────┬────────────────────────────────────┘
-                              │
-                              ▼
+                             │
+                             ▼
               ┌───────────────────────────────┐
-              │      VStack (LayoutNode)       │
-              │      isDirty: false ✓          │
+              │      VStack (LayoutNode)      │
+              │      isDirty: false ✓         │
               └───────────────┬───────────────┘
                               │
                 ┌─────────────┴─────────────┐
@@ -1777,18 +1777,18 @@ The layout tree mirrors your view hierarchy, with each component represented as 
                 ▼                           ▼
 ┌───────────────────────────┐  ┌───────────────────────────┐
 │  HStack (LayoutNode)      │  │  ScrollView (LayoutNode)  │
-│  isDirty: true ⚠️          │  │  isDirty: false ✓         │
-└───────────┬───────────────┘  └───────────┬───────────────┘
+│  isDirty: true            │  │  isDirty: false ✓         │
+└───────────┬───────────────┘  └─────────────┬─────────────┘
             │                                │
     ┌───────┴───────┐                        │
     │               │                        │
     ▼               ▼                        ▼
-┌──────────┐  ┌──────────┐          ┌──────────────────┐
+┌──────────┐  ┌──────────┐          ┌────────────────────┐
 │ViewLayout│  │ViewLayout│          │ VStack (LayoutNode)│
 │  Label   │  │  Button  │          │ isDirty: false ✓   │
 │          │  │          │          └──────────┬─────────┘
 │isDirty:  │  │isDirty:  │                     │
-│true ⚠️   │  │false ✓   │                     ▼
+│true      │  │false ✓   │                     ▼
 └──────────┘  └──────────┘          ┌──────────────────┐
                                     │ ViewLayout Card  │
                                     │                  │
@@ -1796,22 +1796,22 @@ The layout tree mirrors your view hierarchy, with each component represented as 
                                     └──────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                            Legend                                │
+│                            Legend                               │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ⚠️ = Dirty (will be recalculated in next layout pass)          │
-│  ✓  = Clean (uses cached result, skipped in calculation)         │
-│                                                                   │
-│  When a node is dirty:                                           │
-│    • It and all its children are recalculated                    │
-│    • Results are cached after calculation                        │
-│    • Parent nodes are marked dirty (propagation)                  │
-│                                                                   │
-│  When a node is clean:                                           │
-│    • Uses cached layout result                                   │
-│    • Skips calculation entirely                                  │
-│    • Improves performance significantly                          │
-│                                                                   │
+│                                                                 │
+│  Dirty (will be recalculated in next layout pass)               │
+│  Clean (uses cached result, skipped in calculation)             │
+│                                                                 │
+│  When a node is dirty:                                          │
+│    • It and all its children are recalculated                   │
+│    • Results are cached after calculation                       │
+│    • Parent nodes are marked dirty (propagation)                │
+│                                                                 │
+│  When a node is clean:                                          │
+│    • Uses cached layout result                                  │
+│    • Skips calculation entirely                                 │
+│    • Improves performance significantly                         │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
