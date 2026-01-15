@@ -9,6 +9,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     private var isAnimating = false
     private var animatedOffset: CGFloat = 0
     private var animationDemoViewOriginalX: CGFloat? // Store original x position
+    private var lastBounds: CGRect = .zero // Track bounds changes for rotation detection
     
     // Layout Tree Test Properties
     private enum LayoutTreeConstants {
@@ -154,6 +155,7 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         enableLayoutDebugging = true
         
         layoutContainer.useIncrementalLayout = true
+        lastBounds = view.bounds
         setupActions()
         setupLayoutTreeTest()
         setupIdentityDiffTest()
@@ -175,6 +177,23 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         layoutCardLabels()
+        
+        // Check if bounds changed (screen rotation)
+        let boundsChanged = lastBounds != view.bounds
+        if boundsChanged {
+            lastBounds = view.bounds
+            
+            // Update animation view position after layout completes (handles screen rotation)
+            if animatedOffset != 0 {
+                // Delay slightly to ensure layout is fully complete
+                DispatchQueue.main.async { [weak self] in
+                    self?.updateAnimationViewPositionAfterLayout()
+                }
+            } else {
+                // Update original position to current position after rotation
+                animationDemoViewOriginalX = animationDemoView.frame.origin.x
+            }
+        }
     }
     
     private func layoutCardLabels() {
@@ -687,44 +706,38 @@ final class AdvancedFeaturesViewController: BaseViewController, Layout {
         super.traitCollectionDidChange(previousTraitCollection)
         updateEnvironmentLabel()
         EnvironmentProvider.shared.updateSystemEnvironment()
-        
-        // Handle screen rotation - update original position after layout completes
-        if previousTraitCollection != nil {
-            // Wait for layout to complete, then update position
-            DispatchQueue.main.async { [weak self] in
-                self?.updateAnimationViewPositionAfterRotation()
-            }
-        }
     }
     
-    private func updateAnimationViewPositionAfterRotation() {
-        // Update original position after layout to handle screen rotation
-        // This ensures the view stays centered when screen rotates
-        if animatedOffset != 0, animationDemoViewOriginalX != nil {
-            // Protect the view during position update
-            layoutContainer.startAnimating(animationDemoView)
-            
-            // Recalculate original position based on current layout position and offset
-            // After layout, the view should be at its centered position
-            let currentX = animationDemoView.frame.origin.x
-            let newOriginalX = currentX - animatedOffset
+    private func updateAnimationViewPositionAfterLayout() {
+        // Update animation view position after layout completes (e.g., after screen rotation)
+        // This ensures the view maintains its offset position relative to the new layout
+        
+        // Protect the view during position update to prevent layout system from overriding
+        layoutContainer.startAnimating(animationDemoView)
+        
+        // Get the current frame after layout - this is the new centered position
+        let currentFrame = animationDemoView.frame
+        
+        if animatedOffset != 0 {
+            // If offset is applied, the layout system moved the view to its new centered position
+            // This new centered position becomes the new originalX
+            // Then we apply the offset from this new original position
+            let newOriginalX = currentFrame.origin.x
             animationDemoViewOriginalX = newOriginalX
             
             // Update frame to maintain offset from new original position
-            let currentFrame = animationDemoView.frame
             animationDemoView.frame = CGRect(
                 x: newOriginalX + animatedOffset,
                 y: currentFrame.origin.y,
                 width: currentFrame.width,
                 height: currentFrame.height
             )
-            
-            layoutContainer.stopAnimating(animationDemoView)
-        } else if animatedOffset == 0 {
-            // If offset is 0, update original position to current position
-            // This ensures next animation starts from the correct center position
-            animationDemoViewOriginalX = animationDemoView.frame.origin.x
+        } else {
+            // If no offset, just update original position to current position
+            animationDemoViewOriginalX = currentFrame.origin.x
         }
+        
+        layoutContainer.stopAnimating(animationDemoView)
     }
     
     
