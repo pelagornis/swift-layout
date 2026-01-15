@@ -2214,6 +2214,314 @@ The library is built on UIKit and designed for iOS applications:
 - Minimal view creation/destruction
 - State preservation across updates
 
+**Value-Type Layout Buffer:**
+
+The library implements `LayoutNodeBuffer`, a high-performance layout tree buffer using a contiguous memory array instead of object references. This provides significant performance benefits for complex layouts.
+
+```
+Current (Object-Based):
+┌──────────┐    ┌──────────┐    ┌──────────┐
+│ Node 1   │───►│ Node 2   │───►│ Node 3   │
+│ (Heap)   │    │ (Heap)   │    │ (Heap)   │
+└──────────┘    └──────────┘    └──────────┘
+   │              │              │
+   └──────────────┴──────────────┘
+   (Non-contiguous memory, cache misses)
+
+Optimized (Array-Based):
+┌─────────────────────────────────────────┐
+│ [Node 1] [Node 2] [Node 3] [Node 4] ... │
+│  (Contiguous memory, cache-friendly)    │
+└─────────────────────────────────────────┘
+```
+
+**Benefits:**
+
+1. **CPU Cache Efficiency**:
+
+   - Contiguous memory improves cache locality
+   - Sequential access patterns are significantly faster
+   - Reduced cache misses during tree traversal
+   - Better CPU prefetching behavior
+
+2. **Memory Allocation**:
+
+   - Single allocation instead of many small heap allocations
+   - Reduced ARC overhead (no reference counting needed)
+   - More efficient memory utilization
+
+3. **SIMD Optimization**:
+
+   - Vector operations possible on contiguous arrays
+   - Parallel processing of layout calculations
+   - Batch operations on multiple nodes
+
+4. **Memory Access Patterns**:
+   - Predictable access patterns enable CPU optimizations
+   - Better branch prediction
+   - Reduced pointer chasing
+
+**Trade-offs:**
+
+- More complex tree structure representation (indices instead of pointers)
+- Dynamic resizing requires array reallocation
+- Parent-child relationships managed via indices
+- More complex implementation and debugging
+
+**Implementation:**
+
+`LayoutNodeBuffer` is automatically used by `LayoutContainer` when `useIncrementalLayout` is enabled. The buffer manages layout nodes in a contiguous array, providing efficient tree operations:
+
+```swift
+// LayoutContainer automatically uses LayoutNodeBuffer internally
+layoutContainer.useIncrementalLayout = true
+
+// The buffer is managed automatically:
+// - Created when layout tree is built
+// - Updated on layout changes
+// - Cleared when hierarchy changes
+```
+
+**API Overview:**
+
+```swift
+public class LayoutNodeBuffer {
+    // Node management
+    func addNode(layout: any Layout, parentIndex: Int?) -> Int
+    func removeNode(at index: Int)
+    func getNode(at index: Int) -> LayoutNodeData?
+
+    // Tree operations
+    func buildTree(rootIndex: Int)
+    func calculateLayout(at index: Int, in bounds: CGRect) -> LayoutResult
+
+    // Dirty state management
+    func markDirty(at index: Int, propagateToParent: Bool)
+    func invalidate(at index: Int)
+
+    // Statistics
+    func activeNodeCount() -> Int
+    func totalCapacity() -> Int
+}
+```
+
+**Performance Characteristics:**
+
+- Faster layout calculations for complex trees
+- Improved CPU cache utilization through contiguous memory access
+- Reduced memory allocation overhead
+- Better performance for dynamic content updates
+
+**User Experience Benefits:**
+
+- ✅ **Smooth animations**: No choppiness during rotation or transitions
+- ✅ **Faster response**: Layout updates complete more quickly
+- ✅ **Stable performance**: Consistent frame rates even with complex layouts
+- ✅ **Better battery life**: More efficient CPU usage
+
+**Implementation Status:**
+
+`LayoutNodeBuffer` is **currently implemented and used** by `LayoutContainer` when `useIncrementalLayout` is enabled. The library automatically manages the buffer internally, so you don't need to interact with it directly in most cases.
+
+**Usage:**
+
+```swift
+// Enable incremental layout (uses LayoutNodeBuffer internally)
+layoutContainer.useIncrementalLayout = true
+
+// The buffer is automatically managed:
+// - Created when layout tree is built
+// - Updated on layout changes
+// - Cleared when hierarchy changes
+```
+
+**Best Practices:**
+
+1. **Enable Incremental Layout**: Always enable `useIncrementalLayout` for complex layouts
+
+   ```swift
+   layoutContainer.useIncrementalLayout = true
+   ```
+
+2. **Use Identity for Views**: Provide stable identities for views to enable efficient diffing
+
+   ```swift
+   view.ui().id("stable-id")
+   ```
+
+3. **Minimize Layout Changes**: Batch layout updates when possible
+
+   ```swift
+   // Good: Single update
+   layoutContainer.updateBody { self.body }
+
+   // Avoid: Multiple updates
+   layoutContainer.updateBody { self.body1 }
+   layoutContainer.updateBody { self.body2 }
+   ```
+
+4. **Profile Performance**: Use `PerformanceProfiler` to identify bottlenecks
+   ```swift
+   PerformanceProfiler.shared.startProfiling()
+   // ... layout operations ...
+   let report = PerformanceProfiler.shared.stopProfiling()
+   ```
+
+**Debugging & Performance Monitoring:**
+
+The library provides comprehensive debugging and performance monitoring tools:
+
+```swift
+// Enable layout debugging
+LayoutDebugger.shared.enableAll()
+
+// Monitor performance
+PerformanceProfiler.shared.startProfiling()
+// ... layout operations ...
+let report = PerformanceProfiler.shared.stopProfiling()
+
+// Measure specific layout operations
+LayoutPerformanceMonitor.measureLayout(name: "Complex Layout") {
+    layoutContainer.layoutSubviews()
+}
+```
+
+**Troubleshooting Common Issues:**
+
+1. **Layout not updating**: Ensure `layoutContainer.updateBody()` is called after state changes
+2. **Views not appearing**: Check that views are properly added to the layout hierarchy
+3. **Performance issues**: Enable incremental layout and use identity for views
+4. **Animation conflicts**: Use `layoutContainer.startAnimating()` to protect views during animation
+
+**When to Use:**
+
+✅ **Array-based buffer is beneficial for:**
+
+- Complex layouts with many nodes (100+ nodes)
+- Frequent layout updates
+- Performance-critical applications
+- Applications requiring smooth scrolling and animations
+
+❌ **Object-based approach is sufficient for:**
+
+- Simple layouts (< 50 nodes)
+- Infrequent updates
+- Development/prototyping phase
+- Code simplicity is priority
+
+**Note:** The `LayoutNodeBuffer` is automatically used by `LayoutContainer` when incremental layout is enabled. You don't need to interact with it directly in most cases. The library handles buffer management internally.
+
+### Debugging & Performance Tools
+
+The library includes comprehensive debugging and performance monitoring tools:
+
+**Layout Debugger:**
+
+```swift
+// Enable debugging
+LayoutDebugger.shared.enableAll()
+
+// Enable specific categories
+LayoutDebugger.shared.enableViewHierarchy = true
+LayoutDebugger.shared.enableLayoutCalculation = true
+LayoutDebugger.shared.enableFrameSettings = true
+
+// Analyze view hierarchy
+LayoutDebugger.shared.analyzeViewHierarchy(
+    layoutContainer,
+    title: "Layout Analysis"
+)
+```
+
+**Performance Profiler:**
+
+```swift
+// Profile layout operations
+PerformanceProfiler.shared.startProfiling()
+// ... perform layout operations ...
+let report = PerformanceProfiler.shared.stopProfiling()
+
+// Get performance statistics
+let profiles = PerformanceProfiler.shared.allProfiles
+for profile in profiles {
+    print("\(profile.name): \(profile.averageTime)ms")
+}
+```
+
+**Performance Monitor:**
+
+```swift
+// Measure specific operations
+LayoutPerformanceMonitor.measureLayout(name: "Complex Layout") {
+    layoutContainer.layoutSubviews()
+}
+
+// Print performance summary
+LayoutPerformanceMonitor.printSummary()
+```
+
+**Frame Rate Monitor:**
+
+```swift
+// Monitor frame rate
+FrameRateMonitor.shared.start()
+// ... later ...
+let fps = FrameRateMonitor.shared.averageFPS
+FrameRateMonitor.shared.stop()
+```
+
+### Troubleshooting
+
+**Common Issues and Solutions:**
+
+1. **Layout not updating after state change**
+
+   ```swift
+   // Solution: Call updateBody() after state changes
+   @State private var count = 0
+
+   Button("Increment") {
+       count += 1
+       layoutContainer.updateBody { self.body }
+   }
+   ```
+
+2. **Views not appearing**
+
+   ```swift
+   // Solution: Ensure views are in the layout hierarchy
+   layoutContainer.updateBody {
+       VStack {
+           myView.ui()
+       }
+   }
+   ```
+
+3. **Performance issues with complex layouts**
+
+   ```swift
+   // Solution: Enable incremental layout and use identity
+   layoutContainer.useIncrementalLayout = true
+   view.ui().id("stable-id")
+   ```
+
+4. **Animation conflicts with layout**
+
+   ```swift
+   // Solution: Protect views during animation
+   layoutContainer.startAnimating(view)
+   // ... animate view ...
+   layoutContainer.stopAnimating(view)
+   ```
+
+5. **Layout calculations taking too long**
+   ```swift
+   // Solution: Profile and optimize
+   PerformanceProfiler.shared.startProfiling()
+   // ... identify bottlenecks ...
+   PerformanceProfiler.shared.stopProfiling()
+   ```
+
 ### Extension Points
 
 The architecture is designed for extensibility:
