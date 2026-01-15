@@ -2608,6 +2608,7 @@ Sources/Layout/
 │   ├── LayoutResult.swift
 │   ├── LayoutModifier.swift
 │   ├── LayoutNode.swift   # Layout tree node for incremental updates
+│   ├── LayoutNodeBuffer.swift  # High-performance array-based layout buffer
 │   ├── EmptyLayout.swift
 │   ├── TupleLayout.swift
 │   ├── ArrayLayout.swift
