@@ -75,7 +75,8 @@ public class LayoutContainer: UIView {
     private var animatingViews: Set<UIView> = []
     private var animatingViewIdentifiers: Set<ObjectIdentifier> = []
     private var identityToViewMap: [AnyHashable: UIView] = [:]
-    private var rootNode: LayoutNode?
+    private var layoutNodeBuffer: LayoutNodeBuffer?
+    private var rootNodeIndex: Int?
     
     /// Maps new ScrollView instances to reused old ScrollView instances
     /// Used when ScrollView instances without identity are reused
@@ -208,20 +209,27 @@ public class LayoutContainer: UIView {
         identityToViewMap.removeAll()
         containerViewMapping.removeAll()
         cachedLayout = nil
-        rootNode = nil
+        layoutNodeBuffer = nil
+        rootNodeIndex = nil
     }
     
     private func updateLayoutTree(layout: any Layout, structureChanged: Bool) {
         guard useIncrementalLayout else { return }
         
-            if rootNode == nil {
-                rootNode = LayoutNode(layout: layout)
-                rootNode?.buildTree()
-                rootNode?.markDirty()
+        if layoutNodeBuffer == nil {
+            layoutNodeBuffer = LayoutNodeBuffer()
+            rootNodeIndex = layoutNodeBuffer?.addNode(layout: layout)
+            if let rootIndex = rootNodeIndex {
+                layoutNodeBuffer?.buildTree(rootIndex: rootIndex)
+                layoutNodeBuffer?.markDirty(at: rootIndex)
+            }
         } else if structureChanged {
-                rootNode = LayoutNode(layout: layout)
-                rootNode?.buildTree()
-                rootNode?.markDirty()
+            layoutNodeBuffer?.clear()
+            rootNodeIndex = layoutNodeBuffer?.addNode(layout: layout)
+            if let rootIndex = rootNodeIndex {
+                layoutNodeBuffer?.buildTree(rootIndex: rootIndex)
+                layoutNodeBuffer?.markDirty(at: rootIndex)
+            }
         }
     }
     
@@ -446,8 +454,15 @@ public class LayoutContainer: UIView {
             return
         }
         
-        // Legacy layout application
-        let result = layout.calculateLayout(in: bounds)
+        // Use LayoutNodeBuffer for incremental layout if enabled
+        let result: LayoutResult
+        if useIncrementalLayout, let buffer = layoutNodeBuffer, let rootIndex = rootNodeIndex {
+            result = buffer.calculateLayout(at: rootIndex, in: bounds)
+        } else {
+            // Legacy layout application
+            result = layout.calculateLayout(in: bounds)
+        }
+        
         let centerOffset = calculateCenterOffset(for: result.totalSize)
         
         applyFrames(
@@ -677,10 +692,13 @@ public class LayoutContainer: UIView {
             return
         }
         
-        if useIncrementalLayout && rootNode == nil, let layout = cachedLayout {
-            rootNode = LayoutNode(layout: layout)
-            rootNode?.buildTree()
-            rootNode?.markDirty()
+        if useIncrementalLayout && layoutNodeBuffer == nil, let layout = cachedLayout {
+            layoutNodeBuffer = LayoutNodeBuffer()
+            rootNodeIndex = layoutNodeBuffer?.addNode(layout: layout)
+            if let rootIndex = rootNodeIndex {
+                layoutNodeBuffer?.buildTree(rootIndex: rootIndex)
+                layoutNodeBuffer?.markDirty(at: rootIndex)
+            }
         }
         
         if !animatingViews.isEmpty {
@@ -688,7 +706,16 @@ public class LayoutContainer: UIView {
         }
         
         let boundsChanged = lastBounds != bounds
-        let layoutDirty = useIncrementalLayout ? (rootNode?.isDirty ?? true) : true
+        let layoutDirty: Bool
+        if useIncrementalLayout, let buffer = layoutNodeBuffer, let rootIndex = rootNodeIndex {
+            if let node = buffer.getNode(at: rootIndex) {
+                layoutDirty = node.isDirty
+            } else {
+                layoutDirty = true
+            }
+        } else {
+            layoutDirty = true
+        }
         
         if boundsChanged || layoutDirty {
             lastBounds = bounds
@@ -700,29 +727,30 @@ public class LayoutContainer: UIView {
     /// This marks only the target node as dirty without propagating to parent,
     /// allowing for partial updates where only the changed view is recalculated
     public func markViewDirty(_ view: UIView) {
-        guard useIncrementalLayout, let node = rootNode else {
+        guard useIncrementalLayout, let buffer = layoutNodeBuffer, let rootIndex = rootNodeIndex else {
             setNeedsLayout()
             return
         }
         
         // Find the node containing this view
-        if let targetNode = node.findNode(containing: view) {
-            targetNode.markDirty(propagateToParent: true)
+        if let targetIndex = buffer.findNode(containing: view, startingAt: rootIndex) {
+            buffer.markDirty(at: targetIndex, propagateToParent: true)
             setNeedsLayout()
         } else {
-            node.invalidate()
+            buffer.invalidate(at: rootIndex)
             setNeedsLayout()
         }
     }
     
     public func invalidateLayoutTree() {
-        guard let node = rootNode else { return }
-        node.invalidate()
+        guard let buffer = layoutNodeBuffer, let rootIndex = rootNodeIndex else { return }
+        buffer.invalidate(at: rootIndex)
         setNeedsLayout()
     }
     
     public func rebuildLayoutTree() {
-        rootNode = nil
+        layoutNodeBuffer = nil
+        rootNodeIndex = nil
         setNeedsLayout()
     }
 }
