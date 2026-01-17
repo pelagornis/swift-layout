@@ -142,6 +142,9 @@ public class HStack: UIView, Layout {
         // intrinsicContentSize calculates the natural size without constraints
         // Based on children's intrinsicContentSize, not dependent on bounds
         
+        // Pre-calculate infinite size constant to avoid repeated calculations
+        let infiniteSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        
         for subview in subviews {
             var size: CGSize
             
@@ -150,45 +153,54 @@ public class HStack: UIView, Layout {
                 let minLength = spacer.minLength ?? 0
                 // Spacer uses minLength in intrinsicContentSize
                 size = CGSize(width: minLength, height: minLength)
-            } else if let layoutView = subview as? (any Layout) {
-                // Use intrinsicContentSize for Layout views
-                size = layoutView.intrinsicContentSize
-            } else if let label = subview as? UILabel {
-                // Calculate based on text size for UILabel
-                let textSize = label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
-                size = textSize
-            } else if let button = subview as? UIButton {
-                // Calculate based on button size for UIButton
-                let buttonSize = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
-                size = buttonSize
             } else {
-                // Use intrinsicContentSize for other views
-                size = subview.intrinsicContentSize
+                // Optimize type checking - check most common types first
+                if let label = subview as? UILabel {
+                    // Calculate based on text size for UILabel - reuse infiniteSize constant
+                    size = label.sizeThatFits(infiniteSize)
+                } else if let button = subview as? UIButton {
+                    // Calculate based on button size for UIButton - reuse infiniteSize constant
+                    size = button.sizeThatFits(infiniteSize)
+                } else if let layoutView = subview as? (any Layout) {
+                    // Use intrinsicContentSize for Layout views
+                    size = layoutView.intrinsicContentSize
+                } else {
+                    // Use intrinsicContentSize for other views
+                    size = subview.intrinsicContentSize
+                }
             }
             
             totalWidth += size.width
-            maxHeight = max(maxHeight, size.height)
+            // Optimize max() call - only update if larger
+            if size.height > maxHeight {
+                maxHeight = size.height
+            }
         }
         
-        // Add spacing - consider Spacers with minLength
-        let effectiveSubviews: [UIView]
+        // Add spacing - count effective subviews without creating new array
+        var effectiveSubviewCount = 0
         if isInsideScrollView {
-            effectiveSubviews = subviews.filter { subview in
+            for subview in subviews {
                 if let spacer = subview as? Spacer {
-                    return (spacer.minLength ?? 0) > 0
+                    if (spacer.minLength ?? 0) > 0 {
+                        effectiveSubviewCount += 1
+                    }
+                } else {
+                    effectiveSubviewCount += 1
                 }
-                return true
             }
         } else {
-            effectiveSubviews = subviews
+            effectiveSubviewCount = subviews.count
         }
-        if effectiveSubviews.count > 1 {
-            totalWidth += spacing * CGFloat(effectiveSubviews.count - 1)
+        if effectiveSubviewCount > 1 {
+            totalWidth += spacing * CGFloat(effectiveSubviewCount - 1)
         }
         
-        // Add padding
-        totalWidth += padding.left + padding.right
-        maxHeight += padding.top + padding.bottom
+        // Add padding - cache calculations
+        let paddingLeftRight = padding.left + padding.right
+        let paddingTopBottom = padding.top + padding.bottom
+        totalWidth += paddingLeftRight
+        maxHeight += paddingTopBottom
         
         return CGSize(width: totalWidth, height: maxHeight)
     }
@@ -334,17 +346,7 @@ public class HStack: UIView, Layout {
                 spacerCount += 1
                 totalMinLength += spacer.minLength ?? 0
             } else {
-                var size: CGSize
-                if let label = subview as? UILabel {
-                    let textSize = label.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: safeBounds.height))
-                    size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-                } else if let button = subview as? UIButton {
-                    let buttonSize = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: safeBounds.height))
-                    size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
-                } else {
-                    let intrinsicSize = subview.intrinsicContentSize
-                    size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
-                }
+                let size = calculateFallbackSize(for: subview, maxWidth: CGFloat.greatestFiniteMagnitude, maxHeight: safeBounds.height)
                 frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
                 totalSize.height = max(totalSize.height, size.height)
                 fixedContentWidth += size.width
@@ -402,9 +404,27 @@ public class HStack: UIView, Layout {
         // Detect if inside ScrollView
         let isInsideScrollView = isInsideScrollView()
         
-        // Apply screen size limits
-        let maxWidth = min(safeBounds.width, bounds.width)
-        let maxHeight = min(safeBounds.height, bounds.height)
+        // Apply screen size limits - optimize min() calls
+        let maxWidth: CGFloat
+        if safeBounds.width <= bounds.width {
+            maxWidth = safeBounds.width
+        } else {
+            maxWidth = bounds.width
+        }
+        let maxHeight: CGFloat
+        if safeBounds.height <= bounds.height {
+            maxHeight = safeBounds.height
+        } else {
+            maxHeight = bounds.height
+        }
+        
+        // Pre-calculate alignment values to avoid repeated checks
+        let isTop = alignment == .top
+        let isCenter = alignment == .center
+        let safeBoundsMinY = safeBounds.minY
+        let safeBoundsMaxY = safeBounds.maxY
+        let safeBoundsHeight = safeBounds.height
+        let safeBoundsHalfHeight = safeBoundsHeight * 0.5
         
         for subview in subviews {
             // Handle Spacer with minLength inside ScrollView
@@ -415,7 +435,10 @@ public class HStack: UIView, Layout {
                     let size = CGSize(width: minLength, height: maxHeight)
                     frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
                     totalSize.width += size.width
-                    totalSize.height = max(totalSize.height, size.height)
+                    // Optimize max() call - only update if larger
+                    if size.height > totalSize.height {
+                        totalSize.height = size.height
+                    }
                 }
                 continue
             }
@@ -444,7 +467,10 @@ public class HStack: UIView, Layout {
                     }
                     frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
                     totalSize.width += size.width
-                    totalSize.height = max(totalSize.height, size.height)
+                    // Optimize max() call - only update if larger
+                    if size.height > totalSize.height {
+                        totalSize.height = size.height
+                    }
                 }
             } else if let layoutView = subview as? (any Layout) {
                 // Pass limited size to child layout
@@ -452,62 +478,75 @@ public class HStack: UIView, Layout {
                 let childResult = layoutView.calculateLayout(in: limitedBounds)
                 frames.merge(childResult.frames) { _, new in new }
                 
-                // Apply size limits
-                let limitedWidth = min(childResult.totalSize.width, maxWidth)
-                let limitedHeight = min(childResult.totalSize.height, maxHeight)
-                totalSize.width += limitedWidth
-                totalSize.height = max(totalSize.height, limitedHeight)
-            } else {
-                // Use existing logic if no stored ViewLayout information
-                var size: CGSize
-                if let label = subview as? UILabel {
-                    let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-                    size = CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
-                } else if let button = subview as? UIButton {
-                    let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-                    size = CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
+                // Apply size limits - optimize min() calls
+                let limitedWidth: CGFloat
+                if childResult.totalSize.width <= maxWidth {
+                    limitedWidth = childResult.totalSize.width
                 } else {
-                    let intrinsicSize = subview.intrinsicContentSize
-                    size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
+                    limitedWidth = maxWidth
                 }
+                let limitedHeight: CGFloat
+                if childResult.totalSize.height <= maxHeight {
+                    limitedHeight = childResult.totalSize.height
+                } else {
+                    limitedHeight = maxHeight
+                }
+                totalSize.width += limitedWidth
+                // Optimize max() call - only update if larger
+                if limitedHeight > totalSize.height {
+                    totalSize.height = limitedHeight
+                }
+            } else {
+                // Use existing logic if no stored ViewLayout information - reuse helper
+                let size = calculateFallbackSize(for: subview, maxWidth: maxWidth, maxHeight: maxHeight)
                 frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
                 totalSize.width += size.width
                 totalSize.height = max(totalSize.height, size.height)
             }
         }
         
-        // Add spacing - consider Spacers with minLength inside ScrollView
-        let effectiveSubviews: [UIView]
+        // Add spacing - count effective subviews without creating new array
+        var effectiveSubviewCount = 0
         if isInsideScrollView {
-            effectiveSubviews = subviews.filter { subview in
+            for subview in subviews {
                 if let spacer = subview as? Spacer {
-                    return (spacer.minLength ?? 0) > 0
+                    if (spacer.minLength ?? 0) > 0 {
+                        effectiveSubviewCount += 1
+                    }
+                } else {
+                    effectiveSubviewCount += 1
                 }
-                return true
             }
         } else {
-            effectiveSubviews = subviews
+            effectiveSubviewCount = subviews.count
         }
-        if effectiveSubviews.count > 1 {
-            totalSize.width += spacing * CGFloat(effectiveSubviews.count - 1)
+        if effectiveSubviewCount > 1 {
+            totalSize.width += spacing * CGFloat(effectiveSubviewCount - 1)
         }
         
         // Add padding
         totalSize.width += padding.left + padding.right
         totalSize.height += padding.top + padding.bottom
         
-        // Apply final size limits
-        totalSize.width = min(totalSize.width, bounds.width)
-        totalSize.height = min(totalSize.height, bounds.height)
+        // Apply final size limits - optimize min() calls
+        if totalSize.width > bounds.width {
+            totalSize.width = bounds.width
+        }
+        if totalSize.height > bounds.height {
+            totalSize.height = bounds.height
+        }
         
         // Calculate actual position for each view
         var currentX: CGFloat = padding.left
-        let centerY = (totalSize.height - padding.top - padding.bottom) / 2 + padding.top
+        // Optimize /2 with *0.5
+        let paddingHeight = totalSize.height - padding.top - padding.bottom
+        let centerY = paddingHeight * 0.5 + padding.top
         
         for subview in subviews {
             if let frame = frames[subview] {
                 // Calculate actual position for view (center alignment)
-                let viewY = centerY - frame.height / 2
+                // Optimize /2 with *0.5
+                let viewY = centerY - frame.height * 0.5
                 let actualFrame = CGRect(
                     x: currentX,
                     y: viewY,
@@ -553,6 +592,20 @@ public class HStack: UIView, Layout {
     /// Retrieves ViewLayout information for a specific view
     public func getViewLayout(for view: UIView) -> ViewLayout? {
         return viewLayouts[view]
+    }
+    
+    /// Helper method to calculate fallback size for a subview
+    private func calculateFallbackSize(for subview: UIView, maxWidth: CGFloat, maxHeight: CGFloat) -> CGSize {
+        if let label = subview as? UILabel {
+            let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
+            return CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
+        } else if let button = subview as? UIButton {
+            let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
+            return CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
+        } else {
+            let intrinsicSize = subview.intrinsicContentSize
+            return CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
+        }
     }
     
     /// Method to detect if inside ScrollView
