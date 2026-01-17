@@ -40,18 +40,21 @@ public struct ViewLayout: Layout {
     }
 
     public func calculateLayout(in bounds: CGRect) -> LayoutResult {
+        // Cache modifiers to avoid repeated property access
+        let cachedModifiers = modifiers
+        
         // PHASE 1: MEASURE - Calculate the size the view wants
-        let measuredSize = measureSize(in: bounds)
+        let measuredSize = measureSize(in: bounds, modifiers: cachedModifiers)
         
         // PHASE 2: LAYOUT - Calculate the final position
-        let finalFrame = layoutFrame(size: measuredSize, in: bounds)
+        let finalFrame = layoutFrame(size: measuredSize, in: bounds, modifiers: cachedModifiers)
         
         return LayoutResult(frames: [view: finalFrame], totalSize: measuredSize)
     }
     
     /// MEASURE PHASE: Determines the size the view wants
     /// This is separate from placement (layout phase)
-    private func measureSize(in bounds: CGRect) -> CGSize {
+    private func measureSize(in bounds: CGRect, modifiers: [LayoutModifier]) -> CGSize {
         // Use default bounds if invalid (width can be 0 while height is available)
         // SwiftUI-style: nil width/height means unconstrained in that dimension
         let proposedWidth: CGFloat? = bounds.width > 0 ? bounds.width : nil
@@ -62,23 +65,32 @@ public struct ViewLayout: Layout {
         // Calculate more accurate default size
         var defaultSize: CGSize
         
-        if intrinsicSize.width == UIView.noIntrinsicMetric || intrinsicSize.height == UIView.noIntrinsicMetric {
-            // When intrinsicContentSize is not set
+        // Optimize: check if intrinsicContentSize is valid before using it
+        let hasIntrinsicWidth = intrinsicSize.width != UIView.noIntrinsicMetric
+        let hasIntrinsicHeight = intrinsicSize.height != UIView.noIntrinsicMetric
+        
+        if hasIntrinsicWidth && hasIntrinsicHeight {
+            // Use intrinsicContentSize, but respect proposed constraints
+            defaultSize = CGSize(
+                width: proposedWidth.map { min($0, intrinsicSize.width) } ?? intrinsicSize.width,
+                height: proposedHeight.map { min($0, intrinsicSize.height) } ?? intrinsicSize.height
+            )
+        } else {
+            // When intrinsicContentSize is not set - optimize type checking
+            let maxWidth = proposedWidth ?? CGFloat.greatestFiniteMagnitude
             if let label = view as? UILabel {
-                // For UILabel, calculate based on text size
-                let maxWidth = proposedWidth ?? CGFloat.greatestFiniteMagnitude
-                let textSize = label.text?.size(withAttributes: [.font: label.font ?? UIFont.systemFont(ofSize: 17)]) ?? .zero
+                // For UILabel, use sizeThatFits instead of text?.size(withAttributes:) for better accuracy
+                let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
                 defaultSize = CGSize(
-                    width: max(min(textSize.width + 20, maxWidth), 100), // Ensure minimum width
-                    height: max(textSize.height + 10, 30) // Ensure minimum height
+                    width: max(min(textSize.width, maxWidth), 100), // Ensure minimum width
+                    height: max(textSize.height, 30) // Ensure minimum height
                 )
             } else if let button = view as? UIButton {
-                // For UIButton, calculate based on title size
-                let maxWidth = proposedWidth ?? CGFloat.greatestFiniteMagnitude
-                let titleSize = button.title(for: .normal)?.size(withAttributes: [.font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 17)]) ?? .zero
+                // For UIButton, use sizeThatFits for better accuracy
+                let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
                 defaultSize = CGSize(
-                    width: max(min(titleSize.width + 40, maxWidth), 120), // Ensure minimum width
-                    height: max(titleSize.height + 20, 44) // Ensure minimum height
+                    width: max(min(buttonSize.width, maxWidth), 120), // Ensure minimum width
+                    height: max(buttonSize.height, 44) // Ensure minimum height
                 )
             } else {
                 // For other UIViews, use default values or proposed size
@@ -87,15 +99,9 @@ public struct ViewLayout: Layout {
                     height: proposedHeight ?? 30
                 )
             }
-        } else {
-            // Use intrinsicContentSize, but respect proposed constraints
-            defaultSize = CGSize(
-                width: proposedWidth.map { min($0, intrinsicSize.width) } ?? intrinsicSize.width,
-                height: proposedHeight.map { min($0, intrinsicSize.height) } ?? intrinsicSize.height
-            )
         }
         
-        // Apply size modifiers (measure phase)
+        // Apply size modifiers (measure phase) - use cached modifiers
         var measuredSize = defaultSize
         for modifier in modifiers {
             if let sizeModifier = modifier as? SizeModifier {
@@ -134,17 +140,23 @@ public struct ViewLayout: Layout {
     
     /// LAYOUT PHASE: Determines the final position of the view
     /// This happens after measure phase
-    private func layoutFrame(size: CGSize, in bounds: CGRect) -> CGRect {
+    private func layoutFrame(size: CGSize, in bounds: CGRect, modifiers: [LayoutModifier]) -> CGRect {
         // Use actual bounds if available, otherwise use safe fallback
         let safeBounds = bounds.width > 0 && bounds.height > 0 ? bounds : CGRect(x: 0, y: 0, width: 375, height: bounds.height > 0 ? bounds.height : 600)
         
-        // Recalculate size if we have Percent modifiers - always use actual bounds for consistency
-        // This ensures Percent calculations use the actual bounds from parent container
+        // Pre-filter size modifiers to avoid repeated type checks
+        let sizeModifiers = modifiers.compactMap { $0 as? SizeModifier }
+        let hasSizeModifiers = !sizeModifiers.isEmpty
+        
+        // Only recalculate Percent-based sizes if bounds changed from measure phase
+        // Check if bounds are significantly different to avoid unnecessary recalculation
         var finalSize = size
-        for modifier in modifiers {
-            if let sizeModifier = modifier as? SizeModifier {
-                // Always recalculate Percent-based sizes with actual bounds to ensure consistency
-                // This fixes issues where measureSize used fallback values but layoutFrame has real bounds
+        let boundsChanged = abs(safeBounds.width - (bounds.width > 0 ? bounds.width : 375)) > 1.0 || 
+                           abs(safeBounds.height - (bounds.height > 0 ? bounds.height : 600)) > 1.0
+        
+        if boundsChanged && hasSizeModifiers {
+            // Recalculate size if we have Percent modifiers and bounds changed
+            for sizeModifier in sizeModifiers {
                 if let width = sizeModifier.width {
                     finalSize.width = width.calculate(relativeTo: safeBounds.width)
                 }
@@ -161,8 +173,9 @@ public struct ViewLayout: Layout {
         var frame = CGRect(origin: .zero, size: finalSize)
         
         // Apply modifiers in sequence (layout phase - positioning)
+        // Skip size and aspect ratio modifiers (already applied in measure phase)
         for modifier in modifiers {
-            // Skip size modifiers (already applied above)
+            // Skip size modifiers and aspect ratio modifiers (already applied above)
             if modifier is SizeModifier || modifier is AspectRatioModifier {
                 continue
             }
