@@ -185,25 +185,30 @@ public class ZStack: UIView, Layout {
             x = bounds.minX
             y = bounds.minY
         case .top:
-            x = bounds.midX - size.width / 2
+            // Optimize /2 with *0.5
+            x = bounds.midX - size.width * 0.5
             y = bounds.minY
         case .topTrailing:
             x = bounds.maxX - size.width
             y = bounds.minY
         case .leading:
             x = bounds.minX
-            y = bounds.midY - size.height / 2
+            // Optimize /2 with *0.5
+            y = bounds.midY - size.height * 0.5
         case .center:
-            x = bounds.midX - size.width / 2
-            y = bounds.midY - size.height / 2
+            // Optimize /2 with *0.5
+            x = bounds.midX - size.width * 0.5
+            y = bounds.midY - size.height * 0.5
         case .trailing:
             x = bounds.maxX - size.width
-            y = bounds.midY - size.height / 2
+            // Optimize /2 with *0.5
+            y = bounds.midY - size.height * 0.5
         case .bottomLeading:
             x = bounds.minX
             y = bounds.maxY - size.height
         case .bottom:
-            x = bounds.midX - size.width / 2
+            // Optimize /2 with *0.5
+            x = bounds.midX - size.width * 0.5
             y = bounds.maxY - size.height
         case .bottomTrailing:
             x = bounds.maxX - size.width
@@ -217,42 +222,73 @@ public class ZStack: UIView, Layout {
         var maxWidth: CGFloat = 0
         var maxHeight: CGFloat = 0
         
+        // Pre-calculate default bounds constant to avoid repeated calculations
+        let defaultBounds = CGRect(x: 0, y: 0, width: 375, height: 600)
+        
         // Calculate actual size of child views accurately
         for subview in subviews {
             var size: CGSize
             
             // For views implementing Layout protocol (VStack, HStack, ZStack)
             if let layoutView = subview as? (any Layout) {
-                // Use calculateLayout for Layout views to calculate accurate size
-                let layoutResult = layoutView.calculateLayout(in: CGRect(x: 0, y: 0, width: 375, height: 600))
+                // Use calculateLayout for Layout views to calculate accurate size - reuse defaultBounds
+                let layoutResult = layoutView.calculateLayout(in: defaultBounds)
                 size = layoutResult.totalSize
-                // Prevent negative values
-                size = CGSize(width: max(size.width, 50), height: max(size.height, 20))
+                // Prevent negative values - optimize max() calls
+                if size.width < 50 {
+                    size.width = 50
+                }
+                if size.height < 20 {
+                    size.height = 20
+                }
             } else if let label = subview as? UILabel {
-                // Calculate based on text size for UILabel
-                let textSize = label.sizeThatFits(CGSize(width: 375, height: 600))
-                size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
+                // Calculate based on text size for UILabel - reuse defaultBounds
+                let textSize = label.sizeThatFits(defaultBounds.size)
+                // Optimize max() calls
+                size = CGSize(
+                    width: textSize.width >= 50 ? textSize.width : 50,
+                    height: textSize.height >= 20 ? textSize.height : 20
+                )
             } else if let button = subview as? UIButton {
-                // Calculate based on button size for UIButton
-                let buttonSize = button.sizeThatFits(CGSize(width: 375, height: 600))
-                size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
+                // Calculate based on button size for UIButton - reuse defaultBounds
+                let buttonSize = button.sizeThatFits(defaultBounds.size)
+                // Optimize max() calls
+                size = CGSize(
+                    width: buttonSize.width >= 80 ? buttonSize.width : 80,
+                    height: buttonSize.height >= 30 ? buttonSize.height : 30
+                )
             } else {
                 // Use intrinsicContentSize for other views
                 let intrinsicSize = subview.intrinsicContentSize
-                size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
+                // Optimize max() calls
+                size = CGSize(
+                    width: intrinsicSize.width >= 50 ? intrinsicSize.width : 50,
+                    height: intrinsicSize.height >= 20 ? intrinsicSize.height : 20
+                )
             }
             
-            maxWidth = max(maxWidth, size.width)
-            maxHeight = max(maxHeight, size.height)
+            // Optimize max() calls - only update if larger
+            if size.width > maxWidth {
+                maxWidth = size.width
+            }
+            if size.height > maxHeight {
+                maxHeight = size.height
+            }
         }
         
-        // Add padding
-        maxWidth += padding.left + padding.right
-        maxHeight += padding.top + padding.bottom
+        // Add padding - cache calculations
+        let paddingLeftRight = padding.left + padding.right
+        let paddingTopBottom = padding.top + padding.bottom
+        maxWidth += paddingLeftRight
+        maxHeight += paddingTopBottom
         
-        // Ensure minimum size (even when no child views)
-        maxWidth = max(maxWidth, 200)
-        maxHeight = max(maxHeight, 100)
+        // Ensure minimum size (even when no child views) - optimize max() calls
+        if maxWidth < 200 {
+            maxWidth = 200
+        }
+        if maxHeight < 100 {
+            maxHeight = 100
+        }
         
         return CGSize(width: maxWidth, height: maxHeight)
     }
@@ -264,6 +300,9 @@ public class ZStack: UIView, Layout {
         let safeBounds = bounds.inset(by: padding)
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
+        
+        // Pre-calculate infinite height constant to avoid repeated calculations
+        let infiniteHeight = CGFloat.greatestFiniteMagnitude
         
         // If ZStack itself has ViewLayout (from .layout() modifier), use it for size calculation
         // This handles Percent-based sizes correctly
@@ -286,9 +325,15 @@ public class ZStack: UIView, Layout {
         for subview in subviews {
             if let layoutView = subview as? (any Layout) {
                 let childResult = layoutView.calculateLayout(in: safeBounds)
+                
                 frames.merge(childResult.frames) { _, new in new }
-                totalSize.width = max(totalSize.width, childResult.totalSize.width)
-                totalSize.height = max(totalSize.height, childResult.totalSize.height)
+                // Optimize max() calls - only update if larger
+                if childResult.totalSize.width > totalSize.width {
+                    totalSize.width = childResult.totalSize.width
+                }
+                if childResult.totalSize.height > totalSize.height {
+                    totalSize.height = childResult.totalSize.height
+                }
             } else {
                 // Check if stored ViewLayout information exists
                 if let storedViewLayout = getViewLayout(for: subview) {
@@ -297,8 +342,13 @@ public class ZStack: UIView, Layout {
                     
                     if let frame = viewResult.frames[subview] {
                         frames[subview] = frame
-                        totalSize.width = max(totalSize.width, frame.width)
-                        totalSize.height = max(totalSize.height, frame.height)
+                        // Optimize max() calls - only update if larger
+                        if frame.width > totalSize.width {
+                            totalSize.width = frame.width
+                        }
+                        if frame.height > totalSize.height {
+                            totalSize.height = frame.height
+                        }
 
                     } else {
                         // Fallback: use existing logic
@@ -306,18 +356,23 @@ public class ZStack: UIView, Layout {
                         if subview is Spacer {
                             size = .zero
                         } else if let label = subview as? UILabel {
-                            let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                            let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: infiniteHeight))
                             size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
                         } else if let button = subview as? UIButton {
-                            let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
+                            let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: infiniteHeight))
                             size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
                         } else {
                             let intrinsicSize = subview.intrinsicContentSize
                             size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
                         }
                         frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-                        totalSize.width = max(totalSize.width, size.width)
-                        totalSize.height = max(totalSize.height, size.height)
+                        // Optimize max() calls - only update if larger
+                        if size.width > totalSize.width {
+                            totalSize.width = size.width
+                        }
+                        if size.height > totalSize.height {
+                            totalSize.height = size.height
+                        }
                     }
                 } else {
                     // Use existing logic if no stored ViewLayout information
