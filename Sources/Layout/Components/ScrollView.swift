@@ -159,15 +159,20 @@ public class ScrollView: UIScrollView, Layout {
         
         // Normalize bounds (UIScrollView's bounds.origin is negative of contentOffset)
         let normalizedBounds = CGRect(origin: .zero, size: bounds.size)
-        let expectedContentSize: CGSize
+        
+        // Calculate content size and layout result in one pass to avoid duplicate calculations
+        let currentOffset = contentOffset
+        let (expectedContentSize, preCalculatedResult): (CGSize, LayoutResult?)
         switch axis {
         case .vertical:
-            expectedContentSize = CGSize(width: bounds.width, height: calculateActualContentHeight())
+            let (height, result) = calculateActualContentHeightWithResult()
+            expectedContentSize = CGSize(width: bounds.width, height: height)
+            preCalculatedResult = result
         case .horizontal:
-            expectedContentSize = CGSize(width: calculateActualContentWidth(), height: bounds.height)
+            let (width, result) = calculateActualContentWidthWithResult()
+            expectedContentSize = CGSize(width: width, height: bounds.height)
+            preCalculatedResult = result
         }
-        
-        let currentOffset = contentOffset
         
         // Check if bounds or content size changed
         let boundsChanged = cachedBounds.size != normalizedBounds.size
@@ -203,12 +208,12 @@ public class ScrollView: UIScrollView, Layout {
             return
         }
         
-        // Update layout based on scroll axis
+        // Update layout based on scroll axis, reuse pre-calculated result if available
         switch axis {
         case .vertical:
-            updateVerticalLayout(layout, expectedSize: expectedContentSize, currentOffset: currentOffset)
+            updateVerticalLayout(layout, expectedSize: expectedContentSize, currentOffset: currentOffset, preCalculatedResult: preCalculatedResult)
         case .horizontal:
-            updateHorizontalLayout(layout, expectedSize: expectedContentSize, currentOffset: currentOffset)
+            updateHorizontalLayout(layout, expectedSize: expectedContentSize, currentOffset: currentOffset, preCalculatedResult: preCalculatedResult)
         }
         
         cachedContentSize = expectedContentSize
@@ -216,10 +221,16 @@ public class ScrollView: UIScrollView, Layout {
     }
     
     /// Updates vertical scroll layout and preserves scroll position
-    private func updateVerticalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint) {
+    private func updateVerticalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint, preCalculatedResult: LayoutResult? = nil) {
         let actualContentHeight = expectedSize.height
         let contentBounds = CGRect(x: 0, y: 0, width: bounds.width, height: actualContentHeight)
-        let result = layout.calculateLayout(in: contentBounds)
+        // Reuse pre-calculated result if available and bounds match, otherwise recalculate
+        let result: LayoutResult
+        if let preCalculated = preCalculatedResult, preCalculated.totalSize.height == actualContentHeight {
+            result = preCalculated
+        } else {
+            result = layout.calculateLayout(in: contentBounds)
+        }
         
         contentView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: actualContentHeight)
         
@@ -240,10 +251,16 @@ public class ScrollView: UIScrollView, Layout {
     }
     
     /// Updates horizontal scroll layout and preserves scroll position
-    private func updateHorizontalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint) {
+    private func updateHorizontalLayout(_ layout: any Layout, expectedSize: CGSize, currentOffset: CGPoint, preCalculatedResult: LayoutResult? = nil) {
         let actualContentWidth = expectedSize.width
         let contentBounds = CGRect(x: 0, y: 0, width: actualContentWidth, height: bounds.height)
-        let result = layout.calculateLayout(in: contentBounds)
+        // Reuse pre-calculated result if available and bounds match, otherwise recalculate
+        let result: LayoutResult
+        if let preCalculated = preCalculatedResult, preCalculated.totalSize.width == actualContentWidth {
+            result = preCalculated
+        } else {
+            result = layout.calculateLayout(in: contentBounds)
+        }
 
         contentView.frame = CGRect(x: 0, y: 0, width: actualContentWidth, height: bounds.height)
 
@@ -386,7 +403,28 @@ public class ScrollView: UIScrollView, Layout {
     // MARK: - Private Methods
     
     /// Calculates the actual content height by finding and measuring VStack
+    /// Returns both height and the layout result to avoid duplicate calculations
+    private func calculateActualContentHeightWithResult() -> (CGFloat, LayoutResult?) {
+        guard let layout = childLayout else { return (0, nil) }
+        
+        // Use calculateContentHeight which already handles VStack optimization
+        let availableWidth = bounds.width
+        let availableBounds = CGRect(x: 0, y: 0, width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
+        
+        // Try to get result directly from layout calculation
+        let result = layout.calculateLayout(in: availableBounds)
+        let height = result.totalSize.height
+        
+        return (height, result)
+    }
+    
+    /// Calculates the actual content height by finding and measuring VStack
     private func calculateActualContentHeight() -> CGFloat {
+        return calculateActualContentHeightWithResult().0
+    }
+    
+    /// Fallback method for direct contentView check (kept for compatibility)
+    private func calculateActualContentHeightFallback() -> CGFloat {
         guard let layout = childLayout else { return 0 }
         
         let views = layout.extractViews()
@@ -405,7 +443,28 @@ public class ScrollView: UIScrollView, Layout {
     }
     
     /// Calculates the actual content width by finding and measuring HStack
+    /// Returns both width and the layout result to avoid duplicate calculations
+    private func calculateActualContentWidthWithResult() -> (CGFloat, LayoutResult?) {
+        guard let layout = childLayout else { return (0, nil) }
+        
+        // Use calculateContentWidth which already handles HStack optimization
+        let availableHeight = bounds.height
+        let availableBounds = CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: availableHeight)
+        
+        // Try to get result directly from layout calculation
+        let result = layout.calculateLayout(in: availableBounds)
+        let width = result.totalSize.width
+        
+        return (width, result)
+    }
+    
+    /// Calculates the actual content width by finding and measuring HStack
     private func calculateActualContentWidth() -> CGFloat {
+        return calculateActualContentWidthWithResult().0
+    }
+    
+    /// Fallback method for direct contentView check (kept for compatibility)
+    private func calculateActualContentWidthFallback() -> CGFloat {
         guard let layout = childLayout else { return 0 }
         
         let views = layout.extractViews()
