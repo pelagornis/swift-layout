@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Timing function for animations
 public enum AnimationTimingFunction: Sendable {
     case linear

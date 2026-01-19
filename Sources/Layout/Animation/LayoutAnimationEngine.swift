@@ -1,7 +1,4 @@
-#if canImport(UIKit)
 import UIKit
-
-#endif
 import QuartzCore
 
 /// State for a running animation
