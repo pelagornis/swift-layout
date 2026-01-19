@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Adapter that bridges the old `Layout` protocol to the new `NewLayoutNode` protocol
 ///
 /// This adapter allows existing `Layout` implementations to work with the new

@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that overlays another layout on top of a base layout
 public struct OverlayLayout: Layout {
     public typealias Body = Never

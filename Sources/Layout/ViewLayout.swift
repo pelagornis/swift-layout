@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A wrapper that provides layout functionality for UIViews with chainable modifiers.
 ///
 /// ``ViewLayout`` wraps a UIView and provides a fluent interface for applying
@@ -76,29 +74,10 @@ public struct ViewLayout: Layout {
                 height: proposedHeight.map { min($0, intrinsicSize.height) } ?? intrinsicSize.height
             )
         } else {
-            // When intrinsicContentSize is not set - optimize type checking
-            let maxWidth = proposedWidth ?? CGFloat.greatestFiniteMagnitude
-            if let label = view as? UILabel {
-                // For UILabel, use sizeThatFits instead of text?.size(withAttributes:) for better accuracy
-                let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-                defaultSize = CGSize(
-                    width: max(min(textSize.width, maxWidth), 100), // Ensure minimum width
-                    height: max(textSize.height, 30) // Ensure minimum height
-                )
-            } else if let button = view as? UIButton {
-                // For UIButton, use sizeThatFits for better accuracy
-                let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-                defaultSize = CGSize(
-                    width: max(min(buttonSize.width, maxWidth), 120), // Ensure minimum width
-                    height: max(buttonSize.height, 44) // Ensure minimum height
-                )
-            } else {
-                // For other UIViews, use default values or proposed size
-                defaultSize = CGSize(
-                    width: proposedWidth ?? 100,
-                    height: proposedHeight ?? 30
-                )
-            }
+            defaultSize = CGSize(
+                width: proposedWidth ?? 100,
+                height: proposedHeight ?? 30
+            )
         }
         
         // Apply size modifiers (measure phase) - use cached modifiers

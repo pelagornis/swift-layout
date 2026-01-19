@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that applies background color to its base layout
 public struct BackgroundLayout: Layout {
     public typealias Body = Never

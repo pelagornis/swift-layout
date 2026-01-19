@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that has a specific priority
 @MainActor
 public struct PriorityLayout: Layout {

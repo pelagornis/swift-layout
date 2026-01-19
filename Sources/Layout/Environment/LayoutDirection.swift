@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 public enum LayoutDirection: Sendable {
     case leftToRight
     case rightToLeft

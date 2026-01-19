@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A node in the layout tree that wraps a Layout and manages its state
 /// 
 /// LayoutNode provides:

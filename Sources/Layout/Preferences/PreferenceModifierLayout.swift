@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that sets a preference value
 @MainActor
 public struct PreferenceModifierLayout<K: PreferenceKey>: Layout {

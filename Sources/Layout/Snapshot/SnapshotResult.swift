@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Result of a snapshot comparison
 public struct SnapshotResult {
     public let matched: Bool

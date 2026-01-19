@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Cache for incremental layout updates
 @MainActor
 public final class IncrementalLayoutCache {

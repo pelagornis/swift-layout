@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that represents a conditional layout
 public enum ConditionalLayout<TrueContent: Layout, FalseContent: Layout>: Layout {
     public typealias Body = Never

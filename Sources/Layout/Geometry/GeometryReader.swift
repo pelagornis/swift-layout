@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A container that provides access to its geometry
 @MainActor
 public class GeometryReader: UIView, Layout {

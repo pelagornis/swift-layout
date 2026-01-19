@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that can grow or shrink flexibly
 @MainActor
 public struct FlexibleLayout: Layout {

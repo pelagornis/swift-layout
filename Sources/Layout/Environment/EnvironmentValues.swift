@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Container for environment values that flow down the view hierarchy
 @MainActor
 public final class EnvironmentValues {

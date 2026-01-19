@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout with a fixed size in one or both dimensions
 @MainActor
 public struct FixedSizeLayout: Layout {

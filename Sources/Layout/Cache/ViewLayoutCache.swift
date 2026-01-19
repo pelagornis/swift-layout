@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Manages layout cache for a specific view
 @MainActor
 public final class ViewLayoutCache {

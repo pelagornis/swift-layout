@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that does nothing.
 ///
 /// ``EmptyLayout`` represents an empty layout that contains no views

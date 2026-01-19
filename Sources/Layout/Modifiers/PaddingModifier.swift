@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Modifier for adding padding around views.
 ///
 /// Use ``PaddingModifier`` to add space around a view, similar to SwiftUI's `.padding()`.

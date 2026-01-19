@@ -1,8 +1,5 @@
-import Foundation
-#if canImport(UIKit)
 import UIKit
-
-#endif
+import Foundation
 /// A class that manages debug settings for the layout system
 ///
 /// The ``LayoutDebugger`` provides selective debugging capabilities for the custom layout system.

@@ -1,8 +1,5 @@
-import SwiftUI
-#if canImport(UIKit)
 import UIKit
-
-#endif
+import SwiftUI
 // MARK: - UIKit to SwiftUI Bridge
 
 /// UIKit to SwiftUI conversion extension.

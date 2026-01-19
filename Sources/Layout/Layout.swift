@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Base protocol for all layout components in the ManualLayout system.
 ///
 /// The `Layout` protocol is the foundation of the ManualLayout system, providing

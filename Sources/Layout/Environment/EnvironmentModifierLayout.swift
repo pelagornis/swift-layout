@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A layout that modifies environment values for its content
 @MainActor
 public struct EnvironmentModifierLayout<Value>: Layout {

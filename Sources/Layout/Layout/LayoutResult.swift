@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Contains the result of a layout calculation, including view frames and total size.
 ///
 /// ``LayoutResult`` encapsulates both the calculated frames for individual views

@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Registry for managing preference values
 @MainActor
 public final class PreferenceRegistry {

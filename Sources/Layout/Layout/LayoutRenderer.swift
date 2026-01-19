@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// Renders layout results to the UIView hierarchy
 ///
 /// `LayoutRenderer` is responsible for applying placement results to the actual
