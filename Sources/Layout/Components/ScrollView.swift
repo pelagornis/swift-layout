@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A scrollable container view that enables scrolling when content exceeds available space.
 public class ScrollView: UIScrollView, Layout {
     public typealias Body = Never

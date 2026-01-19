@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A vertical stack layout that arranges child layouts vertically.
 ///
 /// ``VStack`` arranges its child layouts in a vertical column with optional spacing
@@ -319,13 +317,7 @@ public class VStack: UIView, Layout {
                 }
             } else {
                 // Optimize type checking - check most common types first
-                if let label = subview as? UILabel {
-                    // Calculate based on text size for UILabel - reuse infiniteSize constant
-                    size = label.sizeThatFits(infiniteSize)
-                } else if let button = subview as? UIButton {
-                    // Calculate based on button size for UIButton - reuse infiniteSize constant
-                    size = button.sizeThatFits(infiniteSize)
-                } else if let layoutView = subview as? (any Layout) {
+                if let layoutView = subview as? (any Layout) {
                     // Use intrinsicContentSize for Layout views
                     size = layoutView.intrinsicContentSize
                 } else {
@@ -711,15 +703,6 @@ public class VStack: UIView, Layout {
     /// Helper method to calculate fallback size for a subview
     /// Optimized to minimize type checking and intrinsicContentSize calls
     private func calculateFallbackSize(for subview: UIView, maxWidth: CGFloat) -> CGSize {
-        // Optimize: check most common types first (UILabel, UIButton are most frequent)
-        if let label = subview as? UILabel {
-            let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-            return CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
-        }
-        if let button = subview as? UIButton {
-            let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-            return CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
-        }
         // Fallback: use intrinsicContentSize (least common case)
         let intrinsicSize = subview.intrinsicContentSize
         return CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))

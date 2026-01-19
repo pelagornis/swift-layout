@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A horizontal stack layout that arranges child layouts horizontally.
 ///
 /// ``HStack`` arranges its child layouts in a horizontal row with optional spacing
@@ -155,13 +153,7 @@ public class HStack: UIView, Layout {
                 size = CGSize(width: minLength, height: minLength)
             } else {
                 // Optimize type checking - check most common types first
-                if let label = subview as? UILabel {
-                    // Calculate based on text size for UILabel - reuse infiniteSize constant
-                    size = label.sizeThatFits(infiniteSize)
-                } else if let button = subview as? UIButton {
-                    // Calculate based on button size for UIButton - reuse infiniteSize constant
-                    size = button.sizeThatFits(infiniteSize)
-                } else if let layoutView = subview as? (any Layout) {
+                if let layoutView = subview as? (any Layout) {
                     // Use intrinsicContentSize for Layout views
                     size = layoutView.intrinsicContentSize
                 } else {
@@ -455,16 +447,9 @@ public class HStack: UIView, Layout {
                 } else {
                     // Fallback: use existing logic
                     var size: CGSize
-                    if let label = subview as? UILabel {
-                        let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-                        size = CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
-                    } else if let button = subview as? UIButton {
-                        let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-                        size = CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
-                    } else {
-                        let intrinsicSize = subview.intrinsicContentSize
-                        size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
-                    }
+
+                    let intrinsicSize = subview.intrinsicContentSize
+                    size = CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
                     frames[subview] = CGRect(x: 0, y: 0, width: size.width, height: size.height)
                     totalSize.width += size.width
                     // Optimize max() call - only update if larger
@@ -596,16 +581,8 @@ public class HStack: UIView, Layout {
     
     /// Helper method to calculate fallback size for a subview
     private func calculateFallbackSize(for subview: UIView, maxWidth: CGFloat, maxHeight: CGFloat) -> CGSize {
-        if let label = subview as? UILabel {
-            let textSize = label.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-            return CGSize(width: min(textSize.width, maxWidth), height: max(textSize.height, 20))
-        } else if let button = subview as? UIButton {
-            let buttonSize = button.sizeThatFits(CGSize(width: maxWidth, height: maxHeight))
-            return CGSize(width: min(buttonSize.width, maxWidth), height: max(buttonSize.height, 30))
-        } else {
-            let intrinsicSize = subview.intrinsicContentSize
-            return CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
-        }
+        let intrinsicSize = subview.intrinsicContentSize
+        return CGSize(width: min(intrinsicSize.width, maxWidth), height: max(intrinsicSize.height, 20))
     }
     
     /// Method to detect if inside ScrollView
@@ -701,9 +678,6 @@ public class HStack: UIView, Layout {
                 }
             }
         }
-        
         return self
     }
 }
-
-

@@ -1,7 +1,5 @@
-#if canImport(UIKit)
 import UIKit
 
-#endif
 /// A z-axis stack layout that layers child layouts on top of each other.
 ///
 /// ``ZStack`` arranges its child layouts in layers, with later children appearing on top
@@ -241,22 +239,6 @@ public class ZStack: UIView, Layout {
                 if size.height < 20 {
                     size.height = 20
                 }
-            } else if let label = subview as? UILabel {
-                // Calculate based on text size for UILabel - reuse defaultBounds
-                let textSize = label.sizeThatFits(defaultBounds.size)
-                // Optimize max() calls
-                size = CGSize(
-                    width: textSize.width >= 50 ? textSize.width : 50,
-                    height: textSize.height >= 20 ? textSize.height : 20
-                )
-            } else if let button = subview as? UIButton {
-                // Calculate based on button size for UIButton - reuse defaultBounds
-                let buttonSize = button.sizeThatFits(defaultBounds.size)
-                // Optimize max() calls
-                size = CGSize(
-                    width: buttonSize.width >= 80 ? buttonSize.width : 80,
-                    height: buttonSize.height >= 30 ? buttonSize.height : 30
-                )
             } else {
                 // Use intrinsicContentSize for other views
                 let intrinsicSize = subview.intrinsicContentSize
@@ -300,10 +282,6 @@ public class ZStack: UIView, Layout {
         let safeBounds = bounds.inset(by: padding)
         var frames: [UIView: CGRect] = [:]
         var totalSize = CGSize.zero
-        
-        // Pre-calculate infinite height constant to avoid repeated calculations
-        let infiniteHeight = CGFloat.greatestFiniteMagnitude
-        
         // If ZStack itself has ViewLayout (from .layout() modifier), use it for size calculation
         // This handles Percent-based sizes correctly
         var zStackSize: CGSize? = nil
@@ -355,12 +333,6 @@ public class ZStack: UIView, Layout {
                         var size: CGSize
                         if subview is Spacer {
                             size = .zero
-                        } else if let label = subview as? UILabel {
-                            let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: infiniteHeight))
-                            size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-                        } else if let button = subview as? UIButton {
-                            let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: infiniteHeight))
-                            size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
                         } else {
                             let intrinsicSize = subview.intrinsicContentSize
                             size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
@@ -379,12 +351,6 @@ public class ZStack: UIView, Layout {
                     var size: CGSize
                     if subview is Spacer {
                         size = .zero
-                    } else if let label = subview as? UILabel {
-                        let textSize = label.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
-                        size = CGSize(width: max(textSize.width, 50), height: max(textSize.height, 20))
-                    } else if let button = subview as? UIButton {
-                        let buttonSize = button.sizeThatFits(CGSize(width: safeBounds.width, height: CGFloat.greatestFiniteMagnitude))
-                        size = CGSize(width: max(buttonSize.width, 80), height: max(buttonSize.height, 30))
                     } else {
                         let intrinsicSize = subview.intrinsicContentSize
                         size = CGSize(width: max(intrinsicSize.width, 50), height: max(intrinsicSize.height, 20))
@@ -476,7 +442,7 @@ public class ZStack: UIView, Layout {
         } else {
             overlayLayouts = [overlayLayout]
         }
-        
+
         // Add overlay views (exclude Layout views)
         for overlayLayout in overlayLayouts {
             let overlayViews = overlayLayout.extractViews()
@@ -487,7 +453,6 @@ public class ZStack: UIView, Layout {
                 }
             }
         }
-        
         return self
     }
 }
